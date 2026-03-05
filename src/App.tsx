@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, RequireAuth } from "@/hooks/useAuth";
+import { SatkerConfigProvider } from "@/contexts/SatkerConfigContext";
 import Layout from "./pages/Layout";
 import Dashboard from "./pages/Dashboard";
 import SubmissionsCard from "./pages/SubmissionsCard";
@@ -20,21 +21,23 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={
-              <RequireAuth>
-                <Layout />
-              </RequireAuth>
-            }>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="submissions/card" element={<SubmissionsCard />} />
-              <Route path="submissions/table" element={<SubmissionsTable />} />
-            </Route>
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <SatkerConfigProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={
+                <RequireAuth>
+                  <Layout />
+                </RequireAuth>
+              }>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="submissions/card" element={<SubmissionsCard />} />
+                <Route path="submissions/table" element={<SubmissionsTable />} />
+              </Route>
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </SatkerConfigProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
