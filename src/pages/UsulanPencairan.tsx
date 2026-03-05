@@ -5,17 +5,17 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SubmissionForm } from '@/components/pencairan/SubmissionForm';
 import { usePencairanData } from '@/hooks/use-pencairan-data';
 import { Submission, SubmissionStatus, UserRole, canCreateSubmission } from '@/types/pencairan';
-import { FileText, Clock, CheckCircle2, XCircle, Plus, RefreshCw, Loader2, FileEdit, AlertCircle, Send, Archive } from 'lucide-react';
+
 import { useAuth } from '@/contexts/AuthContext';
 
 const filterConfig = [
-  { value: 'all', label: 'Total', icon: FileText, color: 'text-blue-500' },
-  { value: 'draft', label: 'Draft', icon: FileEdit, color: 'text-gray-500' },
-  { value: 'pending_bendahara', label: 'Bendahara', icon: Clock, color: 'text-indigo-500' },
-  { value: 'pending_ppk', label: 'PPK', icon: Clock, color: 'text-orange-500' },
-  { value: 'pending_ppspm', label: 'PPSPM', icon: Clock, color: 'text-pink-500' },
-  { value: 'sent_kppn', label: 'KPPN', icon: Send, color: 'text-purple-500' },
-  { value: 'complete_arsip', label: 'Arsip', icon: Archive, color: 'text-emerald-500' },
+  { value: 'all', label: 'Total', icon: '📄', color: 'text-blue-500' },
+  { value: 'draft', label: 'Draft', icon: '✏️', color: 'text-gray-500' },
+  { value: 'pending_bendahara', label: 'Bendahara', icon: '⏳', color: 'text-indigo-500' },
+  { value: 'pending_ppk', label: 'PPK', icon: '⏳', color: 'text-orange-500' },
+  { value: 'pending_ppspm', label: 'PPSPM', icon: '⏳', color: 'text-pink-500' },
+  { value: 'sent_kppn', label: 'KPPN', icon: '📤', color: 'text-purple-500' },
+  { value: 'complete_arsip', label: 'Arsip', icon: '📦', color: 'text-emerald-500' },
 ];
 
 export default function UsulanPencairan() {
@@ -123,8 +123,7 @@ export default function UsulanPencairan() {
         <div className="flex items-center gap-2">
           {showCreateButton && (
             <Button onClick={() => { setEditingSubmission(null); setShowForm(true); }} className="rounded-xl">
-              <Plus className="w-4 h-4 mr-2" />
-              Buat Pengajuan Baru
+              ➕ Buat Pengajuan Baru
             </Button>
           )}
           <Button 
@@ -133,7 +132,7 @@ export default function UsulanPencairan() {
             onClick={() => refetch()}
             className="rounded-xl"
           >
-            <RefreshCw className="w-4 h-4" />
+            🔄
           </Button>
         </div>
       </div>
@@ -142,7 +141,6 @@ export default function UsulanPencairan() {
       <Tabs value={activeFilter} onValueChange={setActiveFilter} className="w-full">
         <TabsList className="flex flex-wrap w-full bg-muted/60 p-1 rounded-xl h-auto gap-1">
           {filterConfig.map((filter) => {
-            const Icon = filter.icon;
             const countValue = counts[filter.value] || 0;
 
             return (
@@ -151,7 +149,7 @@ export default function UsulanPencairan() {
                 value={filter.value}
                 className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg"
               >
-                <Icon className={`h-4 w-4 ${filter.color}`} />
+                <span className="text-lg">{filter.icon}</span>
                 <span>{filter.label}</span>
                 <span className="bg-primary/10 px-2 py-0.5 rounded-full text-xs font-bold text-primary ml-1">
                   {countValue}
@@ -171,11 +169,11 @@ export default function UsulanPencairan() {
         <CardContent className="pt-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="text-4xl animate-spin">⏳</span>
             </div>
           ) : filteredSubmissions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <FileText className="w-12 h-12 mb-4 opacity-50" />
+              <span className="text-6xl mb-4 opacity-50">📄</span>
               <p className="text-lg">Tidak ada pengajuan</p>
               <p className="text-sm">Mulai dengan membuat pengajuan baru</p>
             </div>
@@ -239,7 +237,7 @@ export default function UsulanPencairan() {
                           }}
                           className="rounded-lg"
                         >
-                          <FileEdit className="w-4 h-4" />
+                          ✏️
                         </Button>
                       </div>
                     </div>

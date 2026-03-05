@@ -38,7 +38,6 @@ import {
   JENIS_BELANJA_OPTIONS,
   SUB_JENIS_BELANJA,
 } from '@/types/pencairan';
-import { Send, X, FileText, Loader2, AlertCircle, Save } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganikPencairan, usePencairanData } from '@/hooks/use-pencairan-data';
@@ -387,8 +386,8 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+              📋
             </div>
             <div>
               <DialogTitle className="text-xl">
@@ -471,15 +470,12 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
                   <Label>Kelengkapan Dokumen</Label>
                   {requiredDocs.length > 0 && uncheckedRequiredCount > 0 && (
                     <span className="text-xs text-destructive flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      {uncheckedRequiredCount} dokumen wajib belum lengkap
+                      ⚠️ {uncheckedRequiredCount} dokumen wajib belum lengkap
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>{checkedCount}/{documents.length} dokumen</span>
-                  <span>• {requiredCheckedCount}/{requiredDocs.length} wajib</span>
+                  📄 {checkedCount}/{documents.length} dokumen • {requiredCheckedCount}/{requiredDocs.length} wajib
                 </div>
               </div>
 
@@ -525,7 +521,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                  <FileText className="w-8 h-8 mb-2 opacity-50" />
+                  <span className="text-4xl mb-2 opacity-50">📋</span>
                   <p className="text-sm">Pilih sub-jenis belanja untuk melihat daftar dokumen</p>
                 </div>
               )}
@@ -551,8 +547,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
               className="rounded-xl"
               disabled={isSubmitting}
             >
-              <X className="w-4 h-4 mr-2" />
-              Batal
+              ✕ Batal
             </Button>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -562,24 +557,14 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
               className="rounded-xl shadow-sm hover:shadow-md transition-all"
               disabled={isSubmitting || !title.trim()}
             >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 mr-2" />
-              )}
-              Simpan Draft
+              {isSubmitting ? '⏳' : '💾'} Simpan Draft
             </Button>
             <Button
               onClick={handleSaveAndSubmit}
               className="rounded-xl shadow-sm hover:shadow-md transition-all bg-primary hover:bg-primary/90"
               disabled={isSubmitting || !isFormValid}
             >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4 mr-2" />
-              )}
-              {editData ? 'Simpan dan Kirim ke Bendahara' : 'Kirim ke Bendahara'}
+              {isSubmitting ? '⏳' : '📤'} {editData ? 'Simpan dan Kirim ke Bendahara' : 'Kirim ke Bendahara'}
             </Button>
           </div>
         </DialogFooter>
@@ -599,10 +584,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
                 className="rounded-lg bg-blue-600 hover:bg-blue-700"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : null}
-                Ya, Simpan Draft
+                {isSubmitting ? '⏳ ' : ''}Ya, Simpan Draft
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
