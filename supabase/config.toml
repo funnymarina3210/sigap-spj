@@ -1,0 +1,10 @@
+project_id = "zrtkessqceznopjsljou"
+
+[functions.read-sheets]
+verify_jwt = false
+
+[functions.save-to-sheets]
+verify_jwt = false
+
+[functions.update-status]
+verify_jwt = false
