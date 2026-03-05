@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import DashboardPencairan from "@/components/pencairan/DashboardPencairan";
 
+// Dashboard utama - Integrated dengan Pencairan Components
 export default function Dashboard() {
   const [filterTahun, setFilterTahun] = useState<string>(new Date().getFullYear().toString());
 
