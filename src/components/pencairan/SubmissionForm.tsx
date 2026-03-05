@@ -41,7 +41,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganikPencairan, usePencairanData } from '@/hooks/use-pencairan-data';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SubmissionFormProps {
   open: boolean;

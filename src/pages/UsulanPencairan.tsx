@@ -6,7 +6,7 @@ import { SubmissionForm } from '@/components/pencairan/SubmissionForm';
 import { usePencairanData } from '@/hooks/use-pencairan-data';
 import { Submission, SubmissionStatus, UserRole, canCreateSubmission } from '@/types/pencairan';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const filterConfig = [
   { value: 'all', label: 'Total', icon: '📄', color: 'text-blue-500' },
