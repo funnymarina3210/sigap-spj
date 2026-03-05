@@ -8,6 +8,7 @@ import Layout from "./pages/Layout";
 import Dashboard from "./pages/Dashboard";
 import SubmissionsCard from "./pages/SubmissionsCard";
 import SubmissionsTable from "./pages/SubmissionsTable";
+import UsulanPencairan from "./pages/UsulanPencairan";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -28,8 +29,7 @@ const App = () => (
               </RequireAuth>
             }>
               <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="submissions/card" element={<SubmissionsCard />} />
+              <Route path="dashboard" element={<Dashboard />} />              <Route path="pencairan" element={<UsulanPencairan />} />              <Route path="submissions/card" element={<SubmissionsCard />} />
               <Route path="submissions/table" element={<SubmissionsTable />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
