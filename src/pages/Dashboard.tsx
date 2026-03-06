@@ -44,6 +44,19 @@ export default function Dashboard() {
     };
   }, [filteredSubmissions]);
 
+  // Calculate top submitters
+  const topSubmitters = useMemo(() => {
+    const submitterCounts = filteredSubmissions.reduce((acc, sub) => {
+      acc[sub.submitterName] = (acc[sub.submitterName] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(submitterCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+  }, [filteredSubmissions]);
+
   const statusColors: Record<string, string> = {
     pending_ppk: '#f59e0b',
     pending_bendahara: '#06b6d4',
@@ -347,24 +360,12 @@ export default function Dashboard() {
                   <p className="text-muted-foreground">Memuat data...</p>
                 ) : (
                   <div className="space-y-2">
-                    {useMemo(() => {
-                      // Count submissions by submitter
-                      const submitterCounts = filteredSubmissions.reduce((acc, sub) => {
-                        acc[sub.submitterName] = (acc[sub.submitterName] || 0) + 1;
-                        return acc;
-                      }, {} as Record<string, number>);
-                      
-                      // Sort and get top 5
-                      return Object.entries(submitterCounts)
-                        .sort(([, a], [, b]) => b - a)
-                        .slice(0, 5)
-                        .map(([name, count]) => (
-                          <div key={name} className="flex items-center justify-between p-2 border rounded">
-                            <span className="text-sm">{name}</span>
-                            <span className="text-sm font-medium">{count} pengajuan</span>
-                          </div>
-                        ));
-                    }, [filteredSubmissions])}
+                    {topSubmitters.map(({ name, count }) => (
+                      <div key={name} className="flex items-center justify-between p-2 border rounded">
+                        <span className="text-sm">{name}</span>
+                        <span className="text-sm font-medium">{count} pengajuan</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
