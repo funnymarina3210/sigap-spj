@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Submission, SubmissionStatus, UserRole, canCreateSubmission } from '@/types/pencairan';
+import { Submission, SubmissionStatus, UserRole, canCreateSubmission, PaymentType, formatDateTime } from '@/types/pencairan';
 import { SubmissionForm } from '@/components/pencairan/SubmissionForm';
 import { SubmissionTable } from '@/components/pencairan/SubmissionTable';
 import { SubmissionDetail } from '@/components/pencairan/SubmissionDetail';
@@ -9,6 +9,8 @@ import { FilterTabs } from '@/components/pencairan/FilterTabs';
 import { SPByGrouping } from '@/components/pencairan/SPByGrouping';
 import { usePencairanData } from '@/hooks/use-pencairan-data';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { getNextStatus } from '@/lib/workflow';
 
 export default function UsulanPencairan() {
   const { data: sheetSubmissions = [], isLoading, refetch } = usePencairanData();
@@ -97,6 +99,114 @@ export default function UsulanPencairan() {
   };
 
   const handleDetailClose = () => {
+    setShowDetail(false);
+    setSelectedDetail(null);
+  };
+
+  const handleApprove = async (notes?: string, paymentType?: PaymentType, spmNumber?: string) => {
+    if (!selectedDetail || !user) throw new Error('Submission or user not found');
+
+    // Get next status based on current status and user role
+    const nextStatus = getNextStatus(selectedDetail.status, userRole, 'approve');
+    if (!nextStatus) throw new Error('Cannot approve at current stage or permission denied');
+
+    // Build the update object
+    const updateData: Record<string, any> = {
+      id: selectedDetail.id,
+      status: nextStatus,
+      actor: userRole,
+      action: 'approve',
+      catatan: notes || '',
+    };
+
+    // Handle Bendahara-specific fields (payment type and SPM number)
+    if (userRole === 'Bendahara' && paymentType) {
+      updateData.pembayaran = paymentType;
+      if (paymentType === 'LS' && spmNumber) {
+        updateData.nomorSPM = spmNumber;
+      }
+    }
+
+    // Call the pencairan-update Supabase function
+    const { data, error } = await supabase.functions.invoke('pencairan-update', {
+      body: updateData,
+    });
+
+    if (error) throw new Error(error.message || 'Failed to approve submission');
+
+    // Update local state
+    const updatedSubmission: Submission = {
+      ...selectedDetail,
+      status: nextStatus,
+      updatedAt: new Date(),
+    };
+
+    // Add role-specific timestamp
+    if (userRole === 'Bendahara') {
+      updatedSubmission.waktuBendahara = formatDateTime(new Date());
+      updatedSubmission.statusBendahara = notes || '';
+    } else if (userRole === 'Pejabat Pembuat Komitmen') {
+      updatedSubmission.waktuPPK = formatDateTime(new Date());
+      updatedSubmission.statusPPK = notes || '';
+    } else if (userRole === 'Pejabat Penandatangan Surat Perintah Membayar') {
+      updatedSubmission.waktuPPSPM = formatDateTime(new Date());
+      updatedSubmission.statusPPSPM = notes || '';
+    } else if (userRole === 'KPPN') {
+      updatedSubmission.waktuArsip = formatDateTime(new Date());
+      updatedSubmission.statusArsip = notes || '';
+    }
+
+    setSubmissions(submissions.map(s => s.id === selectedDetail.id ? updatedSubmission : s));
+    setShowDetail(false);
+    setSelectedDetail(null);
+  };
+
+  const handleReject = async (reason: string) => {
+    if (!selectedDetail || !user) throw new Error('Submission or user not found');
+
+    // Determine rejection status based on current status
+    let rejectStatus: SubmissionStatus;
+    switch (selectedDetail.status) {
+      case 'pending_bendahara':
+        rejectStatus = 'rejected_sm';
+        break;
+      case 'pending_ppk':
+        rejectStatus = 'rejected_bendahara';
+        break;
+      case 'pending_ppspm':
+        rejectStatus = 'rejected_ppk';
+        break;
+      case 'pending_kppn':
+        rejectStatus = 'rejected_ppspm';
+        break;
+      case 'pending_arsip':
+        rejectStatus = 'rejected_kppn';
+        break;
+      default:
+        throw new Error('Cannot reject submission at current status');
+    }
+
+    // Call the pencairan-update Supabase function
+    const { data, error } = await supabase.functions.invoke('pencairan-update', {
+      body: {
+        id: selectedDetail.id,
+        status: rejectStatus,
+        actor: userRole,
+        action: 'reject',
+        catatan: reason,
+      },
+    });
+
+    if (error) throw new Error(error.message || 'Failed to reject submission');
+
+    // Update local state
+    const updatedSubmission: Submission = {
+      ...selectedDetail,
+      status: rejectStatus,
+      updatedAt: new Date(),
+    };
+
+    setSubmissions(submissions.map(s => s.id === selectedDetail.id ? updatedSubmission : s));
     setShowDetail(false);
     setSelectedDetail(null);
   };
@@ -196,6 +306,8 @@ export default function UsulanPencairan() {
         open={showDetail}
         onClose={handleDetailClose}
         userRole={userRole}
+        onApprove={handleApprove}
+        onReject={handleReject}
       />
 
       {/* SPBy GROUPING */}

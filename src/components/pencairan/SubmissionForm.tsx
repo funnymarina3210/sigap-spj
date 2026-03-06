@@ -201,7 +201,6 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             namaPengaju: submitterName.trim(),
             jenisPengajuan: jenisPengajuan,
             kelengkapan: kelengkapan,
-            satker: user?.satker,
           },
         });
         if (error) throw new Error(error.message || 'Gagal menyimpan draft');
@@ -225,7 +224,6 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             statusBendahara: '',
             waktuBendahara: '',
             statusKppn: '',
-            satker: user?.satker,
             user: user?.role || '',
           },
         });
@@ -240,6 +238,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
         jenisBelanja,
         subJenisBelanja,
         submittedAt: new Date(),
+        updatedAt: new Date(),
         documents,
         notes: notes.trim() || undefined,
       });
@@ -298,7 +297,6 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             namaPengaju: submitterName.trim(),
             jenisPengajuan: jenisPengajuan,
             kelengkapan: kelengkapan,
-            satker: user?.satker,
           },
         });
         if (error) throw new Error(error.message || 'Gagal mengirim pengajuan');
@@ -322,7 +320,6 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             statusBendahara: '',
             waktuBendahara: '',
             statusKppn: '',
-            satker: user?.satker,
             user: user?.role || '',
           },
         });
@@ -337,6 +334,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
         jenisBelanja,
         subJenisBelanja,
         submittedAt: new Date(),
+        updatedAt: new Date(),
         documents,
         notes: notes.trim() || undefined,
       });

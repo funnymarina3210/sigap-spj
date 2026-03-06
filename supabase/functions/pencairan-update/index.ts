@@ -1,3 +1,4 @@
+// @ts-ignore - Deno runtime imports
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -8,13 +9,40 @@ const corsHeaders = {
 const DEFAULT_SPREADSHEET_ID = '1hnNCHxmQQ5rjVcxIBvJk5lEdZ8aki4YUMBi1s33cnGI';
 const SHEET_NAME = 'data';
 
+// Column mappings (0-based indices)
+const COLUMNS = {
+  ID: 0,              // A
+  uraianPengajuan: 1, // B
+  namaPengaju: 2,     // C
+  jenisPengajuan: 3,  // D
+  kelengkapan: 4,     // E
+  catatan: 5,         // F
+  status: 6,          // G
+  waktuSM: 7,         // H - submitted to SM
+  waktuBendahara: 8,  // I
+  waktuPPK: 9,        // J
+  waktuPPSPM: 10,     // K
+  waktuArsip: 11,     // L - for KPPN/Arsip
+  statusBendahara: 12,// M - notes from Bendahara
+  statusPPK: 13,      // N - notes from PPK
+  statusPPSPM: 14,    // O - notes from PPSPM
+  statusArsip: 15,    // P - notes from Arsip
+  updatedAt: 16,      // Q
+  userRolePembuat: 17,// R
+  pembayaran: 18,     // S - LS or UP
+  nomorSPM: 19,       // T
+  nomorSPPD: 20,      // U
+};
+
 async function getAccessToken() {
   console.log('Getting access token for pencairan-update...');
   
   let privateKey: string;
   let serviceAccountEmail: string;
   
+  // @ts-ignore - Deno API
   const googlePrivateKeyEnv = Deno.env.get('GOOGLE_PRIVATE_KEY');
+  // @ts-ignore - Deno API
   const googleServiceAccountEmailEnv = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL');
   
   try {
@@ -119,7 +147,14 @@ function formatDateTime(): string {
   return `${hours}:${minutes} - ${day}/${month}/${year}`;
 }
 
-serve(async (req) => {
+// Generate SPPD number format: SPPD-2026-001
+function generateSPPDNumber(id: string): string {
+  const year = new Date().getFullYear();
+  const sequence = id.substring(5); // Extract number from ID like "SPJB-001" -> "001"
+  return `SPPD-${year}-${sequence}`;
+}
+
+serve(async (req: Request) => {
   console.log('pencairan-update function invoked');
   
   if (req.method === 'OPTIONS') {
@@ -138,20 +173,21 @@ serve(async (req) => {
       jenisPengajuan,
       kelengkapan,
       catatan,
-      satker,
-      actor,
-      action,
+      actor,      // UserRole
+      action,     // 'approve' | 'reject' | 'submit' | 'save_draft'
+      pembayaran, // 'LS' | 'UP' (from Bendahara)
+      nomorSPM,   // SPM number (from Bendahara for LS)
     } = body;
     
-    if (!id) {
-      throw new Error('ID is required');
+    if (!id || !status) {
+      throw new Error('ID and status are required');
     }
 
     const accessToken = await getAccessToken();
     const spreadsheetId = DEFAULT_SPREADSHEET_ID;
     const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;
     
-    // Ambil semua data dari sheet
+    // Fetch all data from sheet
     const getResponse = await fetch(
       `${baseUrl}/values/${SHEET_NAME}!A:U`,
       {
@@ -171,10 +207,10 @@ serve(async (req) => {
       throw new Error('No data found in sheet');
     }
 
-    // Find row dengan matching ID
+    // Find row with matching ID
     let foundRowIndex = -1;
     for (let i = 1; i < rows.length; i++) {
-      if (rows[i][0] === id) {
+      if (rows[i][COLUMNS.ID] === id) {
         foundRowIndex = i;
         break;
       }
@@ -187,29 +223,99 @@ serve(async (req) => {
     // Update row data
     const updatedRow = [...rows[foundRowIndex]];
     
-    if (uraianPengajuan) updatedRow[1] = uraianPengajuan;
-    if (namaPengaju) updatedRow[2] = namaPengaju;
-    if (jenisPengajuan) updatedRow[3] = jenisPengajuan;
-    if (kelengkapan) updatedRow[4] = kelengkapan;
-    if (catatan) updatedRow[5] = catatan;
-    if (status) updatedRow[6] = status;
-    
-    // Update timestamp sesuai status
-    if (status === 'pending_bendahara' && !updatedRow[8]) {
-      updatedRow[8] = waktuUpdate;
-    } else if (status === 'pending_ppk' && !updatedRow[9]) {
-      updatedRow[9] = waktuUpdate;
-    }else if (status === 'pending_ppspm' && !updatedRow[10]) {
-      updatedRow[10] = waktuUpdate;
-    } else if (status === 'sent_kppn' && !updatedRow[11]) {
-      updatedRow[11] = waktuUpdate;
-    } else if (status === 'complete_arsip' && !updatedRow[11]) {
-      updatedRow[11] = waktuUpdate;
-    }
-    
-    updatedRow[16] = waktuUpdate; // Q: Update terakhir
+    // Update basic fields if provided
+    if (uraianPengajuan) updatedRow[COLUMNS.uraianPengajuan] = uraianPengajuan;
+    if (namaPengaju) updatedRow[COLUMNS.namaPengaju] = namaPengaju;
+    if (jenisPengajuan) updatedRow[COLUMNS.jenisPengajuan] = jenisPengajuan;
+    if (kelengkapan) updatedRow[COLUMNS.kelengkapan] = kelengkapan;
+    if (catatan) updatedRow[COLUMNS.catatan] = catatan;
 
-    // Update sheet dengan batchUpdate
+    // Update status
+    updatedRow[COLUMNS.status] = status;
+
+    // Update workflow stage timestamps based on new status
+    // Only set timestamp if not already set (first time reaching this stage)
+    if (status === 'submitted_sm' && !updatedRow[COLUMNS.waktuSM]) {
+      updatedRow[COLUMNS.waktuSM] = waktuUpdate;
+    }
+    if (status === 'pending_bendahara' && !updatedRow[COLUMNS.waktuBendahara]) {
+      updatedRow[COLUMNS.waktuBendahara] = waktuUpdate;
+    }
+    if (status === 'pending_ppk' && !updatedRow[COLUMNS.waktuPPK]) {
+      updatedRow[COLUMNS.waktuPPK] = waktuUpdate;
+    }
+    if (status === 'pending_ppspm' && !updatedRow[COLUMNS.waktuPPSPM]) {
+      updatedRow[COLUMNS.waktuPPSPM] = waktuUpdate;
+    }
+    if ((status === 'pending_kppn' || status === 'pending_arsip' || status === 'completed') && !updatedRow[COLUMNS.waktuArsip]) {
+      updatedRow[COLUMNS.waktuArsip] = waktuUpdate;
+    }
+
+    // Update role-specific status notes (only from that role)
+    if (actor === 'Bendahara' && catatan) {
+      updatedRow[COLUMNS.statusBendahara] = catatan;
+    }
+    if (actor === 'Pejabat Pembuat Komitmen' && catatan) {
+      updatedRow[COLUMNS.statusPPK] = catatan;
+    }
+    if (actor === 'Pejabat Penandatangan Surat Perintah Membayar' && catatan) {
+      updatedRow[COLUMNS.statusPPSPM] = catatan;
+    }
+    if ((actor === 'KPPN' || actor === 'Arsip') && catatan) {
+      updatedRow[COLUMNS.statusArsip] = catatan;
+    }
+
+    // Handle Bendahara-specific payment type assignment
+    if (actor === 'Bendahara' && pembayaran) {
+      updatedRow[COLUMNS.pembayaran] = pembayaran;
+      if (pembayaran === 'LS' && nomorSPM) {
+        updatedRow[COLUMNS.nomorSPM] = nomorSPM;
+      }
+    }
+
+    // Generate and set SPPD number when completed
+    if (status === 'completed' && !updatedRow[COLUMNS.nomorSPPD]) {
+      updatedRow[COLUMNS.nomorSPPD] = generateSPPDNumber(id);
+    }
+
+    // Handle rejection flows - clear future stage notes/timestamps
+    if (action === 'reject') {
+      switch (status) {
+        case 'rejected_sm':
+          // Rejected by Bendahara - clear Bendahara notes onward
+          updatedRow[COLUMNS.statusBendahara] = '';
+          updatedRow[COLUMNS.statusPPK] = '';
+          updatedRow[COLUMNS.statusPPSPM] = '';
+          updatedRow[COLUMNS.statusArsip] = '';
+          updatedRow[COLUMNS.waktuPPK] = '';
+          updatedRow[COLUMNS.waktuPPSPM] = '';
+          updatedRow[COLUMNS.waktuArsip] = '';
+          break;
+        case 'rejected_bendahara':
+          // Rejected by PPK - clear PPK notes onward
+          updatedRow[COLUMNS.statusPPK] = '';
+          updatedRow[COLUMNS.statusPPSPM] = '';
+          updatedRow[COLUMNS.statusArsip] = '';
+          updatedRow[COLUMNS.waktuPPSPM] = '';
+          updatedRow[COLUMNS.waktuArsip] = '';
+          break;
+        case 'rejected_ppk':
+          // Rejected by PPSPM - clear PPSPM notes onward
+          updatedRow[COLUMNS.statusPPSPM] = '';
+          updatedRow[COLUMNS.statusArsip] = '';
+          updatedRow[COLUMNS.waktuArsip] = '';
+          break;
+        case 'rejected_ppspm':
+          // Rejected by KPPN - clear Arsip notes
+          updatedRow[COLUMNS.statusArsip] = '';
+          break;
+      }
+    }
+
+    // Update last modified timestamp
+    updatedRow[COLUMNS.updatedAt] = waktuUpdate;
+
+    // Update sheet with batchUpdate
     const rowIndex = foundRowIndex;
     const updateResponse = await fetch(
       `${baseUrl}/values/${SHEET_NAME}!A${rowIndex + 1}:U${rowIndex + 1}?valueInputOption=USER_ENTERED`,
@@ -231,7 +337,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, data: updateData, rowIndex }),
+      JSON.stringify({ success: true, data: updateData, rowIndex, newStatus: status }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
