@@ -1,22 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SubmissionForm } from '@/components/pencairan/SubmissionForm';
-import { usePencairanData } from '@/hooks/use-pencairan-data';
 import { Submission, SubmissionStatus, UserRole, canCreateSubmission } from '@/types/pencairan';
-
+import { SubmissionForm } from '@/components/pencairan/SubmissionForm';
+import { SubmissionTable } from '@/components/pencairan/SubmissionTable';
+import { SubmissionDetail } from '@/components/pencairan/SubmissionDetail';
+import { FilterTabs } from '@/components/pencairan/FilterTabs';
+import { SPByGrouping } from '@/components/pencairan/SPByGrouping';
+import { usePencairanData } from '@/hooks/use-pencairan-data';
 import { useAuth } from '@/hooks/useAuth';
-
-const filterConfig = [
-  { value: 'all', label: 'Total', icon: '📄', color: 'text-blue-500' },
-  { value: 'draft', label: 'Draft', icon: '✏️', color: 'text-gray-500' },
-  { value: 'pending_bendahara', label: 'Bendahara', icon: '⏳', color: 'text-indigo-500' },
-  { value: 'pending_ppk', label: 'PPK', icon: '⏳', color: 'text-orange-500' },
-  { value: 'pending_ppspm', label: 'PPSPM', icon: '⏳', color: 'text-pink-500' },
-  { value: 'sent_kppn', label: 'KPPN', icon: '📤', color: 'text-purple-500' },
-  { value: 'complete_arsip', label: 'Arsip', icon: '📦', color: 'text-emerald-500' },
-];
 
 export default function UsulanPencairan() {
   const { data: sheetSubmissions = [], isLoading, refetch } = usePencairanData();
@@ -24,45 +16,21 @@ export default function UsulanPencairan() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [showForm, setShowForm] = useState(false);
+  const [showSpBy, setShowSpBy] = useState(false);
   const [editingSubmission, setEditingSubmission] = useState<Submission | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<Submission | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
 
   const userRole = user?.role as UserRole;
   const showCreateButton = canCreateSubmission(userRole);
 
   useEffect(() => {
     if (sheetSubmissions.length > 0) {
-      const converted: Submission[] = sheetSubmissions.map(item => {
-        let submittedDate = item.submittedAt instanceof Date ? item.submittedAt : new Date();
-        
-        if (isNaN(submittedDate.getTime())) {
-          const timeStr = typeof item.waktuPengajuan === 'string' ? item.waktuPengajuan : '';
-          if (timeStr) {
-            const match = timeStr.match(/^(\d{2}):(\d{2}) - (\d{2})\/(\d{2})\/(\d{4})$/);
-            if (match) {
-              const [, hours, minutes, day, month, year] = match;
-              submittedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
-            }
-          }
-          if (isNaN(submittedDate.getTime())) submittedDate = new Date();
-        }
-        
-        const docsInput = Array.isArray(item.documents) 
-          ? item.documents 
-          : typeof item.documents === 'string' 
-            ? (item.documents as string).split('|').map((name: string) => ({
-                type: name.toLowerCase().replace(/\s+/g, '_'),
-                name: name.trim(),
-                isRequired: true,
-                isChecked: true,
-              }))
-            : [];
-        
-        return {
-          ...item,
-          submittedAt: submittedDate,
-          documents: docsInput,
-        };
-      });
+      const converted: Submission[] = sheetSubmissions.map(item => ({
+        ...item,
+        submittedAt: item.submittedAt instanceof Date ? item.submittedAt : new Date(),
+        updatedAt: item.updatedAt instanceof Date ? item.updatedAt : new Date(),
+      }));
       
       setSubmissions(converted);
     }
@@ -90,15 +58,30 @@ export default function UsulanPencairan() {
   }, [submissions, activeFilter]);
 
   const counts = useMemo(() => {
+    const allStatuses: SubmissionStatus[] = [
+      'draft',
+      'submitted_sm',
+      'pending_bendahara',
+      'pending_ppk',
+      'pending_ppspm',
+      'pending_kppn',
+      'pending_arsip',
+      'completed',
+      'rejected_sm',
+      'rejected_bendahara',
+      'rejected_ppk',
+      'rejected_ppspm',
+      'rejected_kppn',
+    ];
+
     const result: Record<string, number> = {
       all: submissions.length,
-      draft: submissions.filter(s => s.status === 'draft').length,
-      pending_bendahara: submissions.filter(s => s.status === 'pending_bendahara').length,
-      pending_ppk: submissions.filter(s => s.status === 'pending_ppk').length,
-      pending_ppspm: submissions.filter(s => s.status === 'pending_ppspm').length,
-      sent_kppn: submissions.filter(s => s.status === 'sent_kppn').length,
-      complete_arsip: submissions.filter(s => s.status === 'complete_arsip').length,
     };
+
+    allStatuses.forEach(status => {
+      result[status] = submissions.filter(s => s.status === status).length;
+    });
+
     return result;
   }, [submissions]);
 
@@ -106,6 +89,16 @@ export default function UsulanPencairan() {
     setEditingSubmission(null);
     setShowForm(false);
     setTimeout(() => refetch(), 1500);
+  };
+
+  const handleRowClick = (submission: Submission) => {
+    setSelectedDetail(submission);
+    setShowDetail(true);
+  };
+
+  const handleDetailClose = () => {
+    setShowDetail(false);
+    setSelectedDetail(null);
   };
 
   return (
@@ -122,12 +115,27 @@ export default function UsulanPencairan() {
         </div>
         <div className="flex items-center gap-2">
           {showCreateButton && (
-            <Button onClick={() => { setEditingSubmission(null); setShowForm(true); }} className="rounded-xl">
+            <Button
+              onClick={() => {
+                setEditingSubmission(null);
+                setShowForm(true);
+              }}
+              className="rounded-xl"
+            >
               ➕ Buat Pengajuan Baru
             </Button>
           )}
-          <Button 
-            variant="outline" 
+          {userRole === 'Bendahara' && (
+            <Button
+              variant="outline"
+              onClick={() => setShowSpBy(true)}
+              className="rounded-xl"
+            >
+              📦 Kelompok UP
+            </Button>
+          )}
+          <Button
+            variant="outline"
             size="icon"
             onClick={() => refetch()}
             className="rounded-xl"
@@ -138,27 +146,11 @@ export default function UsulanPencairan() {
       </div>
 
       {/* FILTER TABS */}
-      <Tabs value={activeFilter} onValueChange={setActiveFilter} className="w-full">
-        <TabsList className="flex flex-wrap w-full bg-muted/60 p-1 rounded-xl h-auto gap-1">
-          {filterConfig.map((filter) => {
-            const countValue = counts[filter.value] || 0;
-
-            return (
-              <TabsTrigger
-                key={filter.value}
-                value={filter.value}
-                className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg"
-              >
-                <span className="text-lg">{filter.icon}</span>
-                <span>{filter.label}</span>
-                <span className="bg-primary/10 px-2 py-0.5 rounded-full text-xs font-bold text-primary ml-1">
-                  {countValue}
-                </span>
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-      </Tabs>
+      <FilterTabs
+        activeFilter={activeFilter}
+        onFilterChange={setActiveFilter}
+        counts={counts}
+      />
 
       {/* DAFTAR PENGAJUAN */}
       <Card className="rounded-xl">
@@ -178,73 +170,11 @@ export default function UsulanPencairan() {
               <p className="text-sm">Mulai dengan membuat pengajuan baru</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredSubmissions.map((submission) => {
-                const statusColors: Record<SubmissionStatus, string> = {
-                  draft: 'bg-gray-50 border-gray-200',
-                  pending_bendahara: 'bg-indigo-50 border-indigo-200',
-                  pending_ppk: 'bg-orange-50 border-orange-200',
-                  pending_ppspm: 'bg-pink-50 border-pink-200',
-                  sent_kppn: 'bg-purple-50 border-purple-200',
-                  complete_arsip: 'bg-emerald-50 border-emerald-200',
-                  incomplete_sm: 'bg-red-50 border-red-200',
-                  incomplete_bendahara: 'bg-red-50 border-red-200',
-                  incomplete_ppk: 'bg-red-50 border-red-200',
-                  incomplete_ppspm: 'bg-red-50 border-red-200',
-                  incomplete_kppn: 'bg-red-50 border-red-200',
-                };
-
-                const statusLabels: Record<SubmissionStatus, string> = {
-                  draft: 'Draft',
-                  pending_bendahara: 'Menunggu Bendahara',
-                  pending_ppk: 'Menunggu PPK',
-                  pending_ppspm: 'Menunggu PPSPM',
-                  sent_kppn: 'Dikirim ke KPPN',
-                  complete_arsip: 'Selesai Arsip',
-                  incomplete_sm: 'Dikembalikan',
-                  incomplete_bendahara: 'Dikembalikan',
-                  incomplete_ppk: 'Dikembalikan',
-                  incomplete_ppspm: 'Dikembalikan',
-                  incomplete_kppn: 'Dikembalikan',
-                };
-
-                return (
-                  <div key={submission.id} className={`p-4 rounded-lg border ${statusColors[submission.status] || 'bg-gray-50'}`}>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold truncate">{submission.id}</h3>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-background border">
-                            {statusLabels[submission.status]}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">{submission.title}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>Pengaju: {submission.submitterName}</span>
-                          <span>Jenis: {submission.jenisBelanja}</span>
-                          {submission.waktuPengajuan && (
-                            <span>Waktu: {submission.waktuPengajuan}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingSubmission(submission);
-                            setShowForm(true);
-                          }}
-                          className="rounded-lg"
-                        >
-                          ✏️
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <SubmissionTable
+              submissions={filteredSubmissions}
+              onRowClick={handleRowClick}
+              itemsPerPage={10}
+            />
           )}
         </CardContent>
       </Card>
@@ -255,9 +185,27 @@ export default function UsulanPencairan() {
         onClose={() => { 
           setShowForm(false); 
           setEditingSubmission(null); 
-        }} 
-        onSubmit={handleFormSubmit} 
+        }}
+        onSubmit={handleFormSubmit}
         editData={editingSubmission} 
+      />
+
+      {/* DETAIL SHEET */}
+      <SubmissionDetail
+        submission={selectedDetail}
+        open={showDetail}
+        onClose={handleDetailClose}
+        userRole={userRole}
+      />
+
+      {/* SPBy GROUPING */}
+      <SPByGrouping
+        open={showSpBy}
+        onClose={() => setShowSpBy(false)}
+        onSubmit={async () => {
+          setTimeout(() => refetch(), 1000);
+        }}
+        submissions={submissions}
       />
     </div>
   );
