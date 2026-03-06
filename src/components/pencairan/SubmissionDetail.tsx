@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Submission, SubmissionStatus, UserRole, canTakeAction, PaymentType } from '@/types/pencairan';
+import { Submission, SubmissionStatus, UserRole, canTakeAction, PaymentType, getCurrentStage } from '@/types/pencairan';
 import {
   Sheet,
   SheetClose,
@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, X } from 'lucide-react';
+import { AlertCircle, X, User, Calendar, Tag } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatusBadge } from './StatusBadge';
 import { WorkflowProgress } from './WorkflowProgress';
@@ -104,9 +104,16 @@ export function SubmissionDetail({
       <SheetContent className="max-w-2xl overflow-y-auto">
         <SheetHeader>
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <SheetTitle>{submission.id}</SheetTitle>
               <SheetDescription>{submission.title}</SheetDescription>
+              <div className="mt-2">
+                {submission.status !== 'draft' && (
+                  <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                    ✓ {getCurrentStage(submission.status) ? `Kirim ${getCurrentStage(submission.status)}` : 'Proses'}
+                  </span>
+                )}
+              </div>
             </div>
             <SheetClose asChild>
               <Button variant="ghost" size="icon">
@@ -118,50 +125,72 @@ export function SubmissionDetail({
 
         <div className="space-y-6 mt-6">
           {/* Status and Basic Info */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Status</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-lg">Status Pengajuan</h3>
               <StatusBadge status={submission.status as SubmissionStatus} />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Pengaju</p>
-                <p className="font-medium">{submission.submitterName}</p>
+            {/* Info Cards dengan Icons */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <User className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">Pengaju</p>
+                  <p className="font-semibold text-sm">{submission.submitterName}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-muted-foreground">User</p>
-                <p className="font-medium">{submission.user || '-'}</p>
+
+              <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                <Calendar className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">Tanggal Pengajuan</p>
+                  <p className="font-semibold text-sm">{submission.waktuPengajuan || '-'}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-muted-foreground">Jenis Belanja</p>
-                <p className="font-medium">{submission.jenisBelanja}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Sub-Jenis</p>
-                <p className="font-medium">{submission.subJenisBelanja || '-'}</p>
+
+              <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <Tag className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs text-muted-foreground font-medium">Jenis Belanja</p>
+                  <p className="font-semibold text-sm">{submission.jenisBelanja}</p>
+                  <p className="text-xs text-muted-foreground">{submission.subJenisBelanja || '-'}</p>
+                </div>
               </div>
             </div>
 
             {submission.pembayaran && (
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-3 text-sm p-3 bg-gray-50 rounded-lg border">
                 <div>
-                  <p className="text-muted-foreground">Tipe Pembayaran</p>
-                  <p className="font-medium">{submission.pembayaran === 'LS' ? 'Langsung' : 'Uang Persediaan'}</p>
+                  <p className="text-muted-foreground text-xs font-medium">Tipe Pembayaran</p>
+                  <p className="font-semibold">{submission.pembayaran === 'LS' ? 'Langsung (LS)' : 'Uang Persediaan (UP)'}</p>
                 </div>
                 {submission.nomorSPM && (
                   <div>
-                    <p className="text-muted-foreground">No. SPM</p>
-                    <p className="font-medium">{submission.nomorSPM}</p>
+                    <p className="text-muted-foreground text-xs font-medium">No. SPM</p>
+                    <p className="font-semibold">{submission.nomorSPM}</p>
+                  </div>
+                )}
+                {submission.nomorSPPD && (
+                  <div>
+                    <p className="text-muted-foreground text-xs font-medium">No. SPPD</p>
+                    <p className="font-semibold">{submission.nomorSPPD}</p>
                   </div>
                 )}
               </div>
             )}
 
+            {submission.user && (
+              <div className="text-sm p-3 bg-gray-50 rounded-lg border">
+                <p className="text-muted-foreground text-xs font-medium">Dibuat oleh</p>
+                <p className="font-semibold">{submission.user}</p>
+              </div>
+            )}
+
             {submission.notes && (
-              <div>
-                <p className="text-muted-foreground text-sm">Catatan</p>
-                <p className="text-sm mt-1">{submission.notes}</p>
+              <div className="text-sm p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p className="text-muted-foreground text-xs font-medium mb-1">Catatan</p>
+                <p className="text-sm">{submission.notes}</p>
               </div>
             )}
           </div>

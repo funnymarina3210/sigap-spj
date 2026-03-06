@@ -1,9 +1,19 @@
 import { Submission } from '@/types/pencairan';
-import { Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, FileText } from 'lucide-react';
 
 interface TrackingTimelineProps {
   submission: Submission;
 }
+
+// Stage descriptions for badges
+const STAGE_ROLES: Record<string, string> = {
+  'SM': 'Subject Matter (Fungsi)',
+  'Bendahara': 'Bendahara Pengeluaran',
+  'PPK': 'Pejabat Pembuat Komitmen',
+  'PPSPM': 'Pejabat Penandatangan SPM',
+  'KPPN': 'Kantor Pelayanan Perbendaharaan',
+  'Arsip': 'Arsip (Pencatatan)',
+};
 
 export function TrackingTimeline({ submission }: TrackingTimelineProps) {
   // Build timeline entries in reverse chronological order
@@ -16,10 +26,11 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
 
   // Latest first
   if (submission.waktuArsip) {
+    const isArsipActive = ['pending_arsip', 'completed'].includes(submission.status);
     entries.push({
       stage: 'Arsip',
       timestamp: submission.waktuArsip,
-      status: submission.status === 'completed' ? 'approved' : 'rejected',
+      status: submission.status === 'completed' ? 'approved' : submission.status === 'rejected_kppn' ? 'rejected' : 'pending',
       notes: submission.statusArsip,
     });
   }
@@ -28,8 +39,8 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     entries.push({
       stage: 'KPPN',
       timestamp: submission.waktuKppn,
-      status: submission.status.includes('kppn') ? 'pending' : submission.status === 'pending_arsip' ? 'approved' : 'rejected',
-      notes: submission.statusBendahara,
+      status: ['pending_kppn', 'pending_arsip', 'completed'].includes(submission.status) ? 'approved' : 'rejected',
+      notes: 'Diproses KPPN',
     });
   }
 
@@ -37,7 +48,7 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     entries.push({
       stage: 'PPSPM',
       timestamp: submission.waktuPPSPM,
-      status: submission.status === 'pending_kppn' ? 'approved' : submission.status === 'pending_ppspm' ? 'pending' : 'rejected',
+      status: ['pending_kppn', 'pending_arsip', 'completed'].includes(submission.status) ? 'approved' : 'rejected',
       notes: submission.statusPPSPM,
     });
   }
@@ -46,7 +57,7 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     entries.push({
       stage: 'PPK',
       timestamp: submission.waktuPPK,
-      status: submission.status === 'pending_ppspm' ? 'approved' : submission.status === 'pending_ppk' ? 'pending' : 'rejected',
+      status: ['pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status) ? 'approved' : 'rejected',
       notes: submission.statusPPK,
     });
   }
@@ -55,7 +66,7 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     entries.push({
       stage: 'Bendahara',
       timestamp: submission.waktuBendahara,
-      status: submission.status === 'pending_ppk' ? 'approved' : submission.status === 'pending_bendahara' ? 'pending' : 'rejected',
+      status: ['pending_ppk', 'pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status) ? 'approved' : 'rejected',
       notes: submission.statusBendahara,
     });
   }
@@ -65,41 +76,57 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
       stage: 'SM',
       timestamp: submission.waktuPengajuan,
       status: 'approved',
-      notes: 'Submitted by ' + (submission.user || 'User'),
+      notes: `Pengajuan telah dikirim ke Bendahara`,
     });
   }
 
   const getIcon = (status: string) => {
-    if (status === 'approved') return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-    if (status === 'rejected') return <XCircle className="w-5 h-5 text-red-500" />;
-    return <Clock className="w-5 h-5 text-blue-500" />;
+    if (status === 'approved') return <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0" />;
+    if (status === 'rejected') return <XCircle className="w-6 h-6 text-red-500 flex-shrink-0" />;
+    return <div className="w-6 h-6 rounded-full bg-blue-500 flex-shrink-0" />;
   };
 
   if (entries.length === 0) {
     return (
       <div className="flex items-center justify-center py-8 text-muted-foreground">
+        <FileText className="w-4 h-4 mr-2" />
         <p>Tidak ada riwayat pelacakan</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {entries.map((entry, idx) => (
-        <div key={idx} className="flex gap-4">
-          <div className="flex flex-col items-center">
+        <div key={idx} className="flex gap-3 pb-3 border-b last:border-b-0">
+          <div className="flex flex-col items-center gap-1 pt-1">
             {getIcon(entry.status)}
-            {idx < entries.length - 1 && (
-              <div className="w-0.5 h-12 bg-gray-300 mt-2" />
-            )}
           </div>
-          <div className="pb-4 flex-1">
-            <div className="flex items-baseline justify-between">
-              <h4 className="font-medium">{entry.stage}</h4>
-              <span className="text-xs text-muted-foreground">{entry.timestamp}</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-gray-700">
+                {entry.timestamp}
+              </span>
+              <span className="text-sm font-medium text-gray-700">
+                {entry.stage}:
+              </span>
+              <span className="text-sm text-gray-600">
+                {entry.status === 'approved' ? 'Disetujui' : entry.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
+              </span>
             </div>
             {entry.notes && (
-              <p className="text-sm text-muted-foreground mt-1">{entry.notes}</p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded font-medium">
+                  ✓ {entry.notes || STAGE_ROLES[entry.stage]}
+                </span>
+              </div>
+            )}
+            {!entry.notes && (
+              <div className="mt-1">
+                <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded font-medium">
+                  {STAGE_ROLES[entry.stage]}
+                </span>
+              </div>
             )}
           </div>
         </div>
