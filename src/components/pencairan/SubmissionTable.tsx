@@ -16,12 +16,14 @@ import { StatusBadge } from './StatusBadge';
 interface SubmissionTableProps {
   submissions: Submission[];
   onRowClick?: (submission: Submission) => void;
+  onEditDraft?: (submission: Submission) => void;
   itemsPerPage?: number;
 }
 
 export function SubmissionTable({
   submissions,
   onRowClick,
+  onEditDraft,
   itemsPerPage = 10,
 }: SubmissionTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -80,13 +82,14 @@ export function SubmissionTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-24">ID</TableHead>
-                <TableHead>Judul</TableHead>
-                <TableHead className="w-32">Pengaju</TableHead>
-                <TableHead className="w-32">Jenis</TableHead>
-                <TableHead className="w-32">Status</TableHead>
-                <TableHead className="w-32">Update Terakhir</TableHead>
-                {/* <TableHead className="w-20">SPM/SPPD</TableHead> */}
+                <TableHead className="w-20">ID</TableHead>
+                <TableHead>Uraian</TableHead>
+                <TableHead className="w-28">Pengaju</TableHead>
+                <TableHead className="w-24">Jenis</TableHead>
+                <TableHead className="w-24">Status</TableHead>
+                <TableHead className="w-20">Pembayaran</TableHead>
+                <TableHead className="w-24">SPM/SPPD</TableHead>
+                <TableHead className="w-20">Dibuat oleh</TableHead>
                 <TableHead className="w-20 text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -100,39 +103,75 @@ export function SubmissionTable({
                   <TableCell className="font-mono text-sm font-bold">
                     {submission.id}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">
+                  <TableCell className="max-w-xs truncate text-sm">
                     {submission.title}
                   </TableCell>
-                  <TableCell className="text-xs">
+                  <TableCell className="text-xs whitespace-nowrap">
                     {submission.submitterName}
                   </TableCell>
                   <TableCell className="text-xs">
-                    {submission.jenisBelanja}
+                    {submission.jenisBelanja?.split(' - ')[0]}
                   </TableCell>
                   <TableCell>
                     <StatusBadge
                       status={submission.status as SubmissionStatus}
-                      showIcon={true}
+                      showIcon={false}
                     />
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {submission.waktuPengajuan || '-'}
+                  <TableCell className="text-xs">
+                    <span className={`px-2 py-1 rounded text-white text-xs font-medium ${
+                      submission.pembayaran === 'LS' ? 'bg-blue-600' :
+                      submission.pembayaran === 'UP' ? 'bg-green-600' :
+                      'bg-gray-400'
+                    }`}>
+                      {submission.pembayaran || '—'}
+                    </span>
                   </TableCell>
-                  {/* <TableCell className="text-xs">
-                    {submission.nomorSPM || submission.nomorSPPD || '-'}
-                  </TableCell> */}
+                  <TableCell className="text-xs text-muted-foreground">
+                    {submission.nomorSPM || submission.nomorSPPD || '—'}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {submission.user || '—'}
+                  </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={e => {
-                        e.stopPropagation();
-                        onRowClick?.(submission);
-                      }}
-                      className="rounded-lg"
-                    >
-                      Detail →
-                    </Button>
+                    {submission.status === 'draft' ? (
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            onEditDraft?.(submission);
+                          }}
+                          className="rounded-lg text-xs"
+                        >
+                          ✎ Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            onRowClick?.(submission);
+                          }}
+                          className="rounded-lg"
+                        >
+                          Detail →
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={e => {
+                          e.stopPropagation();
+                          onRowClick?.(submission);
+                        }}
+                        className="rounded-lg"
+                      >
+                        Detail →
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

@@ -98,6 +98,11 @@ export default function UsulanPencairan() {
     setShowDetail(true);
   };
 
+  const handleEditDraft = (submission: Submission) => {
+    setEditingSubmission(submission);
+    setShowForm(true);
+  };
+
   const handleDetailClose = () => {
     setShowDetail(false);
     setSelectedDetail(null);
@@ -283,6 +288,7 @@ export default function UsulanPencairan() {
             <SubmissionTable
               submissions={filteredSubmissions}
               onRowClick={handleRowClick}
+              onEditDraft={handleEditDraft}
               itemsPerPage={10}
             />
           )}

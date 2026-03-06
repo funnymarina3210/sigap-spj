@@ -84,19 +84,21 @@ function mapRawToSubmission(raw: PencairanRawData): Submission {
   // Parse jenisBelanja untuk mendapatkan jenis dan sub-jenis
   const jenisParts = raw.jenisBelanja.split(' - ');
   
-  // Konversi status string ke SubmissionStatus
+  // Konversi status string ke SubmissionStatus (13 statuses)
   const statusMap: Record<string, SubmissionStatus> = {
     'draft': 'draft',
+    'submitted_sm': 'submitted_sm',
     'pending_bendahara': 'pending_bendahara',
     'pending_ppk': 'pending_ppk',
     'pending_ppspm': 'pending_ppspm',
-    'sent_kppn': 'sent_kppn',
-    'complete_arsip': 'complete_arsip',
-    'incomplete_sm': 'incomplete_sm',
-    'incomplete_bendahara': 'incomplete_bendahara',
-    'incomplete_ppk': 'incomplete_ppk',
-    'incomplete_ppspm': 'incomplete_ppspm',
-    'incomplete_kppn': 'incomplete_kppn',
+    'pending_kppn': 'pending_kppn',
+    'pending_arsip': 'pending_arsip',
+    'completed': 'completed',
+    'rejected_sm': 'rejected_sm',
+    'rejected_bendahara': 'rejected_bendahara',
+    'rejected_ppk': 'rejected_ppk',
+    'rejected_ppspm': 'rejected_ppspm',
+    'rejected_kppn': 'rejected_kppn',
   };
   
   const status: SubmissionStatus = statusMap[raw.status] || 'draft';
