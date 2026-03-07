@@ -9,6 +9,7 @@ export {
   type WorkflowStage,
   STATUS_LABELS,
   STATUS_COLORS,
+  DOCUMENT_LABELS,
   JENIS_BELANJA_OPTIONS,
   SUB_JENIS_BELANJA,
   getDocumentsByJenisBelanja,
@@ -20,6 +21,7 @@ export {
   canEdit,
   getRelevantTimestamp,
   canReturnFromArsip,
+  canReturnFromArsip as canReturnFromKppn,
   getWorkflowStages,
   getStageName,
   isStageCompleted,
@@ -28,6 +30,3 @@ export {
   SUBMITTER_ROLES,
   ROLES_CAN_VIEW_ALL,
 } from './pencairan';
-
-// Legacy alias
-export { canReturnFromArsip as canReturnFromKppn } from './pencairan';

@@ -65,13 +65,9 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // Map sheet roles to internal roles
-      const mapRole = (sheetRole: string): 'admin' | 'ppk' | 'bendahara' | 'user' => {
-        const lower = sheetRole.toLowerCase().trim();
-        if (lower.includes('pejabat pembuat komitmen')) return 'ppk';
-        if (lower.includes('bendahara')) return 'bendahara';
-        if (lower.includes('pejabat penandatangan') || lower.includes('ppspm')) return 'admin';
-        return 'user';
+      // Use the raw role from the sheet directly (matches UserRole type)
+      const getRoleFromSheet = (sheetRole: string): string => {
+        return sheetRole.trim();
       };
 
       // Validate against users from sheet
@@ -81,7 +77,7 @@ export default function Login() {
 
       if (user) {
         const userData = {
-          role: mapRole(user.role),
+          role: getRoleFromSheet(user.role) as any,
           nama: user.nama,
           password: user.password,
         };

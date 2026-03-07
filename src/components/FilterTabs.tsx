@@ -12,9 +12,9 @@ const filters: { value: SubmissionStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'Semua' },
   { value: 'pending_ppk', label: 'Menunggu PPK' },
   { value: 'pending_bendahara', label: 'Menunggu Bendahara' },
-  { value: 'incomplete_sm', label: 'Dikembalikan SM' },
-  { value: 'incomplete_ppk', label: 'Dikembalikan PPK' },
-  { value: 'sent_kppn', label: 'Kirim KPPN' },
+  { value: 'rejected_sm', label: 'Ditolak SM' },
+  { value: 'rejected_ppk', label: 'Ditolak PPK' },
+  { value: 'completed', label: 'Selesai' },
 ];
 
 export function FilterTabs({ activeFilter, onFilterChange, counts }: FilterTabsProps) {
@@ -39,7 +39,7 @@ export function FilterTabs({ activeFilter, onFilterChange, counts }: FilterTabsP
                   ? 'bg-primary text-primary-foreground' 
                   : 'bg-muted/80 text-muted-foreground'
               )}>
-                {counts[filter.value]}
+                {counts[filter.value] ?? 0}
               </span>
             </TabsTrigger>
           ))}

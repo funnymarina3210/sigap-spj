@@ -90,6 +90,44 @@ export function shouldShowSubmission(submission: Submission, userRole: UserRole,
 
 export type DocumentType = string;
 
+// Document labels for backward compatibility
+export const DOCUMENT_LABELS: Record<string, string> = {
+  kak: 'Kerangka Acuan Kerja (KAK)',
+  form_permintaan: 'Form Permintaan (FP)',
+  sk_kpa: 'SK KPA',
+  spk: 'Surat Perjanjian Kerja (SPK)',
+  bast: 'Berita Acara Serah Terima (BAST)',
+  surat_tugas: 'Surat Tugas',
+  rekap_honor: 'Rekap Honor/Kuitansi',
+  laporan: 'Laporan',
+  undangan: 'Undangan',
+  jadwal_kegiatan: 'Jadwal Kegiatan/Rundown Acara',
+  daftar_hadir: 'Daftar Hadir',
+  paparan_materi: 'Paparan/Materi',
+  fc_ktp_npwp: 'Fc. KTP dan NPWP',
+  ssp_pph_21: 'SSP PPh Pasal 21',
+  spd: 'Surat Perjalanan Dinas (SPD)',
+  visum: 'Visum',
+  kuitansi: 'Kuitansi',
+  daftar_pengeluaran_riil: 'Daftar Pengeluaran Riil',
+  daftar_ongkos_perjalanan: 'Daftar Ongkos Perjalanan',
+  surat_pernyataan_kendaraan_dinas: 'Surat Pernyataan Kendaraan Dinas',
+  laporan_perjadin: 'Laporan Perjadin dan Dokumentasi',
+  rekapitulasi_translok: 'Rekapitulasi Translok',
+  notulen_dokumentasi_rapat: 'Notulen dan Dokumentasi Rapat',
+  komitmen_kontrak: 'Komitmen/Kontrak/Bukti Pembelian/Kuitansi',
+  tanda_terima: 'Tanda Terima',
+  ssp: 'Surat Setor Pajak (SSP)',
+  foto_penerimaan_paket: 'Foto penerimaan paket data/pulsa',
+  foto_konsumsi: 'Foto Konsumsi',
+  bukti_prestasi: 'Bukti Prestasi (BAPP/BAST/BAP)',
+  room_list: 'Room List',
+  invoice_kuitansi: 'Invoice/Kuitansi',
+  fc_npwp_rek_koran: 'Fc. NPWP dan Rek Koran',
+  daftar_uang_harian: 'SPD, Super Kendis, Daftar Uang Harian',
+  super_fasilitas_kantor: 'Super Fasilitas Kantor Tidak Memadai',
+};
+
 export interface Document {
   type: DocumentType;
   name: string;
