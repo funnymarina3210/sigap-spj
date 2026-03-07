@@ -67,98 +67,109 @@ function getStepStatus(stepKey: string, submissionStatus: SubmissionStatus | und
 export function WorkflowProgress({ status, className }: WorkflowProgressProps) {
   const getCurrentStepColor = () => {
     switch (status) {
-      case 'draft': return 'bg-gray-400 text-white';
-      case 'pending_bendahara': return 'bg-blue-400 text-white';
-      case 'incomplete_bendahara': return 'bg-red-400 text-white';
-      case 'pending_ppk': return 'bg-yellow-400 text-white';
-      case 'incomplete_ppk': return 'bg-orange-500 text-white';
-      case 'pending_ppspm': return 'bg-purple-500 text-white';
-      case 'incomplete_ppspm': return 'bg-red-500 text-white';
-      case 'sent_kppn': return 'bg-blue-400 text-white';
-      case 'incomplete_kppn': return 'bg-red-400 text-white';
-      case 'incomplete_sm': return 'bg-red-500 text-white';
-      case 'complete_arsip': return 'bg-green-500 text-white';
-      default: return 'bg-gray-300 text-white';
+      case 'draft': return '#6B7280';
+      case 'pending_bendahara': return '#3B82F6';
+      case 'incomplete_bendahara': return '#EF4444';
+      case 'pending_ppk': return '#FBBF24';
+      case 'incomplete_ppk': return '#F97316';
+      case 'pending_ppspm': return '#A855F7';
+      case 'incomplete_ppspm': return '#EC4899';
+      case 'sent_kppn': return '#3B82F6';
+      case 'incomplete_kppn': return '#EF4444';
+      case 'incomplete_sm': return '#EF4444';
+      case 'complete_arsip': return '#22C55E';
+      default: return '#9CA3AF';
     }
   };
 
   const getProgressLineColor = () => {
     switch (status) {
-      case 'draft': return 'bg-gray-400';
+      case 'draft': return '#6B7280';
       case 'pending_bendahara':
-      case 'incomplete_bendahara': return 'bg-blue-400';
+      case 'incomplete_bendahara': return '#3B82F6';
       case 'pending_ppk':
-      case 'incomplete_ppk': return 'bg-yellow-400';
+      case 'incomplete_ppk': return '#FBBF24';
       case 'pending_ppspm':
-      case 'incomplete_ppspm': return 'bg-purple-500';
+      case 'incomplete_ppspm': return '#A855F7';
       case 'sent_kppn':
-      case 'incomplete_kppn': return 'bg-blue-400';
-      case 'complete_arsip': return 'bg-green-500';
-      default: return 'bg-gray-300';
+      case 'incomplete_kppn': return '#3B82F6';
+      case 'complete_arsip': return '#22C55E';
+      default: return '#9CA3AF';
     }
   };
 
   return (
-    <div className={cn('w-full', className)}>
-      <div className="space-y-6">
+    <div className={cn('w-full px-4', className)}>
+      <div className="space-y-8">
         {/* Progress line with steps */}
-        <div className="relative">
-          {/* Background line */}
-          <div className="absolute top-5 left-0 right-0 h-1.5 bg-gray-200 rounded-full" />
+        <div className="relative flex justify-between items-start" style={{ paddingTop: '16px' }}>
+          {/* Background line - continuous */}
+          <div className="absolute top-6 left-0 right-0 h-1 bg-gray-300" style={{ zIndex: 0 }} />
           
           {/* Active progress line */}
           <div 
-            className={cn(
-              "absolute top-5 left-0 h-1.5 rounded-full transition-all duration-500",
-              getProgressLineColor()
-            )}
+            className="absolute top-6 left-0 h-1 transition-all duration-500"
             style={{
+              backgroundColor: getProgressLineColor(),
               width: status === 'complete_arsip' ? '100%' : 
-                     ['sent_kppn'].includes(status) ? '67%' :
-                     ['incomplete_kppn'].includes(status) ? '67%' :
-                     ['pending_ppspm', 'incomplete_ppspm'].includes(status) ? '67%' :
+                     ['sent_kppn'].includes(status) ? '66.66%' :
+                     ['incomplete_kppn'].includes(status) ? '66.66%' :
+                     ['pending_ppspm', 'incomplete_ppspm'].includes(status) ? '66.66%' :
                      ['pending_ppk', 'incomplete_ppk'].includes(status) ? '50%' :
-                     ['pending_bendahara', 'incomplete_bendahara'].includes(status) ? '33%' :
-                     ['draft', 'incomplete_sm'].includes(status) ? '0%' : '0%'
+                     ['pending_bendahara', 'incomplete_bendahara'].includes(status) ? '33.33%' :
+                     ['draft', 'incomplete_sm'].includes(status) ? '0%' : '0%',
+              zIndex: 1
             }}
           />
           
-          {/* Step circles and connector lines */}
-          <div className="flex items-center justify-between relative z-10">
+          {/* Step circles */}
+          <div className="flex items-start justify-between relative w-full" style={{ zIndex: 2 }}>
             {steps.map((step, index) => {
               const stepStatus = getStepStatus(step.key, status);
-              const stepNumber = index + 1;
               
               return (
-                <div key={step.key} className="flex flex-col items-center">
+                <div key={step.key} className="flex flex-col items-center" style={{ flex: 1 }}>
                   {/* Step circle */}
                   <div
-                    className={cn(
-                      'w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 flex-shrink-0',
-                      stepStatus === 'complete' && 'bg-green-500 text-white shadow-md',
-                      stepStatus === 'current' && `${getCurrentStepColor()} shadow-lg ring-2 ring-offset-2 ring-current`,
-                      stepStatus === 'pending' && 'bg-white text-gray-400 border-2 border-gray-300',
-                      stepStatus === 'error' && 'bg-red-500 text-white shadow-md'
-                    )}
+                    className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 flex-shrink-0 bg-white border-2"
+                    style={{
+                      borderColor: stepStatus === 'pending' ? '#D1D5DB' :
+                                   stepStatus === 'complete' ? '#22C55E' :
+                                   stepStatus === 'current' ? getCurrentStepColor() :
+                                   stepStatus === 'error' ? '#EF4444' : '#D1D5DB',
+                      backgroundColor: stepStatus === 'complete' ? '#22C55E' :
+                                      stepStatus === 'current' ? getCurrentStepColor() :
+                                      stepStatus === 'error' ? '#EF4444' : '#FFFFFF',
+                      color: stepStatus === 'pending' ? '#9CA3AF' : '#FFFFFF',
+                      boxShadow: stepStatus === 'current' ? `0 0 0 4px ${getCurrentStepColor()}33` :
+                                stepStatus === 'complete' ? '0 2px 8px rgba(34, 197, 94, 0.3)' : 'none'
+                    }}
                   >
-                    {stepStatus === 'complete' && <span className="text-xl">✓</span>}
-                    {stepStatus === 'current' && <span></span>}
-                    {stepStatus === 'pending' && <span></span>}
-                    {stepStatus === 'error' && <span>!</span>}
+                    {stepStatus === 'complete' && <span style={{ fontSize: '20px' }}>✓</span>}
+                    {stepStatus === 'current' && <span style={{ fontSize: '16px', color: 'white', fontWeight: 'bold' }}>{index + 1}</span>}
+                    {stepStatus === 'pending' && <span style={{ fontSize: '16px', color: '#9CA3AF', fontWeight: 'bold' }}>{index + 1}</span>}
+                    {stepStatus === 'error' && <span style={{ fontSize: '18px', color: 'white' }}>!</span>}
                   </div>
 
                   {/* Step label */}
                   <div className="mt-3 text-center">
-                    <p className={cn(
-                      'text-xs font-semibold',
-                      stepStatus === 'complete' && 'text-green-600',
-                      stepStatus === 'current' && 'text-gray-900 font-bold',
-                      stepStatus === 'pending' && 'text-gray-600',
-                      stepStatus === 'error' && 'text-red-600'
-                    )}>
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: stepStatus === 'complete' ? '#16A34A' :
+                             stepStatus === 'current' ? '#000000' :
+                             stepStatus === 'pending' ? '#6B7280' :
+                             stepStatus === 'error' ? '#DC2626' : '#6B7280'
+                    }}>
                       {step.label}
                     </p>
-                    <p className="text-[10px] text-gray-600 max-w-[70px] leading-tight mt-1">
+                    <p style={{
+                      fontSize: '10px',
+                      color: '#6B7280',
+                      maxWidth: '70px',
+                      lineHeight: '1.2',
+                      marginTop: '4px'
+                    }}>
                       {step.description}
                     </p>
                   </div>
