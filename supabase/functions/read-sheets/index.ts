@@ -104,15 +104,28 @@ async function readSheet(accessToken: string, spreadsheetId: string, sheetName: 
 function mapStatusToCode(statusText: string): string {
   const statusMap: Record<string, string> = {
     'menunggu verifikasi ppk': 'pending_ppk',
-    'dikembalikan ke sm': 'incomplete_sm',
+    'dikembalikan ke sm': 'rejected_sm',
     'menunggu verifikasi bendahara': 'pending_bendahara',
-    'dikembalikan ke ppk': 'incomplete_ppk',
-    'dikembalikan ke bendahara': 'incomplete_bendahara',
-    'sudah kirim kppn': 'sent_kppn',
+    'dikembalikan ke ppk': 'rejected_bendahara',
+    'dikembalikan ke bendahara': 'rejected_ppk',
+    'sudah kirim kppn': 'completed',
+    'draft': 'draft',
+    'submitted_sm': 'submitted_sm',
+    'pending_bendahara': 'pending_bendahara',
+    'pending_ppk': 'pending_ppk',
+    'pending_ppspm': 'pending_ppspm',
+    'pending_kppn': 'pending_kppn',
+    'pending_arsip': 'pending_arsip',
+    'completed': 'completed',
+    'rejected_sm': 'rejected_sm',
+    'rejected_bendahara': 'rejected_bendahara',
+    'rejected_ppk': 'rejected_ppk',
+    'rejected_ppspm': 'rejected_ppspm',
+    'rejected_kppn': 'rejected_kppn',
   };
   
   const lowerStatus = (statusText || '').toLowerCase().trim();
-  return statusMap[lowerStatus] || 'pending_ppk';
+  return statusMap[lowerStatus] || statusText || 'draft';
 }
 
 serve(async (req) => {
