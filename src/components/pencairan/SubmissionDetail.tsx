@@ -101,10 +101,6 @@ export function SubmissionDetail({
       setPembayaran(submission.pembayaran || '');
       setNomorSPM(submission.nomorSPM || '');
       setNomorSPPD(submission.nomorSPPD || '');
-      
-      if (submission.status === 'incomplete_bendahara') {
-        setPembayaran('');
-      }
     }
   }, [submission]);
 
@@ -214,7 +210,7 @@ export function SubmissionDetail({
     let newStatus: string;
     let actor: 'bendahara' | 'ppk' | 'ppspm' | 'arsip';
     
-    if (submission.status === 'pending_bendahara' || submission.status === 'incomplete_bendahara') {
+    if (submission.status === 'pending_bendahara') {
       if (userRole === 'Bendahara') {
         if (!pembayaran) {
           toast({
@@ -235,32 +231,24 @@ export function SubmissionDetail({
         }
         
         if (pembayaran === 'UP') {
-          if (submission.status === 'incomplete_bendahara') {
-            toast({
-              title: 'Tidak bisa mengirim UP dengan cara normal',
-              description: 'Pilih: (1) Ubah ke LS dan isi SPM baru, atau (2) Gunakan "Simpan SPBy" untuk mengelompokkan UP',
-              variant: 'destructive',
-            });
-          } else {
-            toast({
-              title: 'Langkah salah',
-              description: 'Untuk Uang Persediaan (UP), gunakan tombol "Simpan SPBy"',
-              variant: 'destructive',
-            });
-          }
+          toast({
+            title: 'Langkah salah',
+            description: 'Untuk Uang Persediaan (UP), gunakan tombol "Simpan SPBy"',
+            variant: 'destructive',
+          });
           return;
         }
       }
       
       newStatus = 'pending_ppk';
       actor = 'bendahara';
-    } else if (submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk') {
+    } else if (submission.status === 'pending_ppk') {
       newStatus = 'pending_ppspm';
       actor = 'ppk';
-    } else if (submission.status === 'pending_ppspm' || submission.status === 'incomplete_ppspm') {
-      newStatus = 'sent_kppn';
+    } else if (submission.status === 'pending_ppspm') {
+      newStatus = 'pending_kppn';
       actor = 'ppspm';
-    } else if (submission.status === 'sent_kppn' || submission.status === 'incomplete_kppn') {
+    } else if (submission.status === 'pending_kppn') {
       if (userRole === 'Arsip' && !nomorSPPD) {
         toast({
           title: 'Validasi gagal',
@@ -279,8 +267,8 @@ export function SubmissionDetail({
         return;
       }
       
-      newStatus = 'complete_arsip';
-      actor = 'arsip';
+      newStatus = 'pending_arsip';
+      actor = 'kppn';
     } else {
       return;
     }
@@ -301,18 +289,18 @@ export function SubmissionDetail({
     let newStatus: string;
     let actor: 'bendahara' | 'ppk' | 'ppspm' | 'arsip';
     
-    if (submission.status === 'pending_bendahara' || submission.status === 'incomplete_bendahara') {
-      newStatus = 'incomplete_sm';
+    if (submission.status === 'pending_bendahara') {
+      newStatus = 'rejected_bendahara';
       actor = 'bendahara';
-    } else if (submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk') {
-      newStatus = 'incomplete_bendahara';
+    } else if (submission.status === 'pending_ppk') {
+      newStatus = 'rejected_ppk';
       actor = 'ppk';
-    } else if (submission.status === 'pending_ppspm' || submission.status === 'incomplete_ppspm') {
-      newStatus = 'incomplete_ppk';
+    } else if (submission.status === 'pending_ppspm') {
+      newStatus = 'rejected_ppspm';
       actor = 'ppspm';
-    } else if (submission.status === 'sent_kppn' || submission.status === 'incomplete_kppn') {
-      newStatus = 'incomplete_ppspm';
-      actor = 'arsip';
+    } else if (submission.status === 'pending_kppn') {
+      newStatus = 'rejected_kppn';
+      actor = 'kppn';
     } else {
       return;
     }
@@ -328,7 +316,7 @@ export function SubmissionDetail({
   };
 
   const executeReturnFromArsip = async () => {
-    const newStatus = 'incomplete_ppspm';
+    const newStatus = 'pending_ppspm';
     await updateStatusInSheet(newStatus, notes, 'arsip', 'return');
 
     onUpdateSubmission(submission.id, {
@@ -410,18 +398,18 @@ export function SubmissionDetail({
           return 'Apakah Anda yakin ingin menyetujui dan mengirim ke PPSPM?';
         } else if (submission.status === 'pending_ppspm' || submission.status === 'incomplete_ppspm') {
           return 'Apakah Anda yakin ingin menyetujui dan mengirim ke Arsip?';
-        } else if (submission.status === 'sent_kppn' || submission.status === 'incomplete_kppn') {
-          return 'Apakah Anda yakin ingin menyelesaikan pengajuan ini?';
+      } else if (submission.status === 'pending_kppn') {
+        return 'Apakah Anda yakin ingin menyelesaikan pengajuan ini?';
         }
         return 'Apakah Anda yakin ingin menyetujui pengajuan ini?';
       case 'reject':
-        if (submission.status === 'pending_bendahara' || submission.status === 'incomplete_bendahara') {
+        if (submission.status === 'pending_bendahara') {
           return 'Apakah Anda yakin ingin menolak dan mengembalikan ke SM?';
-        } else if (submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk') {
+        } else if (submission.status === 'pending_ppk') {
           return 'Apakah Anda yakin ingin menolak dan mengembalikan ke Bendahara?';
-        } else if (submission.status === 'pending_ppspm' || submission.status === 'incomplete_ppspm') {
+        } else if (submission.status === 'pending_ppspm') {
           return 'Apakah Anda yakin ingin menolak dan mengembalikan ke PPK?';
-        } else if (submission.status === 'sent_kppn' || submission.status === 'incomplete_kppn') {
+        } else if (submission.status === 'pending_kppn') {
           return 'Apakah Anda yakin ingin menolak dan mengembalikan ke PPSPM?';
         }
         return 'Apakah Anda yakin ingin menolak pengajuan ini?';
@@ -433,33 +421,33 @@ export function SubmissionDetail({
   };
 
   const getApproveButtonLabel = () => {
-    if (submission.status === 'pending_bendahara' || submission.status === 'incomplete_bendahara') {
+    if (submission.status === 'pending_bendahara') {
       return 'Setujui dan Kirim ke PPK';
-    } else if (submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk') {
+    } else if (submission.status === 'pending_ppk') {
       return 'Setujui dan Kirim ke PPSPM';
-    } else if (submission.status === 'pending_ppspm' || submission.status === 'incomplete_ppspm') {
-      return 'Setujui dan Kirim ke Arsip';
-    } else if (submission.status === 'sent_kppn' || submission.status === 'incomplete_kppn') {
+    } else if (submission.status === 'pending_ppspm') {
+      return 'Setujui dan Kirim ke KPPN';
+    } else if (submission.status === 'pending_kppn') {
       return 'Catat dan Selesaikan';
     }
     return 'Setujui';
   };
 
   const getRejectButtonLabel = () => {
-    if (submission.status === 'pending_bendahara' || submission.status === 'incomplete_bendahara') {
+    if (submission.status === 'pending_bendahara') {
       return 'Kembalikan ke SM';
-    } else if (submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk') {
+    } else if (submission.status === 'pending_ppk') {
       return 'Kembalikan ke Bendahara';
-    } else if (submission.status === 'pending_ppspm' || submission.status === 'incomplete_ppspm') {
+    } else if (submission.status === 'pending_ppspm') {
       return 'Kembalikan ke PPK';
-    } else if (submission.status === 'sent_kppn' || submission.status === 'incomplete_kppn') {
+    } else if (submission.status === 'pending_kppn') {
       return 'Kembalikan ke PPSPM';
     }
     return 'Tolak';
   };
 
   const showWorkflowNote = () => {
-    if (submission.status === 'pending_ppspm' || submission.status === 'incomplete_ppspm') {
+    if (submission.status === 'pending_ppspm') {
       return "Pengajuan sedang diperiksa oleh PPSPM (Pejabat Penandatangan Surat Perintah Membayar)";
     }
     return null;
@@ -554,9 +542,9 @@ export function SubmissionDetail({
             </Card>
           </Collapsible>
 
-          {userRole === 'Bendahara' && (submission.status === 'pending_bendahara' || submission.status === 'incomplete_bendahara') && (
+          {userRole === 'Bendahara' && (submission.status === 'pending_bendahara') && (
             <>
-              {submission.status === 'incomplete_bendahara' && submission.pembayaran === 'UP' && (
+              {false && (
                 <Card className="border-amber-200 bg-amber-50">
                   <CardContent className="pt-4 space-y-2 text-sm">
                     <p className="font-medium text-amber-900">⚠️ Pengajuan dikembalikan PPK</p>
@@ -710,12 +698,12 @@ export function SubmissionDetail({
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">
-                  💬 {userRole === 'Arsip' && (submission.status === 'sent_kppn' || submission.status === 'incomplete_kppn') ? 'Catatan dan Identitas' : 'Catatan'}
-                  {submission.status === 'sent_kppn' && <span className="text-red-500">*</span>}
+                  💬 {userRole === 'Arsip' && (submission.status === 'pending_kppn') ? 'Catatan dan Identitas' : 'Catatan'}
+                  {submission.status === 'pending_kppn' && <span className="text-red-500">*</span>}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {userRole === 'Arsip' && (submission.status === 'sent_kppn' || submission.status === 'incomplete_kppn') && (
+                {userRole === 'Arsip' && (submission.status === 'pending_kppn') && (
                   <div className="space-y-2">
                     <label htmlFor="nomorSPPD" className="text-sm font-medium">
                       Nomor SPPD <span className="text-red-500">*</span>
@@ -735,17 +723,17 @@ export function SubmissionDetail({
                 {(canAction || canReturnArsip) ? (
                   <div className="space-y-2">
                     <label htmlFor="notes" className="text-sm font-medium">
-                      Catatan {submission.status === 'sent_kppn' && <span className="text-red-500">*</span>}
+                      Catatan {submission.status === 'pending_kppn' && <span className="text-red-500">*</span>}
                     </label>
                     <textarea
                       id="notes"
-                      placeholder={submission.status === 'sent_kppn' ? "Catatan wajib diisi..." : "Tambahkan catatan..."}
+                      placeholder={submission.status === 'pending_kppn' ? "Catatan wajib diisi..." : "Tambahkan catatan..."}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       className="w-full px-3 py-2 border border-input rounded-md text-sm resize-none"
                       rows={3}
                     />
-                    {submission.status === 'sent_kppn' && !notes && (
+                    {submission.status === 'pending_kppn' && !notes && (
                       <p className="text-xs text-red-500">Isi catatan dengan nomor SPPD dan SPM</p>
                     )}
                   </div>
@@ -769,7 +757,7 @@ export function SubmissionDetail({
                 {isUpdating ? '⏳ Memproses...' : (canReturnArsip ? '↩️ Kembalikan ke PPSPM' : `❌ ${getRejectButtonLabel()}`)}
               </Button>
               
-              {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara' || submission.status === 'incomplete_bendahara') ? (
+              {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara') ? (
                 <Button 
                   className="flex-1"
                   onClick={handleSaveSPBy}
@@ -784,7 +772,7 @@ export function SubmissionDetail({
                   disabled={
                     (canAction && !allDocsComplete) || 
                     isUpdating || 
-                    (submission.status === 'sent_kppn' && !notes) ||
+                    (submission.status === 'pending_kppn' && !notes) ||
                     (userRole === 'Bendahara' && !pembayaran) ||
                     (userRole === 'Bendahara' && pembayaran === 'LS' && !nomorSPM) ||
                     (userRole === 'Arsip' && !nomorSPPD)

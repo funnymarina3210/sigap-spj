@@ -11,6 +11,13 @@ import { usePencairanData } from '@/hooks/use-pencairan-data';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getNextStatus } from '@/lib/workflow';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function UsulanPencairan() {
   const { data: sheetSubmissions = [], isLoading, refetch } = usePencairanData();
@@ -319,16 +326,33 @@ export default function UsulanPencairan() {
         open={showDetail}
         onClose={handleDetailClose}
         userRole={userRole}
-        onApprove={handleApprove}
-        onReject={handleReject}
+        onUpdateSubmission={(id, updates) => {
+          setSubmissions(submissions.map(s => s.id === id ? { ...s, ...updates } : s));
+        }}
+        onRefresh={refetch}
       />
 
       {/* SPBy GROUPING */}
-      <SPByGrouping
-        open={showSpBy}
-        onClose={() => setShowSpBy(false)}
-        submissions={submissions}
-      />
+      <Dialog open={showSpBy} onOpenChange={setShowSpBy}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>📦 Kelompokkan Pengajuan UP</DialogTitle>
+            <DialogDescription>
+              Pilih pengajuan UP yang akan dikelompokkan dalam satu SPM
+            </DialogDescription>
+          </DialogHeader>
+          <SPByGrouping
+            upSubmissions={submissions.filter(s => s.pembayaran === 'UP' && s.status === 'pending_bendahara')}
+            onUpdateSubmissions={(ids, updates) => {
+              setSubmissions(submissions.map(s => ids.includes(s.id) ? { ...s, ...updates } : s));
+            }}
+            onRefresh={() => {
+              refetch();
+              setShowSpBy(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

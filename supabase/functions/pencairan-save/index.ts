@@ -238,7 +238,7 @@ serve(async (req: Request) => {
         status: response.status,
         statusText: response.statusText,
         data: data,
-        url: appendUrl,
+        url: updateUrl,
       });
       throw new Error(`Append failed with status ${response.status}: ${JSON.stringify(data)}`);
     }
