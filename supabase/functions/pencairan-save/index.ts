@@ -1,3 +1,4 @@
+// @ts-ignore - Deno runtime imports
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -14,7 +15,9 @@ async function getAccessToken() {
   let privateKey: string;
   let serviceAccountEmail: string;
   
+  // @ts-ignore - Deno API
   const googlePrivateKeyEnv = Deno.env.get('GOOGLE_PRIVATE_KEY');
+  // @ts-ignore - Deno API
   const googleServiceAccountEmailEnv = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL');
   
   try {
@@ -119,7 +122,7 @@ function formatDateTime(): string {
   return `${hours}:${minutes} - ${day}/${month}/${year}`;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   console.log('pencairan-save function invoked');
   
   if (req.method === 'OPTIONS') {
