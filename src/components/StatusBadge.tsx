@@ -1,6 +1,6 @@
-import { SubmissionStatus, STATUS_LABELS } from '@/types/submission';
+import { SubmissionStatus, STATUS_LABELS } from '@/types/pencairan';
 import { cn } from '@/lib/utils';
-import { Clock, CheckCircle2, XCircle, Send, ArrowLeft } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
 interface StatusBadgeProps {
   status: SubmissionStatus;
@@ -14,47 +14,89 @@ const statusConfig: Record<SubmissionStatus, {
   textClass: string;
   borderClass: string;
 }> = {
-  pending_ppk: {
-    icon: Clock,
-    bgClass: 'bg-status-pending-bg',
-    textClass: 'text-status-pending',
-    borderClass: 'border-status-pending/30',
+  draft: {
+    icon: AlertCircle,
+    bgClass: 'bg-yellow-100',
+    textClass: 'text-yellow-700',
+    borderClass: 'border-yellow-300',
   },
-  incomplete_sm: {
-    icon: ArrowLeft,
-    bgClass: 'bg-status-incomplete-bg',
-    textClass: 'text-status-incomplete',
-    borderClass: 'border-status-incomplete/30',
+  submitted_sm: {
+    icon: Clock,
+    bgClass: 'bg-blue-100',
+    textClass: 'text-blue-700',
+    borderClass: 'border-blue-300',
   },
   pending_bendahara: {
     icon: Clock,
-    bgClass: 'bg-status-sent-bg',
-    textClass: 'text-status-sent',
-    borderClass: 'border-status-sent/30',
+    bgClass: 'bg-blue-100',
+    textClass: 'text-blue-700',
+    borderClass: 'border-blue-300',
   },
-  incomplete_ppk: {
-    icon: XCircle,
-    bgClass: 'bg-status-incomplete-bg',
-    textClass: 'text-status-incomplete',
-    borderClass: 'border-status-incomplete/30',
+  pending_ppk: {
+    icon: Clock,
+    bgClass: 'bg-blue-100',
+    textClass: 'text-blue-700',
+    borderClass: 'border-blue-300',
   },
-  incomplete_bendahara: {
-    icon: XCircle,
-    bgClass: 'bg-status-incomplete-bg',
-    textClass: 'text-status-incomplete',
-    borderClass: 'border-status-incomplete/30',
+  pending_ppspm: {
+    icon: Clock,
+    bgClass: 'bg-blue-100',
+    textClass: 'text-blue-700',
+    borderClass: 'border-blue-300',
   },
-  sent_kppn: {
+  pending_kppn: {
+    icon: Clock,
+    bgClass: 'bg-blue-100',
+    textClass: 'text-blue-700',
+    borderClass: 'border-blue-300',
+  },
+  pending_arsip: {
+    icon: Clock,
+    bgClass: 'bg-blue-100',
+    textClass: 'text-blue-700',
+    borderClass: 'border-blue-300',
+  },
+  completed: {
     icon: CheckCircle2,
-    bgClass: 'bg-status-complete-bg',
-    textClass: 'text-status-complete',
-    borderClass: 'border-status-complete/30',
+    bgClass: 'bg-green-100',
+    textClass: 'text-green-700',
+    borderClass: 'border-green-300',
+  },
+  rejected_sm: {
+    icon: XCircle,
+    bgClass: 'bg-red-100',
+    textClass: 'text-red-700',
+    borderClass: 'border-red-300',
+  },
+  rejected_bendahara: {
+    icon: XCircle,
+    bgClass: 'bg-red-100',
+    textClass: 'text-red-700',
+    borderClass: 'border-red-300',
+  },
+  rejected_ppk: {
+    icon: XCircle,
+    bgClass: 'bg-red-100',
+    textClass: 'text-red-700',
+    borderClass: 'border-red-300',
+  },
+  rejected_ppspm: {
+    icon: XCircle,
+    bgClass: 'bg-red-100',
+    textClass: 'text-red-700',
+    borderClass: 'border-red-300',
+  },
+  rejected_kppn: {
+    icon: XCircle,
+    bgClass: 'bg-red-100',
+    textClass: 'text-red-700',
+    borderClass: 'border-red-300',
   },
 };
 
 export function StatusBadge({ status, className, size = 'md' }: StatusBadgeProps) {
   // Fallback for unknown/undefined status
-  const config = statusConfig[status] || statusConfig.pending_ppk;
+  const config = statusConfig[status] || statusConfig.draft;
   const Icon = config.icon;
   const label = STATUS_LABELS[status] || status || 'Tidak Diketahui';
 

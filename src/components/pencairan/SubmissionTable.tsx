@@ -1,213 +1,67 @@
-import { useState, useMemo } from 'react';
-import { Submission, SubmissionStatus } from '@/types/pencairan';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Submission, UserRole, STATUS_LABELS } from '@/types/pencairan';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { StatusBadge } from './StatusBadge';
+import { StatusBadge } from '@/components/StatusBadge';
+import { Eye } from 'lucide-react';
 
 interface SubmissionTableProps {
   submissions: Submission[];
-  onRowClick?: (submission: Submission) => void;
-  onEditDraft?: (submission: Submission) => void;
-  itemsPerPage?: number;
+  onRowClick: (submission: Submission) => void;
+  userRole: UserRole;
 }
 
-export function SubmissionTable({
-  submissions,
-  onRowClick,
-  onEditDraft,
-  itemsPerPage = 10,
-}: SubmissionTableProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const filteredSubmissions = useMemo(() => {
-    return submissions.filter(sub => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        sub.id.toLowerCase().includes(searchLower) ||
-        sub.title.toLowerCase().includes(searchLower) ||
-        sub.submitterName.toLowerCase().includes(searchLower) ||
-        sub.jenisBelanja.toLowerCase().includes(searchLower) ||
-        (sub.user && sub.user.toLowerCase().includes(searchLower))
-      );
-    });
-  }, [submissions, searchTerm]);
-
-  const totalPages = Math.ceil(filteredSubmissions.length / itemsPerPage);
-  const paginatedSubmissions = useMemo(() => {
-    const startIdx = (currentPage - 1) * itemsPerPage;
-    return filteredSubmissions.slice(startIdx, startIdx + itemsPerPage);
-  }, [filteredSubmissions, currentPage, itemsPerPage]);
-
-  const handlePrevious = () => {
-    setCurrentPage(prev => Math.max(1, prev - 1));
-  };
-
-  const handleNext = () => {
-    setCurrentPage(prev => Math.min(totalPages, prev + 1));
-  };
-
+export function SubmissionTable({ submissions, onRowClick, userRole }: SubmissionTableProps) {
   return (
-    <div className="space-y-4">
-      {/* Search */}
-      <div className="flex items-center gap-2">
-        <Search className="w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Cari ID, judul, pengaju, jenis, atau user..."
-          value={searchTerm}
-          onChange={e => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="rounded-lg"
-        />
-      </div>
-
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
-        {paginatedSubmissions.length === 0 ? (
-          <div className="flex items-center justify-center py-12 text-muted-foreground">
-            <p>Tidak ada data yang sesuai</p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-20">ID</TableHead>
-                <TableHead>Uraian</TableHead>
-                <TableHead className="w-28">Pengaju</TableHead>
-                <TableHead className="w-24">Jenis</TableHead>
-                <TableHead className="w-24">Status</TableHead>
-                <TableHead className="w-20">Pembayaran</TableHead>
-                <TableHead className="w-24">SPM/SPPD</TableHead>
-                <TableHead className="w-20">Dibuat oleh</TableHead>
-                <TableHead className="w-20 text-right">Aksi</TableHead>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Jenis Belanja</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Nomor SPM</TableHead>
+            <TableHead>Nomor SPPD</TableHead>
+            <TableHead>Waktu Update</TableHead>
+            <TableHead className="w-10">Aksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {submissions.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                Tidak ada data
+              </TableCell>
+            </TableRow>
+          ) : (
+            submissions.map(submission => (
+              <TableRow key={submission.id} className="cursor-pointer hover:bg-muted">
+                <TableCell className="text-sm">{submission.id}</TableCell>
+                <TableCell className="text-sm">{submission.submitterName}</TableCell>
+                <TableCell className="text-sm truncate max-w-[200px]">{submission.jenisBelanja}</TableCell>
+                <TableCell>
+                  <StatusBadge status={submission.status} size="sm" />
+                </TableCell>
+                <TableCell className="text-sm">{submission.nomorSPM || '-'}</TableCell>
+                <TableCell className="text-sm">{submission.nomorSPPD || '-'}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {submission.updatedAtString || '-'}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRowClick(submission)}
+                    className="w-8 h-8 p-0"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedSubmissions.map(submission => (
-                <TableRow
-                  key={submission.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => onRowClick?.(submission)}
-                >
-                  <TableCell className="font-mono text-sm font-bold">
-                    {submission.id}
-                  </TableCell>
-                  <TableCell className="max-w-xs truncate text-sm">
-                    {submission.title}
-                  </TableCell>
-                  <TableCell className="text-xs whitespace-nowrap">
-                    {submission.submitterName}
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {submission.jenisBelanja?.split(' - ')[0]}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge
-                      status={submission.status as SubmissionStatus}
-                      showIcon={false}
-                    />
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    <span className={`px-2 py-1 rounded text-white text-xs font-medium ${
-                      submission.pembayaran === 'LS' ? 'bg-blue-600' :
-                      submission.pembayaran === 'UP' ? 'bg-green-600' :
-                      'bg-gray-400'
-                    }`}>
-                      {submission.pembayaran || '—'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {submission.nomorSPM || submission.nomorSPPD || '—'}
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {submission.user || '—'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {submission.status === 'draft' ? (
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            onEditDraft?.(submission);
-                          }}
-                          className="rounded-lg text-xs"
-                        >
-                          ✎ Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            onRowClick?.(submission);
-                          }}
-                          className="rounded-lg"
-                        >
-                          Detail →
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          onRowClick?.(submission);
-                        }}
-                        className="rounded-lg"
-                      >
-                        Detail →
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages} ({filteredSubmissions.length} items)
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrevious}
-              disabled={currentPage === 1}
-              className="rounded-lg"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNext}
-              disabled={currentPage === totalPages}
-              className="rounded-lg"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 }

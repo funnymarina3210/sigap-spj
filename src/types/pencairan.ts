@@ -1,12 +1,11 @@
-// Types untuk Usulan Pencairan - Complete Workflow Implementation
+// Types untuk Usulan Pencairan
 
-// ================== ENUMS & TYPES ==================
 export type SubmissionStatus = 
   | 'draft'
   | 'submitted_sm'
   | 'pending_bendahara'
   | 'pending_ppk'
-  | 'pending_ppspm'  
+  | 'pending_ppspm'
   | 'pending_kppn'
   | 'pending_arsip'
   | 'completed'
@@ -16,7 +15,9 @@ export type SubmissionStatus =
   | 'rejected_ppspm'
   | 'rejected_kppn';
 
-export type PaymentType = 'LS' | 'UP'; // LS = Langsung Serahkan, UP = Uang Persediaan
+export type PaymentType = 'LS' | 'UP';
+
+export type WorkflowStage = 'SM' | 'Bendahara' | 'PPK' | 'PPSPM' | 'KPPN' | 'Arsip';
 
 export type UserRole = 
   | 'Fungsi Sosial'
@@ -26,66 +27,67 @@ export type UserRole =
   | 'Fungsi IPDS'
   | 'Bendahara'
   | 'Pejabat Pembuat Komitmen'
+  | 'Pejabat Pengadaan'
   | 'Pejabat Penandatangan Surat Perintah Membayar'
+  | 'Padamel BPS 3210'
   | 'KPPN'
   | 'Arsip'
+  | 'operator'
   | 'admin';
 
-export type WorkflowStage = 'SM' | 'Bendahara' | 'PPK' | 'PPSPM' | 'KPPN' | 'Arsip';
-
-// Roles yang bisa mengajukan (hanya Fungsi* roles)
+// Roles yang bisa mengajukan
 export const SUBMITTER_ROLES: UserRole[] = [
   'Fungsi Sosial',
   'Fungsi Neraca',
   'Fungsi Produksi',
   'Fungsi Distribusi',
   'Fungsi IPDS',
+  'Bendahara', // 🆕 Bendahara bisa membuat pengajuan
+  'Pejabat Pembuat Komitmen', // 🆕 PPK bisa membuat pengajuan
+  'Pejabat Pengadaan', // 🆕 Pejabat Pengadaan bisa membuat pengajuan
+  'Pejabat Penandatangan Surat Perintah Membayar', // 🆕 PPSPM bisa membuat pengajuan
 ];
 
-// Roles yang bisa melihat SEMUA data pengajuan
+// 🆕 Roles yang bisa melihat SEMUA data pengajuan
 export const ROLES_CAN_VIEW_ALL: UserRole[] = [
-  'Bendahara',
   'Pejabat Pembuat Komitmen',
+  'Bendahara',
+  'Pejabat Pengadaan',
+  'Padamel BPS 3210',
   'Pejabat Penandatangan Surat Perintah Membayar',
-  'KPPN',
   'Arsip',
+  'operator',
   'admin',
 ];
 
-// ================== STATUS LABELS & INFO ==================
-export const STATUS_LABELS: Record<SubmissionStatus, string> = {
-  draft: 'Draft SM',
-  submitted_sm: 'Submitted to Bendahara',
-  pending_bendahara: 'Waiting Bendahara',
-  pending_ppk: 'Waiting PPK',
-  pending_ppspm: 'Waiting PPSPM',
-  pending_kppn: 'Waiting KPPN',
-  pending_arsip: 'Waiting Arsip',
-  completed: 'Completed',
-  rejected_sm: 'Rejected by Bendahara',
-  rejected_bendahara: 'Rejected by PPK',
-  rejected_ppk: 'Rejected by PPSPM',
-  rejected_ppspm: 'Rejected by KPPN',
-  rejected_kppn: 'Rejected by Arsip',
-};
+// 🆕 Helper: Check apakah role bisa lihat semua atau hanya data mereka
+export function canViewAllSubmissions(role: UserRole): boolean {
+  return ROLES_CAN_VIEW_ALL.includes(role);
+}
 
-export const STATUS_COLORS: Record<SubmissionStatus, string> = {
-  draft: 'gray',
-  submitted_sm: 'blue',
-  pending_bendahara: 'purple',
-  pending_ppk: 'orange',
-  pending_ppspm: 'pink',
-  pending_kppn: 'indigo',
-  pending_arsip: 'cyan',
-  completed: 'green',
-  rejected_sm: 'red',
-  rejected_bendahara: 'red',
-  rejected_ppk: 'red',
-  rejected_ppspm: 'red',
-  rejected_kppn: 'red',
-};
+// 🆕 Helper: Check apakah submission harus ditampilkan untuk user dengan role tertentu
+export function shouldShowSubmission(submission: Submission, userRole: UserRole, userCreatorRole?: string): boolean {
+  // Admin dan roles khusus bisa lihat semua
+  if (canViewAllSubmissions(userRole)) {
+    return true;
+  }
+  
+  // Untuk submitter (Fungsi*), hanya tampilkan:
+  // 1. Data yang mereka buat sendiri (kolom R: user)
+  // 2. Data yang sedang dalam review mereka (status = incomplete_sm HANYA jika mereka creator-nya)
+  if (SUBMITTER_ROLES.includes(userRole)) {
+    // Jika buat pengajuan sendiri
+    if (submission.user && submission.user === userRole) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // Untuk role lain (operator, dll), tampilkan semua
+  return true;
+}
 
-// ================== DOCUMENT TYPES & LABELS ==================
 export type DocumentType = string;
 
 export interface Document {
@@ -96,45 +98,6 @@ export interface Document {
   note?: string;
 }
 
-export const DOCUMENT_LABELS: Record<string, string> = {
-  'kak': 'Kerangka Acuan Kerja (KAK)',
-  'form_permintaan': 'Form Permintaan (FP)',
-  'sk_kpa': 'Surat Keputusan KPA',
-  'rekap_honor': 'Rekap Honor/Kuitansi',
-  'laporan': 'Laporan',
-  'ssp_pph21': 'SSP PPh Pasal 21',
-  'surat_tugas': 'Surat Tugas',
-  'visum': 'Visum',
-  'kuitansi': 'Kuitansi',
-  'daftar_pengeluaran_riil': 'Daftar Pengeluaran Riil',
-  'surat_kendis': 'Surat Pernyataan Kendaraan Dinas',
-  'laporan_perjadin': 'Laporan Perjadin dan Dokumentasi',
-  'rekap_translok': 'Rekapitulasi Translok',
-  'spd': 'Surat Perjalanan Dinas (SPD)',
-  'daftar_ongkos': 'Daftar Ongkos Perjalanan',
-  'undangan': 'Undangan',
-  'daftar_hadir': 'Daftar Hadir',
-  'jadwal': 'Jadwal Kegiatan/Rundown Acara',
-  'paparan': 'Paparan/Materi',
-  'ktp_npwp': 'Fc. KTP dan NPWP',
-  'spk': 'Surat Perjanjian Kerja (SPK)',
-  'bast': 'Berita Acara Serah Terima (BAST)',
-  'notulen': 'Notulen dan Dokumentasi Rapat',
-  'bukti_pembelian': 'Komitmen/Kontrak/Bukti Pembelian/Kuitansi',
-  'foto_konsumsi': 'Foto Konsumsi',
-  'super_fasilitas': 'Super Fasilitas Kantor Tidak Memadai',
-  'ssp': 'Surat Setor Pajak (SSP)',
-  'tanda_terima': 'Tanda Terima',
-  'foto_penerimaan': 'Foto penerimaan paket data/pulsa',
-  'bukti_prestasi': 'Bukti Prestasi (BAPP/BAST/BAP)',
-  'kontrak': 'Komitmen/Kontrak',
-  'room_list': 'Room List',
-  'invoice_kuitansi': 'Invoice/Kuitansi',
-  'npwp_rekening': 'Fc. NPWP dan Rek Koran',
-  'spd_super': 'SPD, Super Kendis, Daftar Uang Harian',
-};
-
-// ================== SUBMISSION INTERFACE ==================
 export interface Submission {
   id: string;
   title: string;
@@ -142,31 +105,48 @@ export interface Submission {
   jenisBelanja: string;
   subJenisBelanja?: string;
   submittedAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date; // ✅ UBAH dari string ke Date
+  updatedAtString?: string; // ✅ TAMBAH ini - string asli dari kolom P
   status: SubmissionStatus;
   documents: Document[];
   notes?: string;
-  
-  // Timestamps for each workflow stage
-  waktuPengajuan?: string; // When SM submitted (Col H)
-  waktuBendahara?: string; // When Bendahara reviewed (Col I)
-  waktuPPK?: string; // When PPK reviewed (Col J)
-  waktuPPSPM?: string; // When PPSPM reviewed (Col K)
-  waktuKppn?: string; // When KPPN processed (Col L - not used in new workflow)
-  waktuArsip?: string; // When Arsip recorded (Col L in new workflow)
-  
-  // Status at each stage
-  statusBendahara?: string; // Approve/Reject reason (Col M)
-  statusPPK?: string; // Approve/Reject reason (Col N)
-  statusPPSPM?: string; // Approve/Reject reason (Col O)
-  statusArsip?: string; // Approve/Reject reason (Col P)
-  
-  // User and payment info
-  user?: string; // Role yang membuat pengajuan (Col R)
-  pembayaran?: PaymentType; // LS or UP (Col S)
-  nomorSPM?: string; // SPM number (Col T)
-  nomorSPPD?: string; // SPPD number (Col U)
+  waktuPengajuan?: string;
+  waktuBendahara?: string;
+  waktuPpk?: string;
+  waktuPPSPM?: string;
+  waktuKppn?: string;
+  waktuArsip?: string; // ✅ TAMBAH untuk waktu input arsip
+  statusBendahara?: string;
+  statusPpk?: string;
+  statusPPSPM?: string;
+  statusKppn?: string;
+  statusArsip?: string; // ✅ TAMBAH untuk status arsip
+  bendaharaCheckedAt?: Date;
+  ppkCheckedAt?: Date;
+  ppspmCheckedAt?: Date;
+  kppnCheckedAt?: Date;
+  arsipCheckedAt?: Date; // ✅ TAMBAH untuk waktu record arsip
+  user?: string; // 🆕 Kolom R - role login yang membuat 'Buat Pengajuan Baru'
+  pembayaran?: 'UP' | 'LS'; // 🆕 Kolom S - Tipe pembayaran (Uang Persediaan atau Langsung)
+  nomorSPM?: string; // 🆕 Kolom T - Nomor SPM
+  nomorSPPD?: string; // 🆕 Untuk Arsip - Nomor SPPD
 }
+
+export const STATUS_LABELS: Record<SubmissionStatus, string> = {
+  draft: 'Draft',
+  submitted_sm: 'Sudah Dikirim SM',
+  pending_bendahara: 'Menunggu Bendahara',
+  pending_ppk: 'Menunggu PPK',
+  pending_ppspm: 'Menunggu PPSPM',
+  pending_kppn: 'Menunggu KPPN',
+  pending_arsip: 'Menunggu Arsip',
+  completed: 'Selesai',
+  rejected_sm: 'Ditolak SM',
+  rejected_bendahara: 'Ditolak Bendahara',
+  rejected_ppk: 'Ditolak PPK',
+  rejected_ppspm: 'Ditolak PPSPM',
+  rejected_kppn: 'Ditolak KPPN',
+};
 
 // Jenis Belanja Options (main categories)
 export const JENIS_BELANJA_OPTIONS = [
@@ -399,174 +379,67 @@ export function canCreateSubmission(role: UserRole): boolean {
   return SUBMITTER_ROLES.includes(role) || role === 'admin';
 }
 
-/**
- * Check if user can take an action on a submission at current status
- */
 export function canTakeAction(role: UserRole, status: SubmissionStatus): boolean {
   if (role === 'admin') return true;
-  
-  if (role === 'Bendahara' && (status === 'pending_bendahara' || status === 'rejected_bendahara')) return true;
-  if (role === 'Pejabat Pembuat Komitmen' && (status === 'pending_ppk' || status === 'rejected_ppk')) return true;
-  if (role === 'Pejabat Penandatangan Surat Perintah Membayar' && (status === 'pending_ppspm' || status === 'rejected_ppspm')) return true;
-  if (role === 'KPPN' && (status === 'pending_kppn' || status === 'rejected_kppn')) return true;
-  if (role === 'Arsip' && status === 'pending_arsip') return true;
-  
+  if (role === 'Bendahara' && (status === 'pending_bendahara' || status === 'incomplete_bendahara')) return true;
+  if (role === 'Pejabat Pembuat Komitmen' && (status === 'pending_ppk' || status === 'incomplete_ppk')) return true;
+  if (role === 'Pejabat Penandatangan Surat Perintah Membayar' && (status === 'pending_ppspm' || status === 'incomplete_ppspm')) return true;
+  if (role === 'Arsip' && (status === 'sent_kppn' || status === 'incomplete_kppn')) return true;
   return false;
 }
 
-/**
- * Check if user can edit the submission
- */
-export function canEditSubmission(role: UserRole, status: SubmissionStatus, submittedByRole?: string): boolean {
+export function canReturnFromArsip(role: UserRole, status: SubmissionStatus): boolean {
+  return (role === 'Arsip' || role === 'admin') && status === 'sent_kppn';
+}
+
+export function canViewDetail(role: UserRole, status: SubmissionStatus): boolean {
+  return true;
+}
+
+export function canEdit(role: UserRole, status: SubmissionStatus, submissionUser?: string): boolean {
   if (role === 'admin') return true;
   
-  // Only submitter can edit draft or after rejection
-  if (SUBMITTER_ROLES.includes(role)) {
-    if (status === 'draft') return true;
-    if (status === 'rejected_sm') return true;
+  // Hanya pembuat pengajuan yang bisa edit (submissionUser harus sama dengan userRole)
+  if (submissionUser && submissionUser !== role) {
+    return false; // Bukan pembuat, tidak boleh edit
   }
   
+  // Pembuat pengajuan bisa edit jika status draft atau incomplete_sm
+  if (SUBMITTER_ROLES.includes(role) && status === 'incomplete_sm') return true;
+  if (SUBMITTER_ROLES.includes(role) && status === 'draft') return true;
   return false;
 }
 
-/**
- * Get current workflow stage
- */
-export function getCurrentStage(status: SubmissionStatus): WorkflowStage | null {
-  if (status === 'draft' || status === 'submitted_sm') return 'SM';
-  if (status === 'pending_bendahara' || status === 'rejected_sm') return 'Bendahara';
-  if (status === 'pending_ppk' || status === 'rejected_bendahara') return 'PPK';
-  if (status === 'pending_ppspm' || status === 'rejected_ppk') return 'PPSPM';
-  if (status === 'pending_kppn' || status === 'rejected_ppspm') return 'KPPN';
-  if (status === 'pending_arsip' || status === 'rejected_kppn') return 'Arsip';
-  if (status === 'completed') return 'Arsip';
-  return null;
+export function getRelevantTimestamp(submission: Submission): string | null {
+  if (submission.status === 'complete_arsip' && submission.waktuArsip) {
+    return submission.waktuArsip;
+  }
+  if ((submission.status === 'sent_kppn' || submission.status === 'incomplete_kppn') && submission.waktuKppn) {
+    return submission.waktuKppn;
+  }
+  if (['pending_ppspm', 'incomplete_ppspm'].includes(submission.status) && submission.waktuPPSPM) {
+    return submission.waktuPPSPM;
+  }
+  if (['pending_ppk', 'incomplete_ppk'].includes(submission.status) && submission.waktuPpk) {
+    return submission.waktuPpk;
+  }
+  if (['pending_bendahara', 'incomplete_bendahara'].includes(submission.status) && submission.waktuBendahara) {
+    return submission.waktuBendahara;
+  }
+  return submission.waktuPengajuan || null;
 }
 
-/**
- * Get all workflow stages in order
- */
-export function getWorkflowStages(): WorkflowStage[] {
-  return ['SM', 'Bendahara', 'PPK', 'PPSPM', 'KPPN', 'Arsip'];
-}
-
-/**
- * Check if a stage is completed
- */
-export function isStageCompleted(status: SubmissionStatus, stage: WorkflowStage): boolean {
-  if (status === 'completed') {
-    return true;
-  }
-  
-  const currentStage = getCurrentStage(status);
-  const allStages = getWorkflowStages();
-  const currentIndex = currentStage ? allStages.indexOf(currentStage) : -1;
-  
-  // All stages before current are completed
-  return allStages.indexOf(stage) < currentIndex;
-}
-
-/**
- * Get label for workflow stage
- */
-export function getStageName(stage: WorkflowStage): string {
-  const names: Record<WorkflowStage, string> = {
-    'SM': 'Satuan Kerja',
-    'Bendahara': 'Bendahara',
-    'PPK': 'PPK',
-    'PPSPM': 'PPSPM',
-    'KPPN': 'KPPN',
-    'Arsip': 'Arsip',
-  };
-  return names[stage];
-}
-
-/**
- * View control - check if user can see all submissions
- */
-export function canViewAllSubmissions(role: UserRole): boolean {
-  return ROLES_CAN_VIEW_ALL.includes(role);
-}
-
-/**
- * Check if submission should be shown to user
- */
-export function shouldShowSubmission(submission: Submission, userRole: UserRole, userCreatorRole?: string): boolean {
-  // Admin and review roles can see all
-  if (canViewAllSubmissions(userRole)) {
-    return true;
-  }
-  
-  // Submitters can only see their own
-  if (SUBMITTER_ROLES.includes(userRole)) {
-    return submission.user === userRole;
-  }
-  
-  return false;
-}
-
-/**
- * Get next valid status based on current status and action role
- */
-export function getNextStatus(currentStatus: SubmissionStatus, role: UserRole, action: 'approve' | 'reject'): SubmissionStatus | null {
-  if (currentStatus === 'draft' && SUBMITTER_ROLES.includes(role)) {
-    return 'submitted_sm';
-  }
-  
-  if (currentStatus === 'submitted_sm') {
-    return 'pending_bendahara';
-  }
-  
-  if (currentStatus === 'pending_bendahara' && role === 'Bendahara') {
-    return action === 'approve' ? 'pending_ppk' : 'rejected_sm';
-  }
-  
-  if (currentStatus === 'pending_ppk' && role === 'Pejabat Pembuat Komitmen') {
-    return action === 'approve' ? 'pending_ppspm' : 'rejected_bendahara';
-  }
-  
-  if (currentStatus === 'pending_ppspm' && role === 'Pejabat Penandatangan Surat Perintah Membayar') {
-    return action === 'approve' ? 'pending_kppn' : 'rejected_ppk';
-  }
-  
-  if (currentStatus === 'pending_kppn' && role === 'KPPN') {
-    return action === 'approve' ? 'pending_arsip' : 'rejected_ppspm';
-  }
-  
-  if (currentStatus === 'pending_arsip' && role === 'Arsip') {
-    return action === 'approve' ? 'completed' : 'rejected_kppn';
-  }
-  
-  return null;
-}
-
-// ================== UTILITY FUNCTIONS ==================
-
-/**
- * Format date/time for spreadsheet in Jakarta timezone
- */
-export function formatDateTime(date?: Date): string {
-  if (!date) return '';
-  
-  const opts: Intl.DateTimeFormatOptions = {
+export function formatDateTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const options: Intl.DateTimeFormatOptions = {
     timeZone: 'Asia/Jakarta',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
   };
-  
-  const formatter = new Intl.DateTimeFormat('id-ID', opts);
-  const parts = formatter.formatToParts(date);
-  
-  const values: Record<string, string> = {};
-  parts.forEach(part => {
-    if (part.type !== 'literal') {
-      values[part.type] = part.value;
-    }
-  });
-  
-  // Format: HH:mm - dd/MM/yyyy
-  return `${values.hour}:${values.minute} - ${values.day}/${values.month}/${values.year}`;
+  return new Intl.DateTimeFormat('id-ID', options).format(d);
 }

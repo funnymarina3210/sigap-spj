@@ -1,5 +1,5 @@
-import { SubmissionStatus } from '@/types/pencairan';
-import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SubmissionStatus, STATUS_LABELS } from '@/types/pencairan';
 
 interface FilterTabsProps {
   activeFilter: string;
@@ -7,51 +7,35 @@ interface FilterTabsProps {
   counts: Record<string, number>;
 }
 
-const filterConfig = [
-  { value: 'all', label: 'Total', icon: '📄' },
-  { value: 'draft', label: 'Draft SM', icon: '✏️' },
-  { value: 'submitted_sm', label: 'Submitted', icon: '📤' },
-  { value: 'pending_bendahara', label: 'Bendahara', icon: '⏳' },
-  { value: 'pending_ppk', label: 'PPK', icon: '⏳' },
-  { value: 'pending_ppspm', label: 'PPSPM', icon: '⏳' },
-  { value: 'pending_kppn', label: 'KPPN', icon: '⏳' },
-  { value: 'pending_arsip', label: 'Arsip', icon: '📋' },
-  { value: 'completed', label: 'Completed', icon: '✅' },
-  { value: 'rejected_sm', label: 'Rejected (SM)', icon: '❌' },
-  { value: 'rejected_bendahara', label: 'Rejected (Bendahara)', icon: '❌' },
-  { value: 'rejected_ppk', label: 'Rejected (PPK)', icon: '❌' },
-  { value: 'rejected_ppspm', label: 'Rejected (PPSPM)', icon: '❌' },
-  { value: 'rejected_kppn', label: 'Rejected (KPPN)', icon: '❌' },
-];
-
 export function FilterTabs({ activeFilter, onFilterChange, counts }: FilterTabsProps) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {filterConfig.map((filter) => {
-        const count = counts[filter.value] || 0;
-        const isActive = activeFilter === filter.value;
+  const filterOptions = [
+    { key: 'all', label: 'Semua' },
+    { key: 'draft', label: 'Draft' },
+    { key: 'submitted_sm', label: 'Sudah Dikirim SM' },
+    { key: 'pending_bendahara', label: 'Menunggu Bendahara' },
+    { key: 'pending_ppk', label: 'Menunggu PPK' },
+    { key: 'pending_ppspm', label: 'Menunggu PPSPM' },
+    { key: 'pending_kppn', label: 'Menunggu KPPN' },
+    { key: 'pending_arsip', label: 'Menunggu Arsip' },
+    { key: 'completed', label: 'Selesai' },
+    { key: 'rejected_sm', label: 'Ditolak SM' },
+    { key: 'rejected_bendahara', label: 'Ditolak Bendahara' },
+    { key: 'rejected_ppk', label: 'Ditolak PPK' },
+    { key: 'rejected_ppspm', label: 'Ditolak PPSPM' },
+    { key: 'rejected_kppn', label: 'Ditolak KPPN' },
+  ];
 
-        return (
-          <Button
-            key={filter.value}
-            onClick={() => onFilterChange(filter.value)}
-            variant={isActive ? 'default' : 'outline'}
-            className={`rounded-lg flex items-center gap-1 ${
-              isActive ? '' : 'text-muted-foreground'
-            }`}
-          >
-            <span>{filter.icon}</span>
-            <span>{filter.label}</span>
-            <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${
-              isActive 
-                ? 'bg-primary-foreground/20' 
-                : 'bg-muted'
-            }`}>
-              {count}
+  return (
+    <Tabs value={activeFilter} onValueChange={onFilterChange} className="w-full overflow-x-auto">
+      <TabsList className="grid grid-cols-5 lg:grid-cols-7 w-full">
+        {filterOptions.map(option => (
+          <TabsTrigger key={option.key} value={option.key} className="text-xs">
+            <span className="truncate">
+              {option.label} {counts[option.key] ? `(${counts[option.key]})` : ''}
             </span>
-          </Button>
-        );
-      })}
-    </div>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }

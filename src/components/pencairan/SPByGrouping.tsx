@@ -1,82 +1,37 @@
-import { useState } from 'react';
 import { Submission } from '@/types/pencairan';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { useState } from 'react';
 
 interface SPByGroupingProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (spmNumber: string, selectedSubmissionIds: string[]) => Promise<void>;
   submissions: Submission[];
+  onGrouping?: (selectedIds: string[], label: string) => Promise<void>;
 }
 
-export function SPByGrouping({
-  open,
-  onClose,
-  onSubmit,
-  submissions,
-}: SPByGroupingProps) {
-  const [spmNumber, setSpmNumber] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+export function SPByGrouping({ open, onClose, submissions, onGrouping }: SPByGroupingProps) {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Filter UP submissions that don't have a SPM yet
-  const upSubmissionsWithoutSPM = submissions.filter(
-    s => s.pembayaran === 'UP' && !s.nomorSPM
-  );
+  const upSubmissions = submissions.filter(s => s.pembayaran === 'UP');
 
-  const handleToggleSelect = (id: string) => {
-    const newSet = new Set(selectedIds);
-    if (newSet.has(id)) {
-      newSet.delete(id);
-    } else {
-      newSet.add(id);
-    }
-    setSelectedIds(newSet);
-  };
-
-  const handleSelectAll = () => {
-    if (selectedIds.size === upSubmissionsWithoutSPM.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(upSubmissionsWithoutSPM.map(s => s.id)));
-    }
+  const handleToggle = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   };
 
   const handleSubmit = async () => {
-    if (!spmNumber.trim()) {
-      setError('SPM number is required');
-      return;
-    }
-
-    if (selectedIds.size === 0) {
-      setError('Select at least one submission');
-      return;
-    }
-
+    if (!onGrouping || selectedIds.length === 0) return;
     setIsSubmitting(true);
-    setError(null);
-
     try {
-      await onSubmit(spmNumber, Array.from(selectedIds));
-      // Reset form
-      setSpmNumber('');
-      setSelectedIds(new Set());
+      await onGrouping(selectedIds, 'UP');
+      setSelectedIds([]);
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save grouping');
     } finally {
       setIsSubmitting(false);
     }
@@ -86,106 +41,53 @@ export function SPByGrouping({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Kelompokkan Uang Persediaan (UP)</DialogTitle>
+          <DialogTitle>Pengelompokan Pembayaran UP (Uang Persediaan)</DialogTitle>
           <DialogDescription>
-            Kelompokkan beberapa pengajuan UP dalam satu Surat Perintah Membayar (SPM)
+            Pilih pengajuan yang ingin dikelompokkan dalam satu SPP untuk pembayaran UP
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* SPM Input */}
-          <div>
-            <Label htmlFor="spm-number">Nomor SPM</Label>
-            <Input
-              id="spm-number"
-              placeholder="e.g., SPM-2024-001"
-              value={spmNumber}
-              onChange={e => setSpmNumber(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-
-          {/* Error Alert */}
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Submissions List */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <Label>Pilih Pengajuan</Label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSelectAll}
-                className="text-xs"
-              >
-                {selectedIds.size === upSubmissionsWithoutSPM.length
-                  ? 'Deselect All'
-                  : 'Select All'}
-              </Button>
-            </div>
-
-            {upSubmissionsWithoutSPM.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4">
-                Tidak ada pengajuan UP yang belum dikelompokkan
-              </p>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto border rounded-lg p-3">
-                {upSubmissionsWithoutSPM.map(submission => (
-                  <div
-                    key={submission.id}
-                    className="flex items-start space-x-3 p-2 rounded hover:bg-muted"
-                  >
+          {upSubmissions.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              Tidak ada pengajuan dengan tipe pembayaran UP
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              {upSubmissions.map(submission => (
+                <Card key={submission.id} className="p-3">
+                  <div className="flex items-start gap-3">
                     <Checkbox
-                      id={`up-${submission.id}`}
-                      checked={selectedIds.has(submission.id)}
-                      onCheckedChange={() => handleToggleSelect(submission.id)}
+                      id={submission.id}
+                      checked={selectedIds.includes(submission.id)}
+                      onCheckedChange={() => handleToggle(submission.id)}
                       className="mt-1"
                     />
-                    <div className="flex-1 min-w-0">
-                      <label
-                        htmlFor={`up-${submission.id}`}
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        {submission.id}
-                      </label>
-                      <p className="text-xs text-muted-foreground">
-                        {submission.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {submission.submitterName} • {submission.jenisBelanja}
-                      </p>
-                    </div>
+                    <Label htmlFor={submission.id} className="flex-1 cursor-pointer">
+                      <div className="font-medium">{submission.id}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {submission.submitterName} - {submission.jenisBelanja}
+                      </div>
+                    </Label>
                   </div>
-                ))}
-              </div>
-            )}
+                </Card>
+              ))}
+            </div>
+          )}
 
-            <p className="text-xs text-muted-foreground mt-2">
-              {selectedIds.size} of {upSubmissionsWithoutSPM.length} selected
-            </p>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-2">
+          <div className="flex gap-2 pt-4">
             <Button
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="rounded-lg"
             >
-              Cancel
+              Batal
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting || selectedIds.size === 0}
-              className="rounded-lg"
+              disabled={isSubmitting || selectedIds.length === 0}
             >
-              {isSubmitting ? 'Saving...' : 'Save Grouping'}
+              {isSubmitting ? 'Memproses...' : 'Kelompokkan'}
             </Button>
           </div>
         </div>

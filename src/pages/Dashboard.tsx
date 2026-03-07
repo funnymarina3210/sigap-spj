@@ -25,13 +25,13 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     const total = filteredSubmissions.length;
     const sedangDiproses = filteredSubmissions.filter(s => 
-      ['submitted_sm', 'pending_bendahara', 'pending_ppk', 'pending_ppspm', 'pending_kppn', 'pending_arsip'].includes(s.status)
+      ['pending_bendahara', 'pending_ppk', 'pending_ppspm'].includes(s.status)
     ).length;
     const selesai = filteredSubmissions.filter(s => 
-      s.status === 'completed'
+      s.status === 'complete_arsip'
     ).length;
     const dikembalikan = filteredSubmissions.filter(s => 
-      s.status.startsWith('rejected_')
+      s.status?.startsWith('incomplete_')
     ).length;
     const tingkatSelesai = total > 0 ? Math.round((selesai / total) * 100) : 0;
 

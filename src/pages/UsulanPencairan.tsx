@@ -151,8 +151,8 @@ export default function UsulanPencairan() {
       updatedSubmission.waktuBendahara = formatDateTime(new Date());
       updatedSubmission.statusBendahara = notes || '';
     } else if (userRole === 'Pejabat Pembuat Komitmen') {
-      updatedSubmission.waktuPPK = formatDateTime(new Date());
-      updatedSubmission.statusPPK = notes || '';
+      updatedSubmission.waktuPpk = formatDateTime(new Date());
+      updatedSubmission.statusPpk = notes || '';
     } else if (userRole === 'Pejabat Penandatangan Surat Perintah Membayar') {
       updatedSubmission.waktuPPSPM = formatDateTime(new Date());
       updatedSubmission.statusPPSPM = notes || '';
@@ -169,22 +169,22 @@ export default function UsulanPencairan() {
   const handleReject = async (reason: string) => {
     if (!selectedDetail || !user) throw new Error('Submission or user not found');
 
-    // Determine rejection status based on current status
+    // Determine rejection status based on current status and who's rejecting
     let rejectStatus: SubmissionStatus;
     switch (selectedDetail.status) {
-      case 'pending_bendahara':
+      case 'submitted_sm':
         rejectStatus = 'rejected_sm';
         break;
-      case 'pending_ppk':
+      case 'pending_bendahara':
         rejectStatus = 'rejected_bendahara';
         break;
-      case 'pending_ppspm':
+      case 'pending_ppk':
         rejectStatus = 'rejected_ppk';
         break;
-      case 'pending_kppn':
+      case 'pending_ppspm':
         rejectStatus = 'rejected_ppspm';
         break;
-      case 'pending_arsip':
+      case 'pending_kppn':
         rejectStatus = 'rejected_kppn';
         break;
       default:
