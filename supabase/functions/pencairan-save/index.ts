@@ -1,4 +1,5 @@
 // deno-lint-ignore-file
+// @ts-ignore - Deno runtime imports
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -180,7 +181,7 @@ function formatDateTime(): string {
   return `${hours}:${minutes} - ${day}/${month}/${year}`;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   console.log('pencairan-save function invoked');
   
   if (req.method === 'OPTIONS') {
