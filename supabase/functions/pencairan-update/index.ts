@@ -37,35 +37,18 @@ const COLUMNS = {
 async function getAccessToken() {
   console.log('Getting access token for pencairan-update...');
   
-  let privateKey: string;
-  let serviceAccountEmail: string;
-  
   // @ts-ignore - Deno API
-  const googlePrivateKeyEnv = Deno.env.get('GOOGLE_PRIVATE_KEY');
-  // @ts-ignore - Deno API
-  const googleServiceAccountEmailEnv = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL');
-  
-  try {
-    if (googlePrivateKeyEnv?.includes('"type"')) {
-      const serviceAccount = JSON.parse(googlePrivateKeyEnv);
-      privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
-      serviceAccountEmail = serviceAccount.client_email;
-    } else if (googleServiceAccountEmailEnv?.includes('"type"')) {
-      const serviceAccount = JSON.parse(googleServiceAccountEmailEnv);
-      privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
-      serviceAccountEmail = serviceAccount.client_email;
-    } else {
-      privateKey = googlePrivateKeyEnv?.replace(/\\n/g, '\n') || '';
-      serviceAccountEmail = googleServiceAccountEmailEnv || '';
-    }
-  } catch (e) {
-    console.error('Error parsing credentials:', e);
-    privateKey = googlePrivateKeyEnv?.replace(/\\n/g, '\n') || '';
-    serviceAccountEmail = googleServiceAccountEmailEnv || '';
+  const serviceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
+  if (!serviceAccountJson) {
+    throw new Error('Missing Google credentials');
   }
 
+  const serviceAccount = JSON.parse(serviceAccountJson);
+  const privateKey = serviceAccount.private_key;
+  const serviceAccountEmail = serviceAccount.client_email;
+
   if (!privateKey || !serviceAccountEmail) {
-    throw new Error('Missing Google credentials');
+    throw new Error('Missing Google credentials in service account JSON');
   }
 
   const now = Math.floor(Date.now() / 1000);
