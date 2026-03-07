@@ -37,8 +37,21 @@ export function SubmissionDetail({
   if (!submission) return null;
 
   const isBendahara = userRole === 'Bendahara';
+  const isPPK = userRole === 'Pejabat Pembuat Komitmen';
   const hasActionPermission = canTakeAction(userRole, submission.status);
   const requiresPaymentSelection = isBendahara && submission.status === 'pending_bendahara';
+
+  // Get action button labels based on role and status
+  const getApproveLabel = () => {
+    if (isBendahara && submission.status === 'pending_bendahara') return 'Kirim ke PPK';
+    if (isPPK && submission.status === 'pending_ppk') return 'Kirim ke PPSPM';
+    return 'Setujui';
+  };
+
+  const getRejectLabel = () => {
+    if (isBendahara && submission.status === 'pending_bendahara') return 'Kembalikan ke SM';
+    return 'Tolak';
+  };
 
   const handleApprove = async () => {
     if (!onApprove) return;
@@ -209,7 +222,7 @@ export function SubmissionDetail({
                       className="gap-2"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      {isApproving ? 'Menyetujui...' : 'Setujui'}
+                      {isApproving ? 'Memproses...' : getApproveLabel()}
                     </Button>
                   )}
                   {onReject && (
@@ -220,7 +233,7 @@ export function SubmissionDetail({
                       className="gap-2"
                     >
                       <XCircle className="w-4 h-4" />
-                      {isRejecting ? 'Menolak...' : 'Tolak'}
+                      {isRejecting ? 'Memproses...' : getRejectLabel()}
                     </Button>
                   )}
                 </div>

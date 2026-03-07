@@ -51,16 +51,10 @@ export function AppSidebar({ userRole, onCreateSubmission }: AppSidebarProps) {
 
   const submissionMenuItems = [
     { 
-      title: "Tampilan Card", 
-      url: "/submissions/card", 
+      title: "Daftar Pengajuan", 
+      url: "/pencairan", 
       icon: LayoutGrid,
-      roles: ['admin', 'ppk', 'bendahara', 'user'] as UserRole[]
-    },
-    { 
-      title: "Tampilan Tabel", 
-      url: "/submissions/table", 
-      icon: TableIcon,
-      roles: ['admin', 'ppk', 'bendahara', 'user'] as UserRole[]
+      roles: ['admin', 'Bendahara', 'Pejabat Pembuat Komitmen', 'Pejabat Penandatangan Surat Perintah Membayar', 'KPPN', 'Arsip', 'operator'] as UserRole[]
     },
   ];
 
