@@ -1,6 +1,5 @@
 import { SubmissionStatus } from '@/types/pencairan';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Clock, Circle, XCircle } from 'lucide-react';
 
 interface WorkflowProgressProps {
   status: SubmissionStatus;
@@ -8,11 +7,11 @@ interface WorkflowProgressProps {
 }
 
 const steps = [
-  { key: 'sm', label: 'SM', description: 'Satuan Kerja' },
-  { key: 'bendahara', label: 'Bendahara', description: 'Bendahara' },
-  { key: 'ppk', label: 'PPK', description: 'PPK' },
-  { key: 'ppspm', label: 'PPSPM', description: 'PPSPM' },
-  { key: 'kppn', label: 'KPPN', description: 'KPPN' },
+  { key: 'sm', label: 'SM', description: 'Subject Matter' },
+  { key: 'bendahara', label: 'Bendahara', description: 'Bendahara Pengeluaran' },
+  { key: 'ppk', label: 'PPK', description: 'Pejabat Pembuat Komitmen' },
+  { key: 'ppspm', label: 'PPSPM', description: 'Pejabat Penandatangan Surat Perintah Membayar' },
+  { key: 'kppn', label: 'KPPN', description: 'Kantor Pelayanan Perbendaharaan Negara' },
   { key: 'arsip', label: 'Arsip', description: 'Arsip' },
 ];
 
@@ -22,6 +21,9 @@ function getStepStatus(stepKey: string, submissionStatus: SubmissionStatus | und
   switch (submissionStatus) {
     case 'draft':
       if (stepKey === 'sm') return 'current';
+      return 'pending';
+    case 'incomplete_sm':
+      if (stepKey === 'sm') return 'error';
       return 'pending';
     case 'pending_bendahara':
       if (stepKey === 'sm') return 'complete';
@@ -48,86 +50,111 @@ function getStepStatus(stepKey: string, submissionStatus: SubmissionStatus | und
       if (stepKey === 'ppspm') return 'error';
       return 'pending';
     case 'sent_kppn':
-      // Once sent to KPPN, KPPN is complete and Arsip becomes current responsibility
       if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm' || stepKey === 'kppn') return 'complete';
       if (stepKey === 'arsip') return 'current';
       return 'pending';
     case 'incomplete_kppn':
-      // KPPN rejected the submission
       if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm') return 'complete';
       if (stepKey === 'kppn') return 'error';
       return 'pending';
     case 'complete_arsip':
-      // Everything is complete and archived
       return 'complete';
     default:
       return 'pending';
   }
 }
 
-function getProgressWidth(stepIndex: number, status: SubmissionStatus | undefined): number {
-  if (!status) return 0;
-  
-  const stepStatus = getStepStatus(steps[stepIndex].key, status);
-  
-  if (stepStatus === 'complete') {
-    return 100;
-  } else if (stepStatus === 'current') {
-    return 50;
-  }
-  return 0;
-}
-
 export function WorkflowProgress({ status, className }: WorkflowProgressProps) {
-  // Calculate total progress as percentage
-  const completedSteps = steps.filter(step => getStepStatus(step.key, status) === 'complete').length;
-  const hasCurrentStep = steps.some(step => getStepStatus(step.key, status) === 'current');
-  const totalProgress = (completedSteps / steps.length) * 100 + (hasCurrentStep ? (1 / steps.length) * 50 : 0);
-  
+  // Determine colors based on status
+  const getProgressColor = () => {
+    if (status === 'draft') return 'bg-gray-500';
+    if (status === 'complete_arsip') return 'bg-green-500';
+    if (['pending_bendahara', 'incomplete_bendahara'].includes(status)) return 'bg-blue-500';
+    if (['pending_ppk', 'incomplete_ppk'].includes(status)) return 'bg-yellow-500';
+    if (['pending_ppspm', 'incomplete_ppspm'].includes(status)) return 'bg-purple-500';
+    if (['sent_kppn', 'incomplete_kppn'].includes(status)) return 'bg-indigo-500';
+    if (status === 'incomplete_sm') return 'bg-red-500';
+    return 'bg-primary';
+  };
+
+  const getCurrentStepColor = () => {
+    switch (status) {
+      case 'draft': return 'bg-gray-500 text-white ring-4 ring-gray-200';
+      case 'pending_bendahara': return 'bg-blue-500 text-white ring-4 ring-blue-200';
+      case 'incomplete_bendahara': return 'bg-purple-500 text-white ring-4 ring-purple-200';
+      case 'pending_ppk': return 'bg-yellow-500 text-white ring-4 ring-yellow-200';
+      case 'incomplete_ppk': return 'bg-orange-500 text-white ring-4 ring-orange-200';
+      case 'pending_ppspm': return 'bg-purple-500 text-white ring-4 ring-purple-200';
+      case 'incomplete_ppspm': return 'bg-fuchsia-500 text-white ring-4 ring-fuchsia-200';
+      case 'sent_kppn': return 'bg-indigo-500 text-white ring-4 ring-indigo-200';
+      case 'incomplete_kppn': return 'bg-violet-500 text-white ring-4 ring-violet-200';
+      case 'incomplete_sm': return 'bg-red-500 text-white ring-4 ring-red-200';
+      case 'complete_arsip': return 'bg-green-500 text-white ring-4 ring-green-200';
+      default: return 'bg-primary text-primary-foreground ring-4 ring-primary/20';
+    }
+  };
+
+  const getStepIcon = (stepStatus: string, stepKey: string, index: number) => {
+    if (stepStatus === 'complete') return '✅';
+    if (stepStatus === 'current') return '⏳';
+    if (stepStatus === 'error') return '❌';
+    if (stepKey === 'kppn') return '🏛️';
+    return (index + 1).toString();
+  };
+
   return (
     <div className={cn('w-full', className)}>
       <div className="flex items-center justify-between relative">
         {/* Progress line background */}
-        <div className="absolute left-0 right-0 top-6 h-1 bg-secondary rounded-full" />
+        <div className="absolute top-5 left-[10%] right-[10%] h-1 bg-muted rounded-full" />
         
         {/* Active progress line */}
         <div 
-          className="absolute left-0 top-6 h-1 bg-gradient-to-r from-status-complete to-primary rounded-full transition-all duration-500"
+          className={cn(
+            "absolute top-5 left-[10%] h-1 rounded-full transition-all duration-500",
+            getProgressColor()
+          )}
           style={{
-            width: `${totalProgress}%`
+            width: status === 'complete_arsip' ? '100%' : 
+                   ['sent_kppn', 'incomplete_kppn'].includes(status) ? '83%' :
+                   ['pending_ppspm', 'incomplete_ppspm'].includes(status) ? '67%' :
+                   ['pending_ppk', 'incomplete_ppk'].includes(status) ? '50%' :
+                   ['pending_bendahara', 'incomplete_bendahara'].includes(status) ? '33%' : '0%'
           }}
         />
         
         {steps.map((step, index) => {
           const stepStatus = getStepStatus(step.key, status);
+          const icon = getStepIcon(stepStatus, step.key, index);
           
           return (
-            <div key={step.key} className="relative flex flex-col items-center z-10">
-              <div 
+            <div key={step.key} className="flex flex-col items-center relative z-10">
+              <div
                 className={cn(
-                  'w-12 h-12 rounded-xl flex items-center justify-center border-2 transition-all duration-300 shadow-sm',
-                  stepStatus === 'complete' && 'bg-green-100 border-green-500 text-green-600 shadow-[0_0_20px_rgba(34,197,94,0.2)]',
-                  stepStatus === 'current' && 'bg-blue-100 border-blue-500 text-blue-600 shadow-[0_0_20px_rgba(59,130,246,0.3)]',
-                  stepStatus === 'pending' && 'bg-card border-border text-muted-foreground',
-                  stepStatus === 'error' && 'bg-red-100 border-red-500 text-red-600 shadow-[0_0_20px_rgba(239,68,68,0.2)]'
+                  'w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300',
+                  stepStatus === 'complete' && 'bg-green-500 text-white shadow-lg',
+                  stepStatus === 'current' && getCurrentStepColor(),
+                  stepStatus === 'pending' && 'bg-muted text-muted-foreground border-2 border-muted-foreground/20',
+                  stepStatus === 'error' && 'bg-red-500 text-white ring-4 ring-red-200'
                 )}
               >
-                {stepStatus === 'complete' && <CheckCircle2 className="w-5 h-5" />}
-                {stepStatus === 'current' && <Clock className="w-5 h-5 animate-pulse" />}
-                {stepStatus === 'pending' && <Circle className="w-5 h-5" />}
-                {stepStatus === 'error' && <XCircle className="w-5 h-5" />}
+                <span className="text-lg">{icon}</span>
               </div>
-              <div className="mt-3 text-center">
+
+              <div className="mt-2 text-center">
                 <p className={cn(
-                  'text-sm font-semibold transition-colors',
+                  'text-sm font-medium',
+                  stepStatus === 'current' && status === 'pending_ppk' && 'text-yellow-600',
+                  stepStatus === 'current' && status === 'pending_bendahara' && 'text-blue-600',
+                  stepStatus === 'current' && status === 'incomplete_ppk' && 'text-orange-600',
+                  stepStatus === 'current' && status === 'incomplete_bendahara' && 'text-purple-600',
+                  stepStatus === 'current' && status === 'sent_kppn' && 'text-indigo-600',
                   stepStatus === 'complete' && 'text-green-600',
-                  stepStatus === 'current' && 'text-blue-600',
-                  stepStatus === 'pending' && 'text-muted-foreground',
                   stepStatus === 'error' && 'text-red-600'
                 )}>
                   {step.label}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-[80px] leading-tight">
+                <p className="text-[10px] text-muted-foreground max-w-[80px]">
                   {step.description}
                 </p>
               </div>
