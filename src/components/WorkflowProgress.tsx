@@ -50,8 +50,8 @@ function getStepStatus(stepKey: string, submissionStatus: SubmissionStatus | und
       if (stepKey === 'ppspm') return 'error';
       return 'pending';
     case 'sent_kppn':
-      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm' || stepKey === 'kppn') return 'complete';
-      if (stepKey === 'arsip') return 'current';
+      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm') return 'complete';
+      if (stepKey === 'kppn') return 'current';
       return 'pending';
     case 'incomplete_kppn':
       if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm') return 'complete';
@@ -114,7 +114,8 @@ export function WorkflowProgress({ status, className }: WorkflowProgressProps) {
             )}
             style={{
               width: status === 'complete_arsip' ? '100%' : 
-                     ['sent_kppn', 'incomplete_kppn'].includes(status) ? '83%' :
+                     ['sent_kppn'].includes(status) ? '67%' :
+                     ['incomplete_kppn'].includes(status) ? '67%' :
                      ['pending_ppspm', 'incomplete_ppspm'].includes(status) ? '67%' :
                      ['pending_ppk', 'incomplete_ppk'].includes(status) ? '50%' :
                      ['pending_bendahara', 'incomplete_bendahara'].includes(status) ? '33%' :
@@ -136,13 +137,13 @@ export function WorkflowProgress({ status, className }: WorkflowProgressProps) {
                       'w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 flex-shrink-0',
                       stepStatus === 'complete' && 'bg-green-500 text-white shadow-md',
                       stepStatus === 'current' && `${getCurrentStepColor()} shadow-lg ring-2 ring-offset-2 ring-current`,
-                      stepStatus === 'pending' && 'bg-gray-200 text-gray-500 border-2 border-gray-300',
+                      stepStatus === 'pending' && 'bg-white text-gray-400 border-2 border-gray-300',
                       stepStatus === 'error' && 'bg-red-500 text-white shadow-md'
                     )}
                   >
                     {stepStatus === 'complete' && <span className="text-xl">✓</span>}
-                    {stepStatus === 'current' && <span>{stepNumber}</span>}
-                    {stepStatus === 'pending' && (step.key === 'kppn' ? '🏛️' : <span className="text-sm">{stepNumber}</span>)}
+                    {stepStatus === 'current' && <span></span>}
+                    {stepStatus === 'pending' && <span></span>}
                     {stepStatus === 'error' && <span>!</span>}
                   </div>
 
