@@ -36,24 +36,25 @@ export const WORKFLOW_TRANSITIONS: Record<SubmissionStatus, Record<WorkflowActio
     approve: null,
     reject: null,
   },
+  // Rejection handling - previous stage can take corrective action
   rejected_sm: {
-    approve: null,
+    approve: 'submitted_sm',  // Submitter resubmit
     reject: null,
   },
   rejected_bendahara: {
-    approve: null,
+    approve: 'pending_ppk',  // Bendahara kirim ulang ke PPK
     reject: null,
   },
   rejected_ppk: {
-    approve: null,
+    approve: 'pending_ppk',  // Bendahara kirim ulang ke PPK
     reject: null,
   },
   rejected_ppspm: {
-    approve: null,
+    approve: 'pending_ppspm',  // PPK kirim ulang ke PPSPM
     reject: null,
   },
   rejected_kppn: {
-    approve: null,
+    approve: 'pending_kppn',  // PPSPM kirim ulang ke KPPN
     reject: null,
   },
 };

@@ -9,6 +9,37 @@ const corsHeaders = {
 const DEFAULT_SPREADSHEET_ID = '1fVVqmK0LANErtoiuSlKY8YAk9Nsu4sXQ33BwzRlQhNE';
 const SHEET_NAME = 'data';
 
+// Types from pencairan.ts
+type SubmissionStatus = 
+  | 'draft' | 'submitted_sm' | 'pending_bendahara' | 'pending_ppk' | 'pending_ppspm' | 'pending_kppn' | 'pending_arsip' | 'completed'
+  | 'rejected_sm' | 'rejected_bendahara' | 'rejected_ppk' | 'rejected_ppspm' | 'rejected_kppn';
+
+type UserRole = 
+  | 'Fungsi Sosial' | 'Fungsi Neraca' | 'Fungsi Produksi' | 'Fungsi Distribusi' | 'Fungsi IPDS'
+  | 'Bendahara' | 'Pejabat Pembuat Komitmen' | 'Pejabat Pengadaan' | 'Pejabat Penandatangan Surat Perintah Membayar'
+  | 'KPPN' | 'Arsip' | 'Padamel BPS 3210' | 'operator' | 'admin';
+
+const SUBMITTER_ROLES: UserRole[] = [
+  'Fungsi Sosial', 'Fungsi Neraca', 'Fungsi Produksi', 'Fungsi Distribusi', 'Fungsi IPDS',
+  'Bendahara', 'Pejabat Pembuat Komitmen', 'Pejabat Pengadaan', 'Pejabat Penandatangan Surat Perintah Membayar'
+];
+
+// Rejection handling - validate that correct role can take action on rejection
+function canTakeActionOnRejected(role: UserRole, status: SubmissionStatus): boolean {
+  if (role === 'admin') return true;
+  
+  // Workflow: SM → Bendahara → PPK → PPSPM → KPPN → Arsip
+  // Previous stage role handles rejection correction:
+  
+  if (status === 'rejected_sm') return SUBMITTER_ROLES.includes(role);
+  if (status === 'rejected_bendahara') return SUBMITTER_ROLES.includes(role) || role === 'Bendahara';
+  if (status === 'rejected_ppk') return role === 'Bendahara'; // ← Bendahara resends to PPK
+  if (status === 'rejected_ppspm') return role === 'Pejabat Pembuat Komitmen'; // ← PPK resends
+  if (status === 'rejected_kppn') return role === 'Pejabat Penandatangan Surat Perintah Membayar'; // ← PPSPM resends
+  
+  return false;
+}
+
 // Column mappings (0-based indices)
 const COLUMNS = {
   ID: 0,              // A
@@ -201,6 +232,14 @@ serve(async (req: Request) => {
 
     if (foundRowIndex === -1) {
       throw new Error(`Submission with ID ${id} not found`);
+    }
+
+    // Validate that actor can take action on rejected statuses
+    const currentStatus = rows[foundRowIndex][COLUMNS.status] as SubmissionStatus;
+    if (currentStatus.startsWith('rejected_')) {
+      if (!canTakeActionOnRejected(actor as UserRole, currentStatus)) {
+        throw new Error(`User role '${actor}' is not authorized to take action on status '${currentStatus}'`);
+      }
     }
 
     // Update row data

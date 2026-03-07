@@ -467,10 +467,37 @@ export function canCreateSubmission(role: UserRole): boolean {
 
 export function canTakeAction(role: UserRole, status: SubmissionStatus): boolean {
   if (role === 'admin') return true;
+  // Can take action on pending statuses based on role
   if (role === 'Bendahara' && status === 'pending_bendahara') return true;
   if (role === 'Pejabat Pembuat Komitmen' && status === 'pending_ppk') return true;
   if (role === 'Pejabat Penandatangan Surat Perintah Membayar' && status === 'pending_ppspm') return true;
   if (role === 'Arsip' && status === 'pending_arsip') return true;
+  // Can also take action on rejected statuses (resubmit)
+  if (canTakeActionOnRejected(role, status)) return true;
+  return false;
+}
+
+export function canTakeActionOnRejected(role: UserRole, status: SubmissionStatus): boolean {
+  if (role === 'admin') return true;
+  
+  // Alur workflow: SM → Bendahara → PPK → PPSPM → KPPN → Arsip
+  // When rejected at a stage, the previous stage role can take corrective action:
+  
+  // rejected_sm: Submitter bisa resubmit (but we need submissionUser to verify)
+  if (status === 'rejected_sm') return SUBMITTER_ROLES.includes(role);
+  
+  // rejected_bendahara: Submitter bisa resubmit, Bendahara bisa send ulang
+  if (status === 'rejected_bendahara') return SUBMITTER_ROLES.includes(role) || role === 'Bendahara';
+  
+  // rejected_ppk: Bendahara bisa send ulang ke PPK
+  if (status === 'rejected_ppk') return role === 'Bendahara';
+  
+  // rejected_ppspm: PPK bisa send ulang ke PPSPM  
+  if (status === 'rejected_ppspm') return role === 'Pejabat Pembuat Komitmen';
+  
+  // rejected_kppn: PPSPM bisa send ulang ke KPPN
+  if (status === 'rejected_kppn') return role === 'Pejabat Penandatangan Surat Perintah Membayar';
+  
   return false;
 }
 
