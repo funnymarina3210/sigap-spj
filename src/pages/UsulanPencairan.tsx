@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Submission, SubmissionStatus, UserRole, canCreateSubmission, PaymentType, formatDateTime } from '@/types/pencairan';
+import { Submission, SubmissionStatus, UserRole, canCreateSubmission, PaymentType, formatDateTime, shouldShowSubmission, canViewAllSubmissions } from '@/types/pencairan';
 import { SubmissionForm } from '@/components/pencairan/SubmissionForm';
 import { SubmissionTable } from '@/components/pencairan/SubmissionTable';
 import { SubmissionDetail } from '@/components/pencairan/SubmissionDetail';
@@ -41,6 +41,11 @@ export default function UsulanPencairan() {
   const filteredSubmissions = useMemo(() => {
     let result = submissions;
     
+    // 🆕 Filter berdasarkan role visibility
+    // - Jika role bisa lihat semua (Bendahara, PPK, PPSPM, KPPN, Arsip, admin, operator): lihat semua
+    // - Jika role adalah submitter (Fungsi*): hanya lihat pengajuan yang dibuat sendiri
+    result = result.filter(sub => shouldShowSubmission(sub, userRole, sub.user));
+    
     if (activeFilter !== 'all') {
       result = result.filter(sub => sub.status === activeFilter);
     }
@@ -57,7 +62,7 @@ export default function UsulanPencairan() {
     });
     
     return result;
-  }, [submissions, activeFilter]);
+  }, [submissions, activeFilter, userRole]);
 
   const counts = useMemo(() => {
     const allStatuses: SubmissionStatus[] = [
@@ -76,16 +81,19 @@ export default function UsulanPencairan() {
       'rejected_kppn',
     ];
 
+    // 🆕 Filter submissions berdasarkan role visibility untuk counts
+    const visibleSubmissions = submissions.filter(sub => shouldShowSubmission(sub, userRole, sub.user));
+
     const result: Record<string, number> = {
-      all: submissions.length,
+      all: visibleSubmissions.length,
     };
 
     allStatuses.forEach(status => {
-      result[status] = submissions.filter(s => s.status === status).length;
+      result[status] = visibleSubmissions.filter(s => s.status === status).length;
     });
 
     return result;
-  }, [submissions]);
+  }, [submissions, userRole]);
 
   const handleFormSubmit = () => {
     setEditingSubmission(null);
@@ -111,8 +119,8 @@ export default function UsulanPencairan() {
   const handleApprove = async (notes?: string, paymentType?: PaymentType, spmNumber?: string) => {
     if (!selectedDetail || !user) throw new Error('Submission or user not found');
 
-    // Get next status based on current status and user role
-    const nextStatus = getNextStatus(selectedDetail.status, userRole, 'approve');
+    // Get next status based on current status
+    const nextStatus = getNextStatus(selectedDetail.status, 'approve');
     if (!nextStatus) throw new Error('Cannot approve at current stage or permission denied');
 
     // Build the update object
