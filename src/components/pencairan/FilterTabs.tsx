@@ -11,16 +11,18 @@ interface FilterTabsProps {
 const filters: { value: string; label: string; color: string }[] = [
   { value: 'all', label: 'Semua', color: '' },
   { value: 'draft', label: 'Draft SM', color: 'bg-gray-500 hover:bg-gray-600 text-white border-gray-500'},
+  { value: 'submitted_sm', label: 'Submitted SM', color: 'bg-slate-500 hover:bg-slate-600 text-white border-slate-500'},
   { value: 'pending_bendahara', label: 'Bendahara', color: 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' },
   { value: 'pending_ppk', label: 'PPK', color: 'bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-500' },
   { value: 'pending_ppspm', label: 'PPSPM', color: 'bg-violet-500 hover:bg-violet-600 text-white border-violet-500' },
-  { value: 'sent_kppn', label: 'KPPN', color: 'bg-teal-500 hover:bg-teal-600 text-white border-teal-400' },
-  { value: 'complete_arsip', label: 'Catat Arsip', color: 'bg-green-500 hover:bg-green-600 text-white border-green-500' },
-  { value: 'incomplete_sm', label: 'Tolak SM', color: 'bg-red-500 hover:bg-red-600 text-white border-red-500' },
-  { value: 'incomplete_bendahara', label: 'Tolak Bendahara', color: 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500' },
-  { value: 'incomplete_ppk', label: 'Tolak PPK', color: 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600' },
-  { value: 'incomplete_ppspm', label: 'Tolak PPSPM', color: 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500' },
-  { value: 'incomplete_kppn', label: 'Tolak KPPN', color: 'bg-pink-500 hover:bg-pink-600 text-white border-pink-500' },
+  { value: 'pending_kppn', label: 'KPPN', color: 'bg-teal-500 hover:bg-teal-600 text-white border-teal-400' },
+  { value: 'pending_arsip', label: 'Arsip', color: 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500' },
+  { value: 'completed', label: 'Selesai', color: 'bg-green-500 hover:bg-green-600 text-white border-green-500' },
+  { value: 'rejected_sm', label: 'Tolak SM', color: 'bg-red-500 hover:bg-red-600 text-white border-red-500' },
+  { value: 'rejected_bendahara', label: 'Tolak Bendahara', color: 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500' },
+  { value: 'rejected_ppk', label: 'Tolak PPK', color: 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600' },
+  { value: 'rejected_ppspm', label: 'Tolak PPSPM', color: 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500' },
+  { value: 'rejected_kppn', label: 'Tolak KPPN', color: 'bg-pink-500 hover:bg-pink-600 text-white border-pink-500' },
 ];
 
 export function FilterTabs({ activeFilter, onFilterChange, counts }: FilterTabsProps) {
