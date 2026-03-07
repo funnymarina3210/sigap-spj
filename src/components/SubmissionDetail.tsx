@@ -93,7 +93,7 @@ export function SubmissionDetail({
   const updateStatusInSheet = async (
     newStatus: string, 
     newNotes?: string, 
-    actor: 'ppk' | 'bendahara' | 'kppn' = 'ppk',
+    actor: string = 'ppk',
     action: 'approve' | 'reject' | 'return' = 'approve'
   ) => {
     setIsUpdating(true);
