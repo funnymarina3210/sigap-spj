@@ -23,50 +23,42 @@ function getStepStatus(stepKey: string, submissionStatus: SubmissionStatus | und
     case 'draft':
       if (stepKey === 'sm') return 'current';
       return 'pending';
-    case 'submitted_sm':
-      if (stepKey === 'sm') return 'complete';
-      if (stepKey === 'bendahara') return 'current';
-      return 'pending';
-    case 'rejected_sm':
-      if (stepKey === 'sm') return 'error';
-      return 'pending';
     case 'pending_bendahara':
       if (stepKey === 'sm') return 'complete';
       if (stepKey === 'bendahara') return 'current';
       return 'pending';
-    case 'rejected_bendahara':
-      if (stepKey === 'sm' || stepKey === 'bendahara') return 'complete';
-      if (stepKey === 'ppk') return 'error';
+    case 'incomplete_bendahara':
+      if (stepKey === 'sm') return 'complete';
+      if (stepKey === 'bendahara') return 'error';
       return 'pending';
     case 'pending_ppk':
       if (stepKey === 'sm' || stepKey === 'bendahara') return 'complete';
       if (stepKey === 'ppk') return 'current';
       return 'pending';
-    case 'rejected_ppk':
-      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk') return 'complete';
-      if (stepKey === 'ppspm') return 'error';
+    case 'incomplete_ppk':
+      if (stepKey === 'sm' || stepKey === 'bendahara') return 'complete';
+      if (stepKey === 'ppk') return 'error';
       return 'pending';
     case 'pending_ppspm':
       if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk') return 'complete';
       if (stepKey === 'ppspm') return 'current';
       return 'pending';
-    case 'rejected_ppspm':
-      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm') return 'complete';
-      if (stepKey === 'kppn') return 'error';
+    case 'incomplete_ppspm':
+      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk') return 'complete';
+      if (stepKey === 'ppspm') return 'error';
       return 'pending';
-    case 'pending_kppn':
-      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm') return 'complete';
-      if (stepKey === 'kppn') return 'current';
-      return 'pending';
-    case 'rejected_kppn':
-      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm' || stepKey === 'kppn') return 'complete';
-      if (stepKey === 'arsip') return 'error';
-      return 'pending';
-    case 'pending_arsip':
+    case 'sent_kppn':
+      // Once sent to KPPN, KPPN is complete and Arsip becomes current responsibility
       if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm' || stepKey === 'kppn') return 'complete';
       if (stepKey === 'arsip') return 'current';
       return 'pending';
-    case 'completed':
+    case 'incomplete_kppn':
+      // KPPN rejected the submission
+      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm') return 'complete';
+      if (stepKey === 'kppn') return 'error';
+      return 'pending';
+    case 'complete_arsip':
+      // Everything is complete and archived
       return 'complete';
     default:
       return 'pending';
