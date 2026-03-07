@@ -110,7 +110,7 @@ export default function Index() {
   const [editingSubmission, setEditingSubmission] = useState<Submission | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('table'); // Default to table view
 
-  const userRole: UserRole = user?.role as UserRole || 'user';
+  const userRole = (user?.role || 'operator') as UserRole;
   const showCreateButton = canCreateSubmission(userRole);
 
   // Convert sheet data to Submission format and sort by newest
@@ -189,14 +189,14 @@ export default function Index() {
     });
   }, [submissions, searchQuery, selectedMonth, selectedYear, activeFilter]);
   const counts = useMemo(() => {
-    const result: Record<SubmissionStatus | 'all', number> = {
+    const result: Record<string, number> = {
       all: submissions.length,
       pending_ppk: 0,
       pending_bendahara: 0,
-      incomplete_sm: 0,
-      incomplete_ppk: 0,
-      incomplete_bendahara: 0,
-      sent_kppn: 0
+      rejected_sm: 0,
+      rejected_ppk: 0,
+      rejected_bendahara: 0,
+      completed: 0
     };
     submissions.forEach(sub => {
       result[sub.status]++;
@@ -275,8 +275,8 @@ export default function Index() {
           <StatCard title="Total Pengajuan" value={counts.all} icon={FileText} variant="primary" />
           <StatCard title="Menunggu PPK" value={counts.pending_ppk} icon={Clock} variant="warning" />
           <StatCard title="Menunggu Bendahara" value={counts.pending_bendahara} icon={Clock} variant="primary" />
-          <StatCard title="Dikembalikan" value={counts.incomplete_sm + counts.incomplete_ppk} icon={XCircle} variant="danger" />
-          <StatCard title="Kirim KPPN" value={counts.sent_kppn} icon={CheckCircle2} variant="success" className="col-span-2 md:col-span-1" />
+          <StatCard title="Dikembalikan" value={(counts.rejected_sm || 0) + (counts.rejected_ppk || 0)} icon={XCircle} variant="danger" />
+          <StatCard title="Selesai" value={counts.completed || 0} icon={CheckCircle2} variant="success" className="col-span-2 md:col-span-1" />
         </div>
 
         {/* Filter and Submissions */}
