@@ -161,7 +161,7 @@ export function SubmissionDetail({
   const updateStatusInSheet = async (
     newStatus: string, 
     newNotes?: string, 
-    actor: 'ppk' | 'ppspm' | 'bendahara' | 'arsip' = 'ppk',
+    actor: 'ppk' | 'ppspm' | 'bendahara' | 'arsip' | 'kppn' = 'ppk',
     action: 'approve' | 'reject' | 'return' | 'save_spby' = 'approve'
   ) => {
     setIsUpdating(true);
@@ -208,7 +208,7 @@ export function SubmissionDetail({
 
   const executeApprove = async () => {
     let newStatus: string;
-    let actor: 'bendahara' | 'ppk' | 'ppspm' | 'arsip';
+    let actor: 'bendahara' | 'ppk' | 'ppspm' | 'kppn' | 'arsip';
     
     if (submission.status === 'pending_bendahara') {
       if (userRole === 'Bendahara') {
@@ -287,7 +287,7 @@ export function SubmissionDetail({
 
   const executeReject = async () => {
     let newStatus: string;
-    let actor: 'bendahara' | 'ppk' | 'ppspm' | 'arsip';
+    let actor: 'bendahara' | 'ppk' | 'ppspm' | 'kppn' | 'arsip';
     
     if (submission.status === 'pending_bendahara') {
       newStatus = 'rejected_bendahara';
@@ -392,14 +392,14 @@ export function SubmissionDetail({
   const getConfirmMessage = () => {
     switch (confirmDialog.action) {
       case 'approve':
-        if (submission.status === 'pending_bendahara' || submission.status === 'incomplete_bendahara') {
+        if (submission.status === 'pending_bendahara') {
           return 'Apakah Anda yakin ingin menyetujui dan mengirim ke PPK?';
-        } else if (submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk') {
+        } else if (submission.status === 'pending_ppk') {
           return 'Apakah Anda yakin ingin menyetujui dan mengirim ke PPSPM?';
-        } else if (submission.status === 'pending_ppspm' || submission.status === 'incomplete_ppspm') {
-          return 'Apakah Anda yakin ingin menyetujui dan mengirim ke Arsip?';
-      } else if (submission.status === 'pending_kppn') {
-        return 'Apakah Anda yakin ingin menyelesaikan pengajuan ini?';
+        } else if (submission.status === 'pending_ppspm') {
+          return 'Apakah Anda yakin ingin menyetujui dan mengirim ke KPPN?';
+        } else if (submission.status === 'pending_kppn') {
+          return 'Apakah Anda yakin ingin menyelesaikan pengajuan ini?';
         }
         return 'Apakah Anda yakin ingin menyetujui pengajuan ini?';
       case 'reject':
