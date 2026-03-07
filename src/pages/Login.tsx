@@ -147,7 +147,7 @@ export default function Login() {
               <CardDescription className="text-muted-foreground mt-2">
                 Sinergi Gerak Administrasi Pengajuan — Surat Pertanggungjawaban
                 <br />
-                <span className="text-xs">BPS Kabupaten Cirebon</span>
+                <span className="text-xs">BPS Kabupaten Majalengka</span>
               </CardDescription>
             </div>
           </CardHeader>

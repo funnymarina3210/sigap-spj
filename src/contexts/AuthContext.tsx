@@ -134,12 +134,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data?.values && data.values.length > 1) {
         // Skip header row (index 0)
+        // Sheet structure: column A=role, B=username, C=password, D-E=?, F=satker
         const users = data.values.slice(1).map((row: string[], index: number) => ({
           rowIndex: index + 2, // +2 because we skip header and array is 0-indexed
-          username: row[0]?.trim() || "",
-          password: row[1]?.trim() || "",
-          role: row[2]?.trim() || "",
-          satker: row[5]?.trim() || "" // Kolom F = index 5
+          role: row[0]?.trim() || "",        // Column A (index 0)
+          username: row[1]?.trim() || "",    // Column B (index 1) - nama
+          password: row[2]?.trim() || "",    // Column C (index 2)
+          satker: row[5]?.trim() || ""       // Column F (index 5)
         }));
 
         // Find matching user (case-insensitive username comparison)

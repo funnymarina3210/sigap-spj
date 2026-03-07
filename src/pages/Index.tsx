@@ -262,7 +262,7 @@ export default function Index() {
               Selamat Datang, {user?.nama || 'User'}
             </h1>
             <p className="text-primary-foreground/80 max-w-2xl text-lg">
-              Sistem Monitoring Pengajuan Administrasi - BPS Kabupaten Cirebon. 
+              Sistem Monitoring Pengajuan Administrasi - BPS Kabupaten Majalengka. 
               Pantau status pengajuan dari SM hingga KPPN dengan mudah dan efisien.
             </p>
           </div>

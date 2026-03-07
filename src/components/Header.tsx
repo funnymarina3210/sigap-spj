@@ -219,7 +219,7 @@ export function Header({ user, onLogout }: HeaderProps) {
               Sigap SPJ
             </h1>
             <p className="text-xs text-muted-foreground font-medium">
-              BPS Kabupaten Cirebon
+              BPS Kabupaten Majalengka
             </p>
           </div>
         </div>
