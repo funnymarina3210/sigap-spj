@@ -296,6 +296,7 @@ export default function UsulanPencairan() {
             <SubmissionTable
               submissions={filteredSubmissions}
               onRowClick={handleRowClick}
+              userRole={userRole}
             />
           )}
         </CardContent>

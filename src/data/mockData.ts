@@ -45,7 +45,7 @@ export const mockSubmissions: Submission[] = [
     jenisBelanja: 'Honorarium',
     submitterName: 'Budi Santoso',
     submittedAt: new Date('2024-12-15'),
-    status: 'sent_kppn',
+    status: 'completed' as any,
     documents: createDocuments([
       { type: 'sk_kpa', isRequired: true, isChecked: true },
       { type: 'daftar_hadir', isRequired: true, isChecked: true },
@@ -61,7 +61,7 @@ export const mockSubmissions: Submission[] = [
     jenisBelanja: 'Belanja Bahan',
     submitterName: 'Dewi Lestari',
     submittedAt: new Date('2024-12-22'),
-    status: 'incomplete_sm',
+    status: 'rejected_sm' as any,
     documents: createDocuments([
       { type: 'undangan', isRequired: true, isChecked: true },
       { type: 'daftar_hadir', isRequired: true, isChecked: false },
@@ -75,7 +75,7 @@ export const mockSubmissions: Submission[] = [
     jenisBelanja: 'Belanja Barang Persediaan',
     submitterName: 'Rizky Pratama',
     submittedAt: new Date('2024-12-21'),
-    status: 'incomplete_ppk',
+    status: 'rejected_ppk' as any,
     documents: createDocuments([
       { type: 'kak', isRequired: true, isChecked: true },
       { type: 'form_permintaan', isRequired: true, isChecked: true },
