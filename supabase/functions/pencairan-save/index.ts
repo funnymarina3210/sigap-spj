@@ -191,12 +191,31 @@ serve(async (req: Request) => {
 
     console.log('[pencairan-save] Row data prepared (21 columns)');
 
-    const appendUrl = `${baseUrl}/values/${encodeURIComponent(SHEET_NAME + '!A:U')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
-    console.log('[pencairan-save] Append URL:', appendUrl);
-    console.log('[pencairan-save] Request payload:', JSON.stringify({ values: [rowData] }));
+    // First, find the next empty row by reading column A
+    const findRowUrl = `${baseUrl}/values/${encodeURIComponent(SHEET_NAME + '!A:A')}`;
+    console.log('[pencairan-save] Finding next empty row...');
+    
+    const findResponse = await fetch(findRowUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    
+    if (!findResponse.ok) {
+      const errText = await findResponse.text();
+      throw new Error(`Failed to read sheet: ${errText}`);
+    }
+    
+    const findData = await findResponse.json();
+    const existingRows = findData.values ? findData.values.length : 0;
+    const nextRow = existingRows + 1;
+    
+    console.log('[pencairan-save] Existing rows:', existingRows, '-> Writing to row:', nextRow);
+    
+    // Write to explicit row range A{nextRow}:U{nextRow}
+    const updateUrl = `${baseUrl}/values/${encodeURIComponent(SHEET_NAME + '!A' + nextRow + ':U' + nextRow)}?valueInputOption=USER_ENTERED`;
+    console.log('[pencairan-save] Update URL:', updateUrl);
 
-    const response = await fetch(appendUrl, {
-      method: 'POST',
+    const response = await fetch(updateUrl, {
+      method: 'PUT',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
