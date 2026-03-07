@@ -9,9 +9,9 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSubmissionsData } from '@/hooks/useSheetData';
+import { usePencairanData } from '@/hooks/use-pencairan-data';
 import { useMemo } from 'react';
-import { STATUS_LABELS, SubmissionStatus } from '@/types/submission';
+import { STATUS_LABELS, SubmissionStatus } from '@/types/pencairan';
 
 interface User {
   role: string;
@@ -34,7 +34,7 @@ interface Notification {
 }
 
 export function Header({ user, onLogout }: HeaderProps) {
-  const { data: submissions } = useSubmissionsData();
+  const { data: submissions } = usePencairanData();
   
   const getInitials = (name: string) => {
     const parts = name.split(' ');
@@ -53,8 +53,8 @@ export function Header({ user, onLogout }: HeaderProps) {
       // Admin sees all activity
       const pendingPpk = submissions.filter(s => s.status === 'pending_ppk').length;
       const pendingBendahara = submissions.filter(s => s.status === 'pending_bendahara').length;
-      const returnedSm = submissions.filter(s => s.status === 'incomplete_sm').length;
-      const sentKppn = submissions.filter(s => s.status === 'sent_kppn').length;
+      const returnedSm = submissions.filter(s => s.status === 'rejected_sm').length;
+      const sentKppn = submissions.filter(s => s.status === 'pending_kppn').length;
       
       if (pendingPpk > 0) {
         notifs.push({

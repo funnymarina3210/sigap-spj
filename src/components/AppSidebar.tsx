@@ -24,7 +24,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { UserRole, canCreateSubmission } from "@/types/submission";
+import { UserRole, canCreateSubmission } from "@/types/pencairan";
 
 interface AppSidebarProps {
   userRole: UserRole;
