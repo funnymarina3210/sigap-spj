@@ -24,7 +24,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { UserRole, canCreateSubmission, SUBMITTER_ROLES } from "@/types/pencairan";
+import { UserRole, canCreateSubmission, SUBMITTER_ROLES, ROLES_CAN_VIEW_ALL } from "@/types/pencairan";
 
 interface AppSidebarProps {
   userRole: UserRole;
@@ -54,7 +54,13 @@ export function AppSidebar({ userRole, onCreateSubmission }: AppSidebarProps) {
       title: "Daftar Pengajuan", 
       url: "/pencairan", 
       icon: LayoutGrid,
-      roles: ['admin', 'Bendahara', 'Pejabat Pembuat Komitmen', 'Pejabat Penandatangan Surat Perintah Membayar', 'KPPN', 'Arsip', 'operator'] as UserRole[]
+      // Show for all submitters and all reviewers
+      roles: [
+        ...SUBMITTER_ROLES,
+        ...ROLES_CAN_VIEW_ALL,
+        'admin',
+        'operator'
+      ].filter((role, index, self) => self.indexOf(role) === index) as UserRole[] // Remove duplicates
     },
   ];
 
