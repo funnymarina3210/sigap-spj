@@ -65,102 +65,107 @@ function getStepStatus(stepKey: string, submissionStatus: SubmissionStatus | und
 }
 
 export function WorkflowProgress({ status, className }: WorkflowProgressProps) {
-  // Determine colors based on status
-  const getProgressColor = () => {
-    if (status === 'draft') return 'bg-gray-500';
-    if (status === 'complete_arsip') return 'bg-green-500';
-    if (['pending_bendahara', 'incomplete_bendahara'].includes(status)) return 'bg-blue-500';
-    if (['pending_ppk', 'incomplete_ppk'].includes(status)) return 'bg-yellow-500';
-    if (['pending_ppspm', 'incomplete_ppspm'].includes(status)) return 'bg-purple-500';
-    if (['sent_kppn', 'incomplete_kppn'].includes(status)) return 'bg-indigo-500';
-    if (status === 'incomplete_sm') return 'bg-red-500';
-    return 'bg-primary';
-  };
-
   const getCurrentStepColor = () => {
     switch (status) {
-      case 'draft': return 'bg-gray-500 text-white ring-4 ring-gray-200';
-      case 'pending_bendahara': return 'bg-blue-500 text-white ring-4 ring-blue-200';
-      case 'incomplete_bendahara': return 'bg-purple-500 text-white ring-4 ring-purple-200';
-      case 'pending_ppk': return 'bg-yellow-500 text-white ring-4 ring-yellow-200';
-      case 'incomplete_ppk': return 'bg-orange-500 text-white ring-4 ring-orange-200';
-      case 'pending_ppspm': return 'bg-purple-500 text-white ring-4 ring-purple-200';
-      case 'incomplete_ppspm': return 'bg-fuchsia-500 text-white ring-4 ring-fuchsia-200';
-      case 'sent_kppn': return 'bg-indigo-500 text-white ring-4 ring-indigo-200';
-      case 'incomplete_kppn': return 'bg-violet-500 text-white ring-4 ring-violet-200';
-      case 'incomplete_sm': return 'bg-red-500 text-white ring-4 ring-red-200';
-      case 'complete_arsip': return 'bg-green-500 text-white ring-4 ring-green-200';
-      default: return 'bg-primary text-primary-foreground ring-4 ring-primary/20';
+      case 'draft': return 'bg-gray-400 text-white';
+      case 'pending_bendahara': return 'bg-blue-400 text-white';
+      case 'incomplete_bendahara': return 'bg-red-400 text-white';
+      case 'pending_ppk': return 'bg-yellow-400 text-white';
+      case 'incomplete_ppk': return 'bg-orange-500 text-white';
+      case 'pending_ppspm': return 'bg-purple-500 text-white';
+      case 'incomplete_ppspm': return 'bg-red-500 text-white';
+      case 'sent_kppn': return 'bg-blue-400 text-white';
+      case 'incomplete_kppn': return 'bg-red-400 text-white';
+      case 'incomplete_sm': return 'bg-red-500 text-white';
+      case 'complete_arsip': return 'bg-green-500 text-white';
+      default: return 'bg-gray-300 text-white';
     }
   };
 
-  const getStepIcon = (stepStatus: string, stepKey: string, index: number) => {
-    if (stepStatus === 'complete') return '✅';
-    if (stepStatus === 'current') return '⏳';
-    if (stepStatus === 'error') return '❌';
-    if (stepKey === 'kppn') return '🏛️';
-    return (index + 1).toString();
+  const getProgressLineColor = () => {
+    switch (status) {
+      case 'draft': return 'bg-gray-400';
+      case 'pending_bendahara':
+      case 'incomplete_bendahara': return 'bg-blue-400';
+      case 'pending_ppk':
+      case 'incomplete_ppk': return 'bg-yellow-400';
+      case 'pending_ppspm':
+      case 'incomplete_ppspm': return 'bg-purple-500';
+      case 'sent_kppn':
+      case 'incomplete_kppn': return 'bg-blue-400';
+      case 'complete_arsip': return 'bg-green-500';
+      default: return 'bg-gray-300';
+    }
   };
 
   return (
     <div className={cn('w-full', className)}>
-      <div className="flex items-center justify-between relative">
-        {/* Progress line background */}
-        <div className="absolute top-5 left-[10%] right-[10%] h-1 bg-muted rounded-full" />
-        
-        {/* Active progress line */}
-        <div 
-          className={cn(
-            "absolute top-5 left-[10%] h-1 rounded-full transition-all duration-500",
-            getProgressColor()
-          )}
-          style={{
-            width: status === 'complete_arsip' ? '100%' : 
-                   ['sent_kppn', 'incomplete_kppn'].includes(status) ? '83%' :
-                   ['pending_ppspm', 'incomplete_ppspm'].includes(status) ? '67%' :
-                   ['pending_ppk', 'incomplete_ppk'].includes(status) ? '50%' :
-                   ['pending_bendahara', 'incomplete_bendahara'].includes(status) ? '33%' : '0%'
-          }}
-        />
-        
-        {steps.map((step, index) => {
-          const stepStatus = getStepStatus(step.key, status);
-          const icon = getStepIcon(stepStatus, step.key, index);
+      <div className="space-y-6">
+        {/* Progress line with steps */}
+        <div className="relative">
+          {/* Background line */}
+          <div className="absolute top-5 left-0 right-0 h-1.5 bg-gray-200 rounded-full" />
           
-          return (
-            <div key={step.key} className="flex flex-col items-center relative z-10">
-              <div
-                className={cn(
-                  'w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300',
-                  stepStatus === 'complete' && 'bg-green-500 text-white shadow-lg',
-                  stepStatus === 'current' && getCurrentStepColor(),
-                  stepStatus === 'pending' && 'bg-muted text-muted-foreground border-2 border-muted-foreground/20',
-                  stepStatus === 'error' && 'bg-red-500 text-white ring-4 ring-red-200'
-                )}
-              >
-                <span className="text-lg">{icon}</span>
-              </div>
+          {/* Active progress line */}
+          <div 
+            className={cn(
+              "absolute top-5 left-0 h-1.5 rounded-full transition-all duration-500",
+              getProgressLineColor()
+            )}
+            style={{
+              width: status === 'complete_arsip' ? '100%' : 
+                     ['sent_kppn', 'incomplete_kppn'].includes(status) ? '83%' :
+                     ['pending_ppspm', 'incomplete_ppspm'].includes(status) ? '67%' :
+                     ['pending_ppk', 'incomplete_ppk'].includes(status) ? '50%' :
+                     ['pending_bendahara', 'incomplete_bendahara'].includes(status) ? '33%' :
+                     ['draft', 'incomplete_sm'].includes(status) ? '0%' : '0%'
+            }}
+          />
+          
+          {/* Step circles and connector lines */}
+          <div className="flex items-center justify-between relative z-10">
+            {steps.map((step, index) => {
+              const stepStatus = getStepStatus(step.key, status);
+              const stepNumber = index + 1;
+              
+              return (
+                <div key={step.key} className="flex flex-col items-center">
+                  {/* Step circle */}
+                  <div
+                    className={cn(
+                      'w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 flex-shrink-0',
+                      stepStatus === 'complete' && 'bg-green-500 text-white shadow-md',
+                      stepStatus === 'current' && `${getCurrentStepColor()} shadow-lg ring-2 ring-offset-2 ring-current`,
+                      stepStatus === 'pending' && 'bg-gray-200 text-gray-500 border-2 border-gray-300',
+                      stepStatus === 'error' && 'bg-red-500 text-white shadow-md'
+                    )}
+                  >
+                    {stepStatus === 'complete' && <span className="text-xl">✓</span>}
+                    {stepStatus === 'current' && <span>{stepNumber}</span>}
+                    {stepStatus === 'pending' && (step.key === 'kppn' ? '🏛️' : <span className="text-sm">{stepNumber}</span>)}
+                    {stepStatus === 'error' && <span>!</span>}
+                  </div>
 
-              <div className="mt-2 text-center">
-                <p className={cn(
-                  'text-sm font-medium',
-                  stepStatus === 'current' && status === 'pending_ppk' && 'text-yellow-600',
-                  stepStatus === 'current' && status === 'pending_bendahara' && 'text-blue-600',
-                  stepStatus === 'current' && status === 'incomplete_ppk' && 'text-orange-600',
-                  stepStatus === 'current' && status === 'incomplete_bendahara' && 'text-purple-600',
-                  stepStatus === 'current' && status === 'sent_kppn' && 'text-indigo-600',
-                  stepStatus === 'complete' && 'text-green-600',
-                  stepStatus === 'error' && 'text-red-600'
-                )}>
-                  {step.label}
-                </p>
-                <p className="text-[10px] text-muted-foreground max-w-[80px]">
-                  {step.description}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+                  {/* Step label */}
+                  <div className="mt-3 text-center">
+                    <p className={cn(
+                      'text-xs font-semibold',
+                      stepStatus === 'complete' && 'text-green-600',
+                      stepStatus === 'current' && 'text-gray-900 font-bold',
+                      stepStatus === 'pending' && 'text-gray-600',
+                      stepStatus === 'error' && 'text-red-600'
+                    )}>
+                      {step.label}
+                    </p>
+                    <p className="text-[10px] text-gray-600 max-w-[70px] leading-tight mt-1">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
