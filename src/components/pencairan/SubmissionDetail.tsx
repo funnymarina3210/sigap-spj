@@ -280,7 +280,6 @@ export function SubmissionDetail({
       documents,
       pembayaran: actor === 'bendahara' ? pembayaran as 'UP' | 'LS' : undefined,
       nomorSPM: actor === 'bendahara' ? nomorSPM : undefined,
-      nomorSPPD: actor === 'arsip' ? nomorSPPD : undefined,
     });
     onClose();
   };
