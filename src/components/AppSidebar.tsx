@@ -24,7 +24,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { UserRole, canCreateSubmission } from "@/types/pencairan";
+import { UserRole, canCreateSubmission, SUBMITTER_ROLES } from "@/types/pencairan";
 
 interface AppSidebarProps {
   userRole: UserRole;
@@ -75,7 +75,7 @@ export function AppSidebar({ userRole, onCreateSubmission }: AppSidebarProps) {
       title: "Buat Pengajuan", 
       url: "#create", 
       icon: Plus,
-      roles: ['admin', 'user'] as UserRole[],
+      roles: [...SUBMITTER_ROLES, 'admin'] as UserRole[],
       action: onCreateSubmission
     },
   ];
