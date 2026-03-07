@@ -45,7 +45,13 @@ export function AppSidebar({ userRole, onCreateSubmission }: AppSidebarProps) {
       title: "Dashboard", 
       url: "/dashboard", 
       icon: LayoutDashboard,
-      roles: ['admin', 'ppk', 'bendahara', 'user'] as UserRole[]
+      // Show Dashboard to all users (submitters and reviewers)
+      roles: [
+        ...SUBMITTER_ROLES,
+        ...ROLES_CAN_VIEW_ALL,
+        'admin',
+        'operator'
+      ].filter((role, index, self) => self.indexOf(role) === index) as UserRole[]
     },
   ];
 
