@@ -22,8 +22,7 @@ interface TimelineEvent {
   actor: string;
   actorLabel: string;
   timestamp?: string;
-  status?: string;
-  statusLabel?: string;
+  statusLabel: string;
   type: 'submit' | 'approve' | 'reject' | 'pending' | 'complete' | 'incomplete';
 }
 
@@ -31,7 +30,7 @@ function parseTimelineStatus(status?: string): { type: 'approve' | 'reject' | 'p
   if (!status) return { type: 'pending', label: 'Menunggu' };
   const lowerStatus = status.toLowerCase();
   if (lowerStatus.includes('disetujui') || lowerStatus.includes('approve')) return { type: 'approve', label: 'Disetujui' };
-  if (lowerStatus.includes('dikembalikan') || lowerStatus.includes('reject')) return { type: 'reject', label: 'Dikembalikan' };
+  if (lowerStatus.includes('dikembalikan') || lowerStatus.includes('tolak') || lowerStatus.includes('reject')) return { type: 'reject', label: 'Dikembalikan' };
   if (lowerStatus.includes('perbaikan') || lowerStatus.includes('incomplete')) return { type: 'incomplete', label: 'Perlu perbaikan' };
   return { type: 'pending', label: status };
 }
@@ -39,60 +38,96 @@ function parseTimelineStatus(status?: string): { type: 'approve' | 'reject' | 'p
 export function TrackingTimeline({ submission, className }: TrackingTimelineProps) {
   const events: TimelineEvent[] = [];
 
-  const isRejectedSm = submission.status === 'rejected_sm';
-  const isRejectedPpk = submission.status === 'rejected_ppk';
-  const isRejectedBendahara = submission.status === 'rejected_bendahara';
-
   // 1. SM Submit
-  if (submission.waktuPengajuan || isRejectedSm) {
+  if (submission.waktuPengajuan) {
+    const isRejectedSm = submission.status === 'rejected_sm';
     events.push({
       id: 'sm-submit',
       actor: 'SM',
       actorLabel: 'Subject Matter (Fungsi)',
-      timestamp: submission.waktuPengajuan || undefined,
-      status: isRejectedSm ? 'Perlu perbaikan' : 'Pengajuan dikirim',
-      statusLabel: isRejectedSm ? 'Diperlukan perbaikan oleh SM' : 'Pengajuan telah dikirim',
-      type: isRejectedSm ? 'incomplete' : 'submit',
+      timestamp: submission.waktuPengajuan,
+      statusLabel: isRejectedSm ? 'Pengajuan dikembalikan ke SM' : 'Pengajuan telah dikirim ke Bendahara',
+      type: isRejectedSm ? 'reject' : 'submit',
     });
   }
 
-  // 2. PPK
-  if (submission.waktuPpk || submission.statusPpk || isRejectedPpk) {
-    const ppkStatus = parseTimelineStatus(submission.statusPpk);
-    events.push({
-      id: 'ppk',
-      actor: 'PPK',
-      actorLabel: 'Pejabat Pembuat Komitmen',
-      timestamp: submission.waktuPpk,
-      status: isRejectedPpk ? 'Perlu perbaikan' : submission.statusPpk,
-      statusLabel: isRejectedPpk ? 'Diperlukan perbaikan oleh PPK' : (submission.statusPpk ? `PPK: ${submission.statusPpk}` : 'Menunggu verifikasi PPK'),
-      type: isRejectedPpk ? 'incomplete' : (submission.statusPpk?.toLowerCase().includes('disetujui') ? 'approve' : ppkStatus.type),
-    });
-  }
-
-  // 3. Bendahara
-  if (submission.waktuBendahara || submission.statusBendahara || isRejectedBendahara) {
+  // 2. Bendahara
+  if (submission.waktuBendahara || submission.statusBendahara) {
+    const isRejectedBendahara = submission.status === 'rejected_bendahara';
     const bendaharaStatus = parseTimelineStatus(submission.statusBendahara);
     events.push({
       id: 'bendahara',
       actor: 'Bendahara',
       actorLabel: 'Bendahara Pengeluaran',
       timestamp: submission.waktuBendahara,
-      status: isRejectedBendahara ? 'Perlu perbaikan' : submission.statusBendahara,
-      statusLabel: isRejectedBendahara ? 'Diperlukan perbaikan oleh Bendahara' : (submission.statusBendahara ? `Bendahara: ${submission.statusBendahara}` : 'Menunggu verifikasi Bendahara'),
-      type: isRejectedBendahara ? 'incomplete' : (submission.statusBendahara?.toLowerCase().includes('disetujui') ? 'approve' : bendaharaStatus.type),
+      statusLabel: isRejectedBendahara ? 'Pengajuan dikembalikan ke SM' : submission.statusBendahara ? `Bendahara: ${submission.statusBendahara}` : 'Menunggu verifikasi Bendahara',
+      type: isRejectedBendahara ? 'reject' : (submission.statusBendahara?.toLowerCase().includes('disetujui') ? 'approve' : bendaharaStatus.type),
     });
   }
 
-  // 4. KPPN
-  if (submission.statusKppn) {
+  // 3. PPK
+  if (submission.waktuPpk || submission.statusPpk) {
+    const isRejectedPpk = submission.status === 'rejected_ppk';
+    const ppkStatus = parseTimelineStatus(submission.statusPpk);
+    events.push({
+      id: 'ppk',
+      actor: 'PPK',
+      actorLabel: 'Pejabat Pembuat Komitmen',
+      timestamp: submission.waktuPpk,
+      statusLabel: isRejectedPpk ? 'Pengajuan dikembalikan ke Bendahara' : submission.statusPpk ? `PPK: ${submission.statusPpk}` : 'Menunggu verifikasi PPK',
+      type: isRejectedPpk ? 'reject' : (submission.statusPpk?.toLowerCase().includes('disetujui') ? 'approve' : ppkStatus.type),
+    });
+  }
+
+  // 4. PPSPM
+  if (submission.waktuPPSPM || submission.statusPPSPM) {
+    const isRejectedPpspm = submission.status === 'rejected_ppspm';
+    const ppspmStatus = parseTimelineStatus(submission.statusPPSPM);
+    events.push({
+      id: 'ppspm',
+      actor: 'PPSPM',
+      actorLabel: 'Pejabat Penandatangan Surat Perintah Membayar',
+      timestamp: submission.waktuPPSPM,
+      statusLabel: isRejectedPpspm ? 'Pengajuan dikembalikan ke PPK' : submission.statusPPSPM ? `PPSPM: ${submission.statusPPSPM}` : 'Menunggu verifikasi PPSPM',
+      type: isRejectedPpspm ? 'reject' : (submission.statusPPSPM?.toLowerCase().includes('disetujui') ? 'approve' : ppspmStatus.type),
+    });
+  }
+
+  // 5. KPPN
+  if (submission.waktuKppn || submission.statusKppn) {
+    const isRejectedKppn = submission.status === 'rejected_kppn';
+    const kppnStatus = parseTimelineStatus(submission.statusKppn);
     events.push({
       id: 'kppn',
       actor: 'KPPN',
       actorLabel: 'Kantor Pelayanan Perbendaharaan Negara',
-      timestamp: undefined,
-      status: submission.statusKppn,
-      statusLabel: `KPPN: ${submission.statusKppn}`,
+      timestamp: submission.waktuKppn,
+      statusLabel: isRejectedKppn ? 'Pengajuan dikembalikan ke PPSPM' : submission.statusKppn ? `KPPN: ${submission.statusKppn}` : 'Menunggu verifikasi KPPN',
+      type: isRejectedKppn ? 'reject' : (submission.statusKppn?.toLowerCase().includes('disetujui') ? 'approve' : kppnStatus.type),
+    });
+  }
+
+  // 6. Arsip
+  if (submission.waktuArsip || submission.statusArsip) {
+    const arsipStatus = parseTimelineStatus(submission.statusArsip);
+    events.push({
+      id: 'arsip',
+      actor: 'Arsip',
+      actorLabel: 'Arsip',
+      timestamp: submission.waktuArsip,
+      statusLabel: submission.statusArsip ? `Arsip: ${submission.statusArsip}` : 'Menunggu verifikasi Arsip',
+      type: submission.statusArsip?.toLowerCase().includes('disetujui') ? 'approve' : arsipStatus.type,
+    });
+  }
+
+  // 7. Completed
+  if (submission.status === 'completed') {
+    events.push({
+      id: 'completed',
+      actor: 'Sistem',
+      actorLabel: 'Pengajuan Selesai',
+      timestamp: submission.updatedAtString,
+      statusLabel: 'Pengajuan telah diselesaikan',
       type: 'complete',
     });
   }

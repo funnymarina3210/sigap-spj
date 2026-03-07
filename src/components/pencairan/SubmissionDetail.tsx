@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/StatusBadge';
 import { WorkflowProgress } from '@/components/WorkflowProgress';
+import { TrackingTimeline } from '@/components/TrackingTimeline';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -107,6 +108,9 @@ export function SubmissionDetail({
               <WorkflowProgress status={submission.status} />
             </CardContent>
           </Card>
+
+          {/* Tracking Timeline */}
+          <TrackingTimeline submission={submission} />
 
           {/* Basic Info */}
           <Card>
