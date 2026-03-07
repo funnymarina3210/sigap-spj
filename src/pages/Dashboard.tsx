@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePencairanData } from "@/hooks/use-pencairan-data";
-import { SubmissionStatus } from "@/types/pencairan";
+import { SubmissionStatus, STATUS_LABELS } from "@/types/pencairan";
 
 // Dashboard Pencairan dengan KPI, Charts, dan Workflow
 export default function Dashboard() {
@@ -28,10 +28,10 @@ export default function Dashboard() {
       ['pending_bendahara', 'pending_ppk', 'pending_ppspm'].includes(s.status)
     ).length;
     const selesai = filteredSubmissions.filter(s => 
-      s.status === 'complete_arsip'
+      s.status === 'completed'
     ).length;
     const dikembalikan = filteredSubmissions.filter(s => 
-      s.status?.startsWith('incomplete_')
+      s.status?.startsWith('rejected_')
     ).length;
     const tingkatSelesai = total > 0 ? Math.round((selesai / total) * 100) : 0;
 
@@ -61,32 +61,21 @@ export default function Dashboard() {
     pending_ppk: '#f59e0b',
     pending_bendahara: '#06b6d4',
     pending_ppspm: '#8b5cf6',
-    sent_kppn: '#10b981',
-    complete_arsip: '#10b981',
-    incomplete_sm: '#ef4444',
-    incomplete_bendahara: '#ef4444',
-    incomplete_ppk: '#ef4444',
-    incomplete_ppspm: '#ef4444',
-    incomplete_kppn: '#ef4444',
+    pending_kppn: '#10b981',
+    pending_arsip: '#14b8a6',
+    completed: '#10b981',
+    rejected_sm: '#ef4444',
+    rejected_bendahara: '#ef4444',
+    rejected_ppk: '#ef4444',
+    rejected_ppspm: '#ef4444',
+    rejected_kppn: '#ef4444',
+    submitted_sm: '#3b82f6',
     draft: '#6b7280'
   };
 
   // Status label mapping
   const getStatusLabel = (status: SubmissionStatus) => {
-    const labels: Record<SubmissionStatus, string> = {
-      draft: 'Draft',
-      pending_bendahara: 'Menunggu Bendahara',
-      pending_ppk: 'Menunggu PPK',
-      pending_ppspm: 'Menunggu PPSPM',
-      sent_kppn: 'Dikirim ke KPPN',
-      complete_arsip: 'Selesai',
-      incomplete_sm: 'Ditolak SM',
-      incomplete_bendahara: 'Ditolak Bendahara',
-      incomplete_ppk: 'Ditolak PPK',
-      incomplete_ppspm: 'Ditolak PPSPM',
-      incomplete_kppn: 'Ditolak KPPN'
-    };
-    return labels[status] || status;
+    return STATUS_LABELS[status] || status;
   };
 
   return (

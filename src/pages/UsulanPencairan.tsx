@@ -116,16 +116,16 @@ export default function UsulanPencairan() {
     setSelectedDetail(null);
   };
 
-  const handleApprove = async (notes?: string, paymentType?: PaymentType, spmNumber?: string) => {
-    if (!selectedDetail || !user) throw new Error('Submission or user not found');
+  const handleApprove = async (submission: Submission, notes: string, paymentType?: PaymentType, spmNumber?: string) => {
+    if (!user) throw new Error('User not found');
 
     // Get next status based on current status
-    const nextStatus = getNextStatus(selectedDetail.status, 'approve');
+    const nextStatus = getNextStatus(submission.status, 'approve');
     if (!nextStatus) throw new Error('Cannot approve at current stage or permission denied');
 
     // Build the update object
     const updateData: Record<string, any> = {
-      id: selectedDetail.id,
+      id: submission.id,
       status: nextStatus,
       actor: userRole,
       action: 'approve',
@@ -149,7 +149,7 @@ export default function UsulanPencairan() {
 
     // Update local state
     const updatedSubmission: Submission = {
-      ...selectedDetail,
+      ...submission,
       status: nextStatus,
       updatedAt: new Date(),
     };
@@ -169,17 +169,17 @@ export default function UsulanPencairan() {
       updatedSubmission.statusArsip = notes || '';
     }
 
-    setSubmissions(submissions.map(s => s.id === selectedDetail.id ? updatedSubmission : s));
+    setSubmissions(submissions.map(s => s.id === submission.id ? updatedSubmission : s));
     setShowDetail(false);
     setSelectedDetail(null);
   };
 
-  const handleReject = async (reason: string) => {
-    if (!selectedDetail || !user) throw new Error('Submission or user not found');
+  const handleReject = async (submission: Submission, reason: string) => {
+    if (!user) throw new Error('User not found');
 
-    // Determine rejection status based on current status and who's rejecting
+    // Determine rejection status based on current status
     let rejectStatus: SubmissionStatus;
-    switch (selectedDetail.status) {
+    switch (submission.status) {
       case 'submitted_sm':
         rejectStatus = 'rejected_sm';
         break;
@@ -202,7 +202,7 @@ export default function UsulanPencairan() {
     // Call the pencairan-update Supabase function
     const { data, error } = await supabase.functions.invoke('pencairan-update', {
       body: {
-        id: selectedDetail.id,
+        id: submission.id,
         status: rejectStatus,
         actor: userRole,
         action: 'reject',
@@ -214,12 +214,12 @@ export default function UsulanPencairan() {
 
     // Update local state
     const updatedSubmission: Submission = {
-      ...selectedDetail,
+      ...submission,
       status: rejectStatus,
       updatedAt: new Date(),
     };
 
-    setSubmissions(submissions.map(s => s.id === selectedDetail.id ? updatedSubmission : s));
+    setSubmissions(submissions.map(s => s.id === submission.id ? updatedSubmission : s));
     setShowDetail(false);
     setSelectedDetail(null);
   };
@@ -296,8 +296,6 @@ export default function UsulanPencairan() {
             <SubmissionTable
               submissions={filteredSubmissions}
               onRowClick={handleRowClick}
-              onEditDraft={handleEditDraft}
-              itemsPerPage={10}
             />
           )}
         </CardContent>
@@ -328,9 +326,6 @@ export default function UsulanPencairan() {
       <SPByGrouping
         open={showSpBy}
         onClose={() => setShowSpBy(false)}
-        onSubmit={async () => {
-          setTimeout(() => refetch(), 1000);
-        }}
         submissions={submissions}
       />
     </div>

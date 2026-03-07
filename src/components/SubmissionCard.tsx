@@ -1,4 +1,4 @@
-import { Submission, getRelevantTimestamp } from '@/types/submission';
+import { Submission, getRelevantTimestamp } from '@/types/pencairan';
 import { StatusBadge } from './StatusBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { FileText, Clock, User, ArrowRight } from 'lucide-react';

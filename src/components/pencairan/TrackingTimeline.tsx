@@ -53,12 +53,12 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     });
   }
 
-  if (submission.waktuPPK) {
+  if (submission.waktuPpk) {
     entries.push({
       stage: 'PPK',
-      timestamp: submission.waktuPPK,
+      timestamp: submission.waktuPpk,
       status: ['pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status) ? 'approved' : 'rejected',
-      notes: submission.statusPPK,
+      notes: submission.statusPpk,
     });
   }
 

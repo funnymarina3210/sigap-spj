@@ -93,10 +93,8 @@ export function Header({ user, onLogout }: HeaderProps) {
         });
       }
     } else if (role === 'ppk') {
-      // PPK sees pending_ppk and incomplete_ppk
       const pendingPpk = submissions.filter(s => s.status === 'pending_ppk').length;
-      const incompletePpk = submissions.filter(s => s.status === 'incomplete_ppk').length;
-      const sentKppn = submissions.filter(s => s.status === 'sent_kppn').length;
+      const rejectedPpk = submissions.filter(s => s.status === 'rejected_bendahara').length;
       
       if (pendingPpk > 0) {
         notifs.push({
@@ -107,28 +105,18 @@ export function Header({ user, onLogout }: HeaderProps) {
           type: 'warning'
         });
       }
-      if (incompletePpk > 0) {
+      if (rejectedPpk > 0) {
         notifs.push({
           id: '2',
           title: 'Dikembalikan ke Anda',
-          message: `${incompletePpk} pengajuan dikembalikan oleh Bendahara`,
+          message: `${rejectedPpk} pengajuan dikembalikan oleh Bendahara`,
           time: 'Terbaru',
           type: 'warning'
         });
       }
-      if (sentKppn > 0) {
-        notifs.push({
-          id: '3',
-          title: 'Sudah Kirim KPPN',
-          message: `${sentKppn} pengajuan sudah dikirim ke KPPN (dapat dikembalikan)`,
-          time: 'Terbaru',
-          type: 'success'
-        });
-      }
     } else if (role === 'bendahara') {
-      // Bendahara sees pending_bendahara and incomplete_bendahara
       const pendingBendahara = submissions.filter(s => s.status === 'pending_bendahara').length;
-      const incompleteBendahara = submissions.filter(s => s.status === 'incomplete_bendahara').length;
+      const rejectedBendahara = submissions.filter(s => s.status === 'rejected_kppn').length;
       
       if (pendingBendahara > 0) {
         notifs.push({
@@ -139,20 +127,19 @@ export function Header({ user, onLogout }: HeaderProps) {
           type: 'warning'
         });
       }
-      if (incompleteBendahara > 0) {
+      if (rejectedBendahara > 0) {
         notifs.push({
           id: '2',
           title: 'Dikembalikan KPPN',
-          message: `${incompleteBendahara} pengajuan dikembalikan dari KPPN`,
+          message: `${rejectedBendahara} pengajuan dikembalikan dari KPPN`,
           time: 'Terbaru',
           type: 'warning'
         });
       }
     } else if (role === 'user') {
-      // User sees their returned submissions and sent to kppn
-      const returnedSm = submissions.filter(s => s.status === 'incomplete_sm').length;
+      const returnedSm = submissions.filter(s => s.status === 'rejected_sm').length;
       const pending = submissions.filter(s => s.status === 'pending_ppk' || s.status === 'pending_bendahara').length;
-      const sentKppn = submissions.filter(s => s.status === 'sent_kppn').length;
+      const completed = submissions.filter(s => s.status === 'completed').length;
       
       if (returnedSm > 0) {
         notifs.push({
@@ -172,11 +159,11 @@ export function Header({ user, onLogout }: HeaderProps) {
           type: 'info'
         });
       }
-      if (sentKppn > 0) {
+      if (completed > 0) {
         notifs.push({
           id: '3',
           title: 'Berhasil',
-          message: `${sentKppn} pengajuan Anda sudah dikirim ke KPPN`,
+          message: `${completed} pengajuan Anda sudah selesai`,
           time: 'Terbaru',
           type: 'success'
         });

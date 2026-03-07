@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { StatusBadge } from '@/components/StatusBadge';
-import { Submission, UserRole, canViewDetail, canEdit, getRelevantTimestamp } from '@/types/submission';
+import { Submission, UserRole, canViewDetail, canEdit, getRelevantTimestamp } from '@/types/pencairan';
 import { format } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import {

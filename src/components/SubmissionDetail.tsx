@@ -3,9 +3,8 @@ import {
   STATUS_LABELS, 
   UserRole, 
   canTakeAction, 
-  canReturnFromKppn,
   getDocumentsByJenisBelanja
-} from '@/types/submission';
+} from '@/types/pencairan';
 import { StatusBadge } from './StatusBadge';
 import { WorkflowProgress } from './WorkflowProgress';
 import { DocumentChecklist } from './DocumentChecklist';
