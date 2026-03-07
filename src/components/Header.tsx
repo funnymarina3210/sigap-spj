@@ -34,7 +34,7 @@ interface Notification {
 }
 
 export function Header({ user, onLogout }: HeaderProps) {
-  const { data: submissions } = usePencairanData();
+  const { data: submissions = [] } = usePencairanData();
   
   const getInitials = (name: string) => {
     const parts = name.split(' ');
