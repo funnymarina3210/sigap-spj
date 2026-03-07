@@ -43,7 +43,7 @@ export default function SubmissionsCard() {
   const [showForm, setShowForm] = useState(false);
   const [editingSubmission, setEditingSubmission] = useState<Submission | null>(null);
 
-  const userRole: UserRole = user?.role as UserRole || 'user';
+  const userRole = (user?.role || 'operator') as UserRole;
 
   // Convert sheet data to Submission format
   useEffect(() => {
@@ -106,14 +106,14 @@ export default function SubmissionsCard() {
   }, [submissions, activeFilter]);
 
   const counts = useMemo(() => {
-    const result: Record<SubmissionStatus | 'all', number> = {
+    const result: Record<string, number> = {
       all: submissions.length,
       pending_ppk: 0,
       pending_bendahara: 0,
-      incomplete_sm: 0,
-      incomplete_ppk: 0,
-      incomplete_bendahara: 0,
-      sent_kppn: 0
+      rejected_sm: 0,
+      rejected_ppk: 0,
+      rejected_bendahara: 0,
+      completed: 0
     };
     submissions.forEach(sub => {
       result[sub.status]++;

@@ -3,9 +3,9 @@ import {
   STATUS_LABELS, 
   UserRole, 
   canTakeAction, 
-  canReturnFromKppn,
+  canReturnFromArsip as canReturnFromKppn,
   getDocumentsByJenisBelanja
-} from '@/types/submission';
+} from '@/types/pencairan';
 import { StatusBadge } from './StatusBadge';
 import { WorkflowProgress } from './WorkflowProgress';
 import { DocumentChecklist } from './DocumentChecklist';
@@ -93,7 +93,7 @@ export function SubmissionDetail({
   const updateStatusInSheet = async (
     newStatus: string, 
     newNotes?: string, 
-    actor: 'ppk' | 'bendahara' | 'kppn' = 'ppk',
+    actor: string = 'ppk',
     action: 'approve' | 'reject' | 'return' = 'approve'
   ) => {
     setIsUpdating(true);
@@ -133,13 +133,13 @@ export function SubmissionDetail({
 
   const handleApprove = async () => {
     let newStatus: string;
-    let actor: 'ppk' | 'bendahara' | 'kppn';
+    let actor: string;
     
-    if (submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk') {
+    if (submission.status === 'pending_ppk' || submission.status === 'rejected_ppk') {
       newStatus = 'pending_bendahara';
       actor = 'ppk';
-    } else if (submission.status === 'pending_bendahara' || submission.status === 'incomplete_bendahara') {
-      newStatus = 'sent_kppn';
+    } else if (submission.status === 'pending_bendahara' || submission.status === 'rejected_bendahara') {
+      newStatus = 'pending_ppspm';
       actor = 'bendahara';
     } else {
       return;
@@ -150,24 +150,19 @@ export function SubmissionDetail({
     onUpdateSubmission(submission.id, {
       status: newStatus as Submission['status'],
       documents,
-      ...(submission.status === 'pending_ppk' && { ppkCheckedAt: new Date() }),
-      ...(submission.status === 'pending_bendahara' && { 
-        bendaharaCheckedAt: new Date(),
-        sentToKppnAt: newStatus === 'sent_kppn' ? new Date() : undefined
-      }),
     });
     onClose();
   };
 
   const handleReject = async () => {
     let newStatus: string;
-    let actor: 'ppk' | 'bendahara' | 'kppn';
+    let actor: string;
     
-    if (submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk') {
-      newStatus = 'incomplete_sm';
+    if (submission.status === 'pending_ppk' || submission.status === 'rejected_ppk') {
+      newStatus = 'rejected_sm';
       actor = 'ppk';
-    } else if (submission.status === 'pending_bendahara' || submission.status === 'incomplete_bendahara') {
-      newStatus = 'incomplete_ppk';
+    } else if (submission.status === 'pending_bendahara' || submission.status === 'rejected_bendahara') {
+      newStatus = 'rejected_ppk';
       actor = 'bendahara';
     } else {
       return;
@@ -184,11 +179,11 @@ export function SubmissionDetail({
   };
 
   const handleReturnToBendahara = async () => {
-    const newStatus = 'incomplete_bendahara';
+    const newStatus = 'rejected_bendahara';
     await updateStatusInSheet(newStatus, notes, 'kppn', 'return');
 
     onUpdateSubmission(submission.id, {
-      status: newStatus,
+      status: newStatus as Submission['status'],
       notes: notes || submission.notes,
     });
     onClose();
@@ -196,19 +191,20 @@ export function SubmissionDetail({
 
   const canAction = canTakeAction(userRole, submission.status);
   const canReturn = canReturnFromKppn(userRole, submission.status);
-  const isReadOnly = userRole === 'user';
+  const isReadOnly = !canAction;
 
   const getApproveButtonLabel = () => {
-    if (submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk') {
+    if (submission.status === 'pending_ppk' || submission.status === 'rejected_ppk') {
       return 'Kirim ke Bendahara';
     }
-    return 'Kirim ke KPPN';
+    return 'Kirim ke PPSPM';
   };
 
   const getRejectButtonLabel = () => {
-    if (submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk') {
+    if (submission.status === 'pending_ppk' || submission.status === 'rejected_ppk') {
       return 'Kembalikan ke SM';
     }
+    return 'Kembalikan ke PPK';
     return 'Kembalikan ke PPK';
   };
 
@@ -402,7 +398,7 @@ export function SubmissionDetail({
               >
                 {isUpdating ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : submission.status === 'pending_ppk' || submission.status === 'incomplete_ppk' ? (
+                ) : submission.status === 'pending_ppk' || submission.status === 'rejected_ppk' ? (
                   <Send className="w-4 h-4 mr-2" />
                 ) : (
                   <CheckCircle2 className="w-4 h-4 mr-2" />

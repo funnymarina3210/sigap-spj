@@ -184,7 +184,7 @@ serve(async (req) => {
 
     const accessToken = await getAccessToken(serviceAccount);
     
-    const spreadsheetId = '1vEuGURS77G7tZVJmff89SD9z4D-mFlYSXQWkX2A0fwc';
+    const spreadsheetId = '1fVVqmK0LANErtoiuSlKY8YAk9Nsu4sXQ33BwzRlQhNE';
     const sheetName = 'data';
     
     // Find the row with the matching ID
