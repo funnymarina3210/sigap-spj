@@ -1,4 +1,4 @@
-// @ts-ignore - Deno runtime imports
+// deno-lint-ignore-file
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -6,24 +6,46 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const DEFAULT_SPREADSHEET_ID = '1fVVqmK0LANErtoiuSlKY8YAk9Nsu4sXQ33BwzRlQhNE';
+// Default SPREADSHEET_ID (fallback untuk 3210)
+const DEFAULT_SPREADSHEET_ID = '1hnNCHxmQQ5rjVcxIBvJk5lEdZ8aki4YUMBi1s33cnGI';
 const SHEET_NAME = 'data';
+
+// Master Config Spreadsheet untuk multi-satker
+const MASTER_CONFIG_SPREADSHEET_ID = '1CBpS-rhb5pSSHFoleUoRa8D8CGeMh61tCoF82S0W0cQ';
+const MASTER_CONFIG_SHEET_NAME = 'satker_config';
 
 async function getAccessToken() {
   console.log('Getting access token for pencairan-save...');
   
-  // @ts-ignore - Deno API
-  const serviceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
-  if (!serviceAccountJson) {
-    throw new Error('Missing Google credentials');
+  let privateKey: string;
+  let serviceAccountEmail: string;
+  
+  // @ts-ignore - Deno runtime API
+  const googlePrivateKeyEnv = Deno.env.get('GOOGLE_PRIVATE_KEY');
+  // @ts-ignore - Deno runtime API
+  const googleServiceAccountEmailEnv = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL');
+  
+  try {
+    if (googlePrivateKeyEnv?.includes('"type"')) {
+      const serviceAccount = JSON.parse(googlePrivateKeyEnv);
+      privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
+      serviceAccountEmail = serviceAccount.client_email;
+    } else if (googleServiceAccountEmailEnv?.includes('"type"')) {
+      const serviceAccount = JSON.parse(googleServiceAccountEmailEnv);
+      privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
+      serviceAccountEmail = serviceAccount.client_email;
+    } else {
+      privateKey = googlePrivateKeyEnv?.replace(/\\n/g, '\n') || '';
+      serviceAccountEmail = googleServiceAccountEmailEnv || '';
+    }
+  } catch (e) {
+    console.error('Error parsing credentials:', e);
+    privateKey = googlePrivateKeyEnv?.replace(/\\n/g, '\n') || '';
+    serviceAccountEmail = googleServiceAccountEmailEnv || '';
   }
 
-  const serviceAccount = JSON.parse(serviceAccountJson);
-  const privateKey = serviceAccount.private_key;
-  const serviceAccountEmail = serviceAccount.client_email;
-
   if (!privateKey || !serviceAccountEmail) {
-    throw new Error('Missing Google credentials in service account JSON');
+    throw new Error('Missing Google credentials');
   }
 
   const now = Math.floor(Date.now() / 1000);
@@ -79,6 +101,59 @@ async function getAccessToken() {
   return tokenData.access_token;
 }
 
+// Fungsi untuk mendapatkan pencairan_sheet_id berdasarkan satker dari Master Config
+async function getPencairanSheetIdBySatker(accessToken: string, satker: string): Promise<string> {
+  try {
+    console.log(`[getPencairanSheetIdBySatker] Looking up satker: ${satker}`);
+    
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${MASTER_CONFIG_SPREADSHEET_ID}/values/${MASTER_CONFIG_SHEET_NAME}!A:F`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    if (!response.ok) {
+      console.warn(`[getPencairanSheetIdBySatker] Failed to fetch master config (${response.status}), using default sheet ID`);
+      return DEFAULT_SPREADSHEET_ID;
+    }
+
+    const data = await response.json();
+    const rows = data.values || [];
+    
+    console.log(`[getPencairanSheetIdBySatker] Master config loaded, rows count: ${rows.length}`);
+
+    if (rows.length <= 1) {
+      console.warn('[getPencairanSheetIdBySatker] No config data found, using default sheet ID');
+      return DEFAULT_SPREADSHEET_ID;
+    }
+
+    // Cari row dengan satker_id matching
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const rowSatker = row[0]?.trim();
+      console.log(`[getPencairanSheetIdBySatker] Checking row ${i}: satker_id="${rowSatker}"`);
+      
+      if (rowSatker === satker?.trim()) {
+        const pencairanSheetId = row[2]?.trim(); // Column C (index 2) = pencairan_sheet_id
+        if (pencairanSheetId) {
+          console.log(`[getPencairanSheetIdBySatker] ✓ Found pencairan sheet ID for satker ${satker}: ${pencairanSheetId}`);
+          return pencairanSheetId;
+        } else {
+          console.warn(`[getPencairanSheetIdBySatker] Row found but pencairan_sheet_id is empty at row ${i}`);
+        }
+      }
+    }
+
+    console.warn(`[getPencairanSheetIdBySatker] Satker ${satker} not found in config, using default sheet ID`);
+    return DEFAULT_SPREADSHEET_ID;
+  } catch (error) {
+    console.error('Error fetching pencairan sheet ID by satker:', error);
+    return DEFAULT_SPREADSHEET_ID;
+  }
+}
+
+// Fungsi untuk mendapatkan waktu Jakarta (WIB)
 function formatDateTime(): string {
   const now = new Date();
   const options: Intl.DateTimeFormatOptions = {
@@ -105,8 +180,8 @@ function formatDateTime(): string {
   return `${hours}:${minutes} - ${day}/${month}/${year}`;
 }
 
-serve(async (req: Request) => {
-  console.log('[pencairan-save] Function invoked, method:', req.method);
+serve(async (req) => {
+  console.log('pencairan-save function invoked');
   
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -114,53 +189,48 @@ serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    console.log('[pencairan-save] Request body received:', JSON.stringify(body, null, 2));
+    console.log('Request body:', JSON.stringify(body));
     
+    // Support both naming conventions from frontend
     const {
       id,
+      // New naming from frontend
       uraianPengajuan,
       namaPengaju,
       jenisPengajuan,
       kelengkapan,
       catatan,
       statusPengajuan,
-      waktuPengajuan,
-      user,
-      satker,
+      satker, // Tambahan: satker dari frontend
+      user, // 🆕 User role yang membuat pengajuan (Kolom R)
+      // Legacy naming
       title,
       submitterName,
       jenisBelanja,
       documents,
       notes,
       status,
-      statusPpk,
-      waktuPpk,
-      statusBendahara,
-      waktuBendahara,
-      statusKppn,
     } = body;
-
-    // Validate required fields
-    if (!id) {
-      throw new Error('Missing required field: id');
-    }
     
-    console.log('[pencairan-save] Extracted parameters:', {
-      id,
-      uraianPengajuan: uraianPengajuan?.substring(0, 30),
-      namaPengaju,
-      statusPengajuan,
-      user,
-    });
+    console.log('[pencairan-save] Received request:', { satker, id });
     
     const accessToken = await getAccessToken();
-    const spreadsheetId = DEFAULT_SPREADSHEET_ID;
     
-    console.log('[pencairan-save] Access token obtained, spreadsheetId:', spreadsheetId);
+    // Dapatkan correct spreadsheet ID berdasarkan satker
+    const spreadsheetId = satker 
+      ? await getPencairanSheetIdBySatker(accessToken, satker)
+      : DEFAULT_SPREADSHEET_ID;
+    
+    console.log('[pencairan-save] Using spreadsheetId:', { satker, spreadsheetId, isDefault: spreadsheetId === DEFAULT_SPREADSHEET_ID });
     
     const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;
-    const resolvedWaktuPengajuan = waktuPengajuan || formatDateTime();
+    const waktuPengajuan = formatDateTime();
 
+    // Struktur kolom sesuai request (21 kolom A:U):
+    // A: ID, B: Uraian Pengajuan, C: Nama Pengaju, D: Jenis Pengajuan, E: Kelengkapan
+    // F: Catatan, G: Status Pengajuan, H: Waktu Pengajuan, I: Waktu Bendahara, J: Waktu PPK
+    // K: Waktu PPSPM, L: Waktu Arsip, M: Status Bendahara, N: Status PPK, O: Status PPSPM, P: Status Arsip
+    // Q: Update terakhir, R: User (role login pembuat), S: Pembayaran (UP/LS), T: Nomor SPM, U: Nomor SPPD
     const rowData = [
       id || '',                                        // A: ID
       uraianPengajuan || title || '',                 // B: Uraian Pengajuan
@@ -168,8 +238,8 @@ serve(async (req: Request) => {
       jenisPengajuan || jenisBelanja || '',           // D: Jenis Pengajuan
       kelengkapan || documents || '',                 // E: Kelengkapan
       catatan || notes || '',                         // F: Catatan
-      statusPengajuan || status || 'draft',          // G: Status Pengajuan
-      resolvedWaktuPengajuan,                         // H: Waktu Pengajuan dari SM
+      statusPengajuan || status || 'draft',          // G: Status Pengajuan (draft for new submissions)
+      waktuPengajuan,                                 // H: Waktu Pengajuan dari SM
       '',                                             // I: Waktu Bendahara
       '',                                             // J: Waktu PPK
       '',                                             // K: Waktu PPSPM
@@ -178,91 +248,45 @@ serve(async (req: Request) => {
       '',                                             // N: Status PPK
       '',                                             // O: Status PPSPM
       '',                                             // P: Status Arsip
-      resolvedWaktuPengajuan,                         // Q: Update terakhir
+      waktuPengajuan,                                 // Q: Update terakhir
       user || '',                                     // R: User (role login pembuat)
       '',                                             // S: Pembayaran (kosong untuk baru)
       '',                                             // T: Nomor SPM (kosong untuk baru)
       '',                                             // U: Nomor SPPD (kosong untuk baru)
     ];
 
-    if (rowData.length !== 21) {
-      throw new Error(`Row data has ${rowData.length} columns, expected 21`);
-    }
+    console.log('Appending row with 21 columns:', rowData);
+    console.log('Row length:', rowData.length);
 
-    console.log('[pencairan-save] Row data prepared (21 columns)');
-
-    // First, find the next empty row by reading column A
-    const findRowUrl = `${baseUrl}/values/${encodeURIComponent(SHEET_NAME + '!A:A')}`;
-    console.log('[pencairan-save] Finding next empty row...');
-    
-    const findResponse = await fetch(findRowUrl, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    
-    if (!findResponse.ok) {
-      const errText = await findResponse.text();
-      throw new Error(`Failed to read sheet: ${errText}`);
-    }
-    
-    const findData = await findResponse.json();
-    const existingRows = findData.values ? findData.values.length : 0;
-    const nextRow = existingRows + 1;
-    
-    console.log('[pencairan-save] Existing rows:', existingRows, '-> Writing to row:', nextRow);
-    
-    // Write to explicit row range A{nextRow}:U{nextRow}
-    const updateUrl = `${baseUrl}/values/${encodeURIComponent(SHEET_NAME + '!A' + nextRow + ':U' + nextRow)}?valueInputOption=USER_ENTERED`;
-    console.log('[pencairan-save] Update URL:', updateUrl);
-
-    const response = await fetch(updateUrl, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ values: [rowData] }),
-    });
-
-    console.log('[pencairan-save] Response status:', response.status);
-    
-    let data;
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[pencairan-save] Raw error response:', errorText);
-      try {
-        data = JSON.parse(errorText);
-      } catch (e) {
-        data = { raw: errorText };
+    // Append dengan range A:U untuk 21 kolom
+    const response = await fetch(
+      `${baseUrl}/values/${SHEET_NAME}!A:U:append?valueInputOption=USER_ENTERED`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ values: [rowData] }),
       }
-      console.error('[pencairan-save] Google Sheets API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: data,
-        url: updateUrl,
-      });
-      throw new Error(`Append failed with status ${response.status}: ${JSON.stringify(data)}`);
+    );
+
+    const data = await response.json();
+    console.log('Append response:', JSON.stringify(data));
+
+    if (!response.ok) {
+      throw new Error(`Append failed: ${JSON.stringify(data)}`);
     }
 
-    data = await response.json();
-    console.log('[pencairan-save] Parsed response:', JSON.stringify(data, null, 2));
-
-    console.log('[pencairan-save] Success! Row appended');
-    
     return new Response(
       JSON.stringify({ success: true, data }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[pencairan-save] Error caught:', errorMessage);
-    console.error('[pencairan-save] Stack:', error instanceof Error ? error.stack : 'no stack');
-    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error in pencairan-save:', errorMessage);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: errorMessage,
-        timestamp: new Date().toISOString(),
-      }),
+      JSON.stringify({ success: false, error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

@@ -9,6 +9,10 @@ const corsHeaders = {
 const DEFAULT_SPREADSHEET_ID = '1fVVqmK0LANErtoiuSlKY8YAk9Nsu4sXQ33BwzRlQhNE';
 const SHEET_NAME = 'data';
 
+// Master Config Spreadsheet untuk multi-satker
+const MASTER_CONFIG_SPREADSHEET_ID = '1CBpS-rhb5pSSHFoleUoRa8D8CGeMh61tCoF82S0W0cQ';
+const MASTER_CONFIG_SHEET_NAME = 'satker_config';
+
 // Types from pencairan.ts
 type SubmissionStatus = 
   | 'draft' | 'submitted_sm' | 'pending_bendahara' | 'pending_ppk' | 'pending_ppspm' | 'pending_kppn' | 'pending_arsip' | 'completed'
@@ -135,6 +139,42 @@ async function getAccessToken() {
   return tokenData.access_token;
 }
 
+async function getPencairanSheetIdBySatker(accessToken: string, satker: string): Promise<string> {
+  console.log(`Looking up spreadsheet ID for satker: ${satker}`);
+  
+  try {
+    // Fetch satker_config sheet
+    const configUrl = `https://sheets.googleapis.com/v4/spreadsheets/${MASTER_CONFIG_SPREADSHEET_ID}/values/${MASTER_CONFIG_SHEET_NAME}`;
+    
+    const configResponse = await fetch(configUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!configResponse.ok) {
+      console.warn(`Failed to fetch satker config: ${configResponse.statusText}`);
+      return DEFAULT_SPREADSHEET_ID;
+    }
+
+    const configData = await configResponse.json();
+    const configRows = configData.values || [];
+
+    // Find matching satker (assuming Column A = satker_name, Column B = spreadsheet_id)
+    for (let i = 1; i < configRows.length; i++) {
+      if (configRows[i][0]?.toLowerCase() === satker.toLowerCase()) {
+        const spreadsheetId = configRows[i][1];
+        console.log(`Found spreadsheet ID for ${satker}: ${spreadsheetId}`);
+        return spreadsheetId;
+      }
+    }
+
+    console.warn(`Satker ${satker} not found in master config, using default`);
+    return DEFAULT_SPREADSHEET_ID;
+  } catch (error) {
+    console.warn(`Error looking up satker config: ${error}, using default`);
+    return DEFAULT_SPREADSHEET_ID;
+  }
+}
+
 function formatDateTime(): string {
   const now = new Date();
   const options: Intl.DateTimeFormatOptions = {
@@ -182,6 +222,7 @@ serve(async (req: Request) => {
     const {
       id,
       status,
+      satker,     // For multi-satker support
       uraianPengajuan,
       namaPengaju,
       jenisPengajuan,
@@ -198,7 +239,10 @@ serve(async (req: Request) => {
     }
 
     const accessToken = await getAccessToken();
-    const spreadsheetId = DEFAULT_SPREADSHEET_ID;
+    // Use satker to lookup spreadsheet ID, fallback to default
+    const spreadsheetId = satker 
+      ? await getPencairanSheetIdBySatker(accessToken, satker)
+      : DEFAULT_SPREADSHEET_ID;
     const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;
     
     // Fetch all data from sheet
