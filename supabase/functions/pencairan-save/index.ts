@@ -123,7 +123,7 @@ function formatDateTime(): string {
 }
 
 serve(async (req: Request) => {
-  console.log('pencairan-save function invoked');
+  console.log('[pencairan-save] Function invoked, method:', req.method);
   
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -131,7 +131,7 @@ serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    console.log('Request body:', JSON.stringify(body));
+    console.log('[pencairan-save] Request body received:', JSON.stringify(body, null, 2));
     
     const {
       id,
@@ -141,25 +141,42 @@ serve(async (req: Request) => {
       kelengkapan,
       catatan,
       statusPengajuan,
-      satker,
+      waktuPengajuan,
       user,
+      satker,
       title,
       submitterName,
       jenisBelanja,
       documents,
       notes,
       status,
+      statusPpk,
+      waktuPpk,
+      statusBendahara,
+      waktuBendahara,
+      statusKppn,
     } = body;
+
+    // Validate required fields
+    if (!id) {
+      throw new Error('Missing required field: id');
+    }
     
-    console.log('[pencairan-save] Received request:', { satker, id });
+    console.log('[pencairan-save] Extracted parameters:', {
+      id,
+      uraianPengajuan: uraianPengajuan?.substring(0, 30),
+      namaPengaju,
+      statusPengajuan,
+      user,
+    });
     
     const accessToken = await getAccessToken();
     const spreadsheetId = DEFAULT_SPREADSHEET_ID;
     
-    console.log('[pencairan-save] Using spreadsheetId:', { spreadsheetId });
+    console.log('[pencairan-save] Access token obtained, spreadsheetId:', spreadsheetId);
     
     const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;
-    const waktuPengajuan = formatDateTime();
+    const resolvedWaktuPengajuan = waktuPengajuan || formatDateTime();
 
     const rowData = [
       id || '',                                        // A: ID
@@ -169,7 +186,7 @@ serve(async (req: Request) => {
       kelengkapan || documents || '',                 // E: Kelengkapan
       catatan || notes || '',                         // F: Catatan
       statusPengajuan || status || 'draft',          // G: Status Pengajuan
-      waktuPengajuan,                                 // H: Waktu Pengajuan dari SM
+      resolvedWaktuPengajuan,                         // H: Waktu Pengajuan dari SM
       '',                                             // I: Waktu Bendahara
       '',                                             // J: Waktu PPK
       '',                                             // K: Waktu PPSPM
@@ -178,44 +195,72 @@ serve(async (req: Request) => {
       '',                                             // N: Status PPK
       '',                                             // O: Status PPSPM
       '',                                             // P: Status Arsip
-      waktuPengajuan,                                 // Q: Update terakhir
+      resolvedWaktuPengajuan,                         // Q: Update terakhir
       user || '',                                     // R: User (role login pembuat)
       '',                                             // S: Pembayaran (kosong untuk baru)
       '',                                             // T: Nomor SPM (kosong untuk baru)
       '',                                             // U: Nomor SPPD (kosong untuk baru)
     ];
 
-    console.log('Appending row with 21 columns:', rowData);
-    console.log('Row length:', rowData.length);
-
-    const response = await fetch(
-      `${baseUrl}/values/${SHEET_NAME}!A:U:append?valueInputOption=USER_ENTERED`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ values: [rowData] }),
-      }
-    );
-
-    const data = await response.json();
-    console.log('Append response:', JSON.stringify(data));
-
-    if (!response.ok) {
-      throw new Error(`Append failed: ${JSON.stringify(data)}`);
+    if (rowData.length !== 21) {
+      throw new Error(`Row data has ${rowData.length} columns, expected 21`);
     }
 
+    console.log('[pencairan-save] Row data prepared (21 columns)');
+
+    const appendUrl = `${baseUrl}/values/${encodeURIComponent(SHEET_NAME + '!A:U')}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+    console.log('[pencairan-save] Append URL:', appendUrl);
+    console.log('[pencairan-save] Request payload:', JSON.stringify({ values: [rowData] }));
+
+    const response = await fetch(appendUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ values: [rowData] }),
+    });
+
+    console.log('[pencairan-save] Response status:', response.status);
+    
+    let data;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[pencairan-save] Raw error response:', errorText);
+      try {
+        data = JSON.parse(errorText);
+      } catch (e) {
+        data = { raw: errorText };
+      }
+      console.error('[pencairan-save] Google Sheets API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: data,
+        url: appendUrl,
+      });
+      throw new Error(`Append failed with status ${response.status}: ${JSON.stringify(data)}`);
+    }
+
+    data = await response.json();
+    console.log('[pencairan-save] Parsed response:', JSON.stringify(data, null, 2));
+
+    console.log('[pencairan-save] Success! Row appended');
+    
     return new Response(
       JSON.stringify({ success: true, data }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error in pencairan-save:', errorMessage);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[pencairan-save] Error caught:', errorMessage);
+    console.error('[pencairan-save] Stack:', error instanceof Error ? error.stack : 'no stack');
+    
     return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
+      JSON.stringify({ 
+        success: false, 
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

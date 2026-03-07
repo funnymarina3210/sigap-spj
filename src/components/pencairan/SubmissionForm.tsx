@@ -305,24 +305,30 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
         const existingIds = existingSubmissions.map(s => s.id);
         const newId = generateSubmissionId(existingIds);
 
+        const payload = {
+          id: newId,
+          uraianPengajuan: title.trim(),
+          namaPengaju: submitterName.trim(),
+          jenisPengajuan: jenisPengajuan,
+          kelengkapan: kelengkapan,
+          catatan: notes.trim() || '',
+          statusPengajuan: 'pending_bendahara',
+          waktuPengajuan: waktuPengajuan,
+          statusPpk: '',
+          waktuPpk: '',
+          statusBendahara: '',
+          waktuBendahara: '',
+          statusKppn: '',
+          user: user?.role || '',
+        };
+
+        console.log('[SubmissionForm] Sending payload to pencairan-save:', payload);
+
         const { data, error } = await supabase.functions.invoke('pencairan-save', {
-          body: {
-            id: newId,
-            uraianPengajuan: title.trim(),
-            namaPengaju: submitterName.trim(),
-            jenisPengajuan: jenisPengajuan,
-            kelengkapan: kelengkapan,
-            catatan: notes.trim() || '',
-            statusPengajuan: 'pending_bendahara',
-            waktuPengajuan: waktuPengajuan,
-            statusPpk: '',
-            waktuPpk: '',
-            statusBendahara: '',
-            waktuBendahara: '',
-            statusKppn: '',
-            user: user?.role || '',
-          },
+          body: payload,
         });
+        
+        console.log('[SubmissionForm] Response from pencairan-save:', { data, error });
         
         if (error) throw new Error(error.message || 'Gagal mengirim ke Google Sheets');
         if (!data?.success) throw new Error(data?.error || 'Gagal mengirim data');
