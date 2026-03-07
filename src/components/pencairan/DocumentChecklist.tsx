@@ -1,65 +1,46 @@
 import { Document } from '@/types/pencairan';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 interface DocumentChecklistProps {
   documents: Document[];
-  onChange?: (documents: Document[]) => void;
+  onToggle?: (index: number) => void;
   readOnly?: boolean;
 }
 
-export function DocumentChecklist({
-  documents,
-  onChange,
-  readOnly = false,
-}: DocumentChecklistProps) {
-  const handleToggle = (index: number) => {
-    if (readOnly || !onChange) return;
-    const updated = [...documents];
-    updated[index].isChecked = !updated[index].isChecked;
-    onChange(updated);
-  };
-
-  // Group documents into pairs for 2-column layout
-  const pairs = [];
-  for (let i = 0; i < documents.length; i += 2) {
-    pairs.push([documents[i], documents[i + 1]]);
-  }
-
+export function DocumentChecklist({ documents, onToggle, readOnly = false }: DocumentChecklistProps) {
   return (
-    <div className="space-y-4">
-      {pairs.map((pair, pairIdx) => (
-        <div key={pairIdx} className="grid grid-cols-2 gap-4">
-          {pair.map((doc, idx) => {
-            const docIndex = pairIdx * 2 + idx;
-            const isRequired = doc.isRequired && !doc.isChecked;
-
-            return (
-              <div key={docIndex} className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50">
-                <Checkbox
-                  id={`doc-${docIndex}`}
-                  checked={doc.isChecked}
-                  onCheckedChange={() => handleToggle(docIndex)}
-                  disabled={readOnly}
-                  className="mt-1"
-                />
-                <div className="flex-1 min-w-0">
-                  <Label
-                    htmlFor={`doc-${docIndex}`}
-                    className={`text-sm font-medium leading-none cursor-pointer ${
-                      readOnly ? '' : 'cursor-pointer'
-                    }`}
-                  >
-                    {doc.name}
-                    {isRequired && <span className="text-red-500 ml-1">*</span>}
-                  </Label>
-                  {doc.note && (
-                    <p className="text-xs text-muted-foreground mt-1">{doc.note}</p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+    <div className="space-y-2">
+      {documents.map((doc, index) => (
+        <div
+          key={`${doc.type}-${index}`}
+          className={cn(
+            'flex items-center gap-3 p-3 rounded-lg border transition-colors',
+            doc.isChecked ? 'bg-green-50 border-green-200' : 'bg-card border-border',
+            !readOnly && 'cursor-pointer hover:bg-muted/50'
+          )}
+          onClick={() => !readOnly && onToggle?.(index)}
+        >
+          <Checkbox
+            checked={doc.isChecked}
+            onCheckedChange={() => !readOnly && onToggle?.(index)}
+            disabled={readOnly}
+            className="rounded"
+          />
+          <div className="flex-1">
+            <span className={cn(
+              'text-sm',
+              doc.isChecked && 'line-through text-muted-foreground'
+            )}>
+              {doc.name}
+            </span>
+            {doc.isRequired && (
+              <span className="text-destructive ml-1">*</span>
+            )}
+            {!doc.isRequired && doc.note && (
+              <span className="text-muted-foreground text-xs ml-2">({doc.note})</span>
+            )}
+          </div>
         </div>
       ))}
     </div>

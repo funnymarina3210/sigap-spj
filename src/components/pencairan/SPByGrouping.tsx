@@ -1,97 +1,388 @@
-import { Submission } from '@/types/pencairan';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { useState } from 'react';
+import { Submission } from '@/types/pencairan';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { format } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 
 interface SPByGroupingProps {
-  open: boolean;
-  onClose: () => void;
-  submissions: Submission[];
-  onGrouping?: (selectedIds: string[], label: string) => Promise<void>;
+  upSubmissions: Submission[];
+  onUpdateSubmissions: (ids: string[], updates: Partial<Submission>) => void;
+  onRefresh: () => void;
 }
 
-export function SPByGrouping({ open, onClose, submissions, onGrouping }: SPByGroupingProps) {
+export function SPByGrouping({
+  upSubmissions,
+  onUpdateSubmissions,
+  onRefresh,
+}: SPByGroupingProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nomorSPM, setNomorSPM] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [changePaymentDialog, setChangePaymentDialog] = useState<{ open: boolean; submissionId: string | null }>({ open: false, submissionId: null });
+  const [changePaymentType, setChangePaymentType] = useState<'UP' | 'LS'>('UP');
+  const [changePaymentSPM, setChangePaymentSPM] = useState('');
+  const [isChangingPayment, setIsChangingPayment] = useState(false);
+  const { toast } = useToast();
 
-  const upSubmissions = submissions.filter(s => s.pembayaran === 'UP');
-
-  const handleToggle = (id: string) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(upSubmissions.map(sub => sub.id));
+    } else {
+      setSelectedIds([]);
+    }
   };
 
-  const handleSubmit = async () => {
-    if (!onGrouping || selectedIds.length === 0) return;
-    setIsSubmitting(true);
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds([...selectedIds, id]);
+    } else {
+      setSelectedIds(selectedIds.filter(sid => sid !== id));
+    }
+  };
+
+  const handleOpenConfirmDialog = () => {
+    if (selectedIds.length === 0) {
+      toast({
+        title: 'Validasi gagal',
+        description: 'Pilih minimal 1 pengajuan',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!nomorSPM.trim()) {
+      toast({
+        title: 'Validasi gagal',
+        description: 'Nomor SPM wajib diisi',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmProcess = async () => {
+    setShowConfirmDialog(false);
+    setIsProcessing(true);
     try {
-      await onGrouping(selectedIds, 'UP');
+      const results = await Promise.all(
+        selectedIds.map(submissionId =>
+          supabase.functions.invoke('pencairan-update', {
+            body: {
+              id: submissionId,
+              nomorSPM: nomorSPM.trim(),
+              actor: 'bendahara',
+              action: 'approve',
+            },
+          })
+        )
+      );
+
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) {
+        throw new Error(`${errors.length} pengajuan gagal diproses`);
+      }
+
+      toast({
+        title: 'Berhasil',
+        description: `${selectedIds.length} pengajuan berhasil dikelompokkan dengan SPM ${nomorSPM} dan dikirim ke PPK`,
+      });
+
+      onUpdateSubmissions(selectedIds, {
+        status: 'pending_ppk',
+        nomorSPM: nomorSPM.trim(),
+        pembayaran: 'UP',
+      });
+
       setSelectedIds([]);
-      onClose();
+      setNomorSPM('');
+      onRefresh();
+    } catch (err) {
+      toast({
+        title: 'Gagal memproses',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive',
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleOpenChangePaymentDialog = (submissionId: string) => {
+    const submission = upSubmissions.find(s => s.id === submissionId);
+    if (submission) {
+      setChangePaymentDialog({ open: true, submissionId });
+      setChangePaymentType((submission.pembayaran as 'UP' | 'LS') || 'UP');
+      setChangePaymentSPM(submission.nomorSPM || '');
+    }
+  };
+
+  const handleChangePayment = async () => {
+    if (!changePaymentDialog.submissionId) return;
+
+    if (changePaymentType === 'LS' && !changePaymentSPM.trim()) {
+      toast({
+        title: 'Validasi gagal',
+        description: 'Nomor SPM wajib diisi untuk pembayaran Langsung (LS)',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsChangingPayment(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('pencairan-update', {
+        body: {
+          id: changePaymentDialog.submissionId,
+          pembayaran: changePaymentType,
+          nomorSPM: changePaymentType === 'LS' ? changePaymentSPM.trim() : '',
+          actor: 'bendahara',
+          action: 'save_spby',
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({
+          title: 'Berhasil',
+          description: `Metode pembayaran diubah ke ${changePaymentType === 'UP' ? 'Uang Persediaan (UP)' : 'Langsung (LS)'}`,
+        });
+        setChangePaymentDialog({ open: false, submissionId: null });
+        setChangePaymentType('UP');
+        setChangePaymentSPM('');
+        onRefresh();
+      } else {
+        throw new Error(data?.error || 'Gagal mengubah metode pembayaran');
+      }
+    } catch (err) {
+      toast({
+        title: 'Gagal mengubah metode pembayaran',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsChangingPayment(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Pengelompokan Pembayaran UP (Uang Persediaan)</DialogTitle>
-          <DialogDescription>
-            Pilih pengajuan yang ingin dikelompokkan dalam satu SPP untuk pembayaran UP
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {upSubmissions.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Tidak ada pengajuan dengan tipe pembayaran UP
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">📄 Kelompokkan Pengajuan UP</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-900">
+              Pilih pengajuan UP yang akan dikelompokkan dalam satu SPM, kemudian input nomor SPM untuk mengelompokkannya.
             </p>
-          ) : (
-            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-              {upSubmissions.map(submission => (
-                <Card key={submission.id} className="p-3">
-                  <div className="flex items-start gap-3">
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-sm font-medium">Pilih Pengajuan</label>
+            <div className="border rounded-lg p-4 space-y-3 max-h-96 overflow-y-auto">
+              {upSubmissions.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">Tidak ada pengajuan UP</p>
+              ) : (
+                <>
+                  <label className="flex items-center gap-3 p-2 rounded hover:bg-muted cursor-pointer">
                     <Checkbox
-                      id={submission.id}
-                      checked={selectedIds.includes(submission.id)}
-                      onCheckedChange={() => handleToggle(submission.id)}
-                      className="mt-1"
+                      checked={selectedIds.length === upSubmissions.length && upSubmissions.length > 0}
+                      onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
                     />
-                    <Label htmlFor={submission.id} className="flex-1 cursor-pointer">
-                      <div className="font-medium">{submission.id}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {submission.submitterName} - {submission.jenisBelanja}
+                    <span className="text-sm font-semibold">Pilih Semua ({upSubmissions.length})</span>
+                  </label>
+                  <div className="border-t pt-2"></div>
+                  {upSubmissions.map((sub) => (
+                    <div key={sub.id} className="flex items-center gap-3 p-2 rounded hover:bg-muted">
+                      <Checkbox
+                        checked={selectedIds.includes(sub.id)}
+                        onCheckedChange={(checked) => handleSelectOne(sub.id, checked as boolean)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{sub.title}</p>
+                        <p className="text-xs text-muted-foreground">{sub.id}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {sub.submitterName} • {format(sub.submittedAt, 'd MMMM yyyy', { locale: idLocale })}
+                        </p>
                       </div>
-                    </Label>
-                  </div>
-                </Card>
-              ))}
+                      {sub.nomorSPM && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          SPM: {sub.nomorSPM}
+                        </span>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenChangePaymentDialog(sub.id)}
+                        className="flex-shrink-0"
+                      >
+                        ✏️ Ubah
+                      </Button>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+
+          {selectedIds.length > 0 && (
+            <div className="space-y-3 pt-4 border-t">
+              <label className="text-sm font-medium">Nomor SPM</label>
+              <input
+                type="text"
+                placeholder="Input nomor SPM (misal: SPM-001/2025)"
+                value={nomorSPM}
+                onChange={(e) => setNomorSPM(e.target.value)}
+                className="w-full px-3 py-2 border border-input rounded-md text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Nomor ini akan disimpan untuk {selectedIds.length} pengajuan yang dipilih dan langsung dikirim ke PPK
+              </p>
+              
+              <Button
+                onClick={handleOpenConfirmDialog}
+                disabled={isProcessing || selectedIds.length === 0 || !nomorSPM.trim()}
+                className="w-full"
+                size="lg"
+              >
+                {isProcessing ? '⏳ Memproses...' : '📤 Kelompokkan & Kirim ke PPK'} ({selectedIds.length})
+              </Button>
             </div>
           )}
 
-          <div className="flex gap-2 pt-4">
+          <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Konfirmasi Pengajuan</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Anda akan mengelompokkan <strong>{selectedIds.length} pengajuan</strong> dengan <strong>SPM {nomorSPM}</strong> dan langsung mengirimnya ke PPK.
+                  <br />
+                  <br />
+                  Status akan otomatis berubah dari <strong>pending_bendahara</strong> menjadi <strong>pending_ppk</strong>.
+                  <br />
+                  Proses ini tidak dapat dibatalkan setelah dikonfirmasi.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogAction onClick={handleConfirmProcess}>
+                Ya, Lanjutkan
+              </AlertDialogAction>
+              <AlertDialogCancel>Batal</AlertDialogCancel>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
+
+      <Dialog open={changePaymentDialog.open} onOpenChange={(open) => setChangePaymentDialog({ ...changePaymentDialog, open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ubah Metode Pembayaran</DialogTitle>
+            <DialogDescription>
+              Pilih metode pembayaran (UP atau LS) untuk pengajuan ini
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="payment-method"
+                  value="UP"
+                  checked={changePaymentType === 'UP'}
+                  onChange={() => {
+                    setChangePaymentType('UP');
+                    setChangePaymentSPM('');
+                  }}
+                  className="w-4 h-4"
+                />
+                <div>
+                  <p className="text-sm font-medium">Uang Persediaan (UP)</p>
+                  <p className="text-xs text-muted-foreground">Tidak memerlukan nomor SPM</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="payment-method"
+                  value="LS"
+                  checked={changePaymentType === 'LS'}
+                  onChange={() => setChangePaymentType('LS')}
+                  className="w-4 h-4"
+                />
+                <div>
+                  <p className="text-sm font-medium">Langsung (LS)</p>
+                  <p className="text-xs text-muted-foreground">Memerlukan nomor SPM</p>
+                </div>
+              </label>
+            </div>
+
+            {changePaymentType === 'LS' && (
+              <div className="space-y-2">
+                <label htmlFor="change-spm" className="text-sm font-medium">
+                  Nomor SPM <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="change-spm"
+                  type="text"
+                  placeholder="Contoh: SPM-001/2025"
+                  value={changePaymentSPM}
+                  onChange={(e) => setChangePaymentSPM(e.target.value)}
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                />
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
             <Button
               variant="outline"
-              onClick={onClose}
-              disabled={isSubmitting}
+              onClick={() => setChangePaymentDialog({ open: false, submissionId: null })}
+              disabled={isChangingPayment}
             >
               Batal
             </Button>
             <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting || selectedIds.length === 0}
+              onClick={handleChangePayment}
+              disabled={isChangingPayment || (changePaymentType === 'LS' && !changePaymentSPM.trim())}
             >
-              {isSubmitting ? 'Memproses...' : 'Kelompokkan'}
+              {isChangingPayment ? '⏳ Menyimpan...' : '💾 Simpan'}
             </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {upSubmissions.length === 0 && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-2xl mb-3">📄</p>
+            <p className="text-muted-foreground">Tidak ada pengajuan dengan tipe pembayaran Uang Persediaan (UP)</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
