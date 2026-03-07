@@ -148,6 +148,54 @@ export const STATUS_LABELS: Record<SubmissionStatus, string> = {
   rejected_kppn: 'Ditolak KPPN',
 };
 
+export const STATUS_COLORS: Record<SubmissionStatus, string> = {
+  draft: 'gray',
+  submitted_sm: 'blue',
+  pending_bendahara: 'purple',
+  pending_ppk: 'orange',
+  pending_ppspm: 'pink',
+  pending_kppn: 'indigo',
+  pending_arsip: 'cyan',
+  completed: 'green',
+  rejected_sm: 'red',
+  rejected_bendahara: 'red',
+  rejected_ppk: 'red',
+  rejected_ppspm: 'red',
+  rejected_kppn: 'red',
+};
+
+export function getWorkflowStages(): WorkflowStage[] {
+  return ['SM', 'Bendahara', 'PPK', 'PPSPM', 'KPPN', 'Arsip'];
+}
+
+export function getStageName(stage: string): string {
+  const names: Record<string, string> = {
+    SM: 'SM',
+    Bendahara: 'Bendahara',
+    PPK: 'PPK',
+    PPSPM: 'PPSPM',
+    KPPN: 'KPPN',
+    Arsip: 'Arsip',
+  };
+  return names[stage] || stage;
+}
+
+export function isStageCompleted(stage: string, status: SubmissionStatus): boolean {
+  const stageOrder = ['SM', 'Bendahara', 'PPK', 'PPSPM', 'KPPN', 'Arsip'];
+  const stageIndex = stageOrder.indexOf(stage);
+  if (stageIndex === -1) return false;
+  if (status === 'completed') return true;
+  // Map status to current stage index
+  const statusStageMap: Record<string, number> = {
+    draft: -1, submitted_sm: 0, pending_bendahara: 1, pending_ppk: 2,
+    pending_ppspm: 3, pending_kppn: 4, pending_arsip: 5,
+    rejected_sm: 0, rejected_bendahara: 1, rejected_ppk: 2,
+    rejected_ppspm: 3, rejected_kppn: 4,
+  };
+  const currentIdx = statusStageMap[status] ?? -1;
+  return stageIndex < currentIdx;
+}
+
 // Jenis Belanja Options (main categories)
 export const JENIS_BELANJA_OPTIONS = [
   'Honorarium',
@@ -381,15 +429,15 @@ export function canCreateSubmission(role: UserRole): boolean {
 
 export function canTakeAction(role: UserRole, status: SubmissionStatus): boolean {
   if (role === 'admin') return true;
-  if (role === 'Bendahara' && (status === 'pending_bendahara' || status === 'incomplete_bendahara')) return true;
-  if (role === 'Pejabat Pembuat Komitmen' && (status === 'pending_ppk' || status === 'incomplete_ppk')) return true;
-  if (role === 'Pejabat Penandatangan Surat Perintah Membayar' && (status === 'pending_ppspm' || status === 'incomplete_ppspm')) return true;
-  if (role === 'Arsip' && (status === 'sent_kppn' || status === 'incomplete_kppn')) return true;
+  if (role === 'Bendahara' && status === 'pending_bendahara') return true;
+  if (role === 'Pejabat Pembuat Komitmen' && status === 'pending_ppk') return true;
+  if (role === 'Pejabat Penandatangan Surat Perintah Membayar' && status === 'pending_ppspm') return true;
+  if (role === 'Arsip' && status === 'pending_arsip') return true;
   return false;
 }
 
 export function canReturnFromArsip(role: UserRole, status: SubmissionStatus): boolean {
-  return (role === 'Arsip' || role === 'admin') && status === 'sent_kppn';
+  return (role === 'Arsip' || role === 'admin') && status === 'pending_arsip';
 }
 
 export function canViewDetail(role: UserRole, status: SubmissionStatus): boolean {
@@ -398,32 +446,25 @@ export function canViewDetail(role: UserRole, status: SubmissionStatus): boolean
 
 export function canEdit(role: UserRole, status: SubmissionStatus, submissionUser?: string): boolean {
   if (role === 'admin') return true;
-  
-  // Hanya pembuat pengajuan yang bisa edit (submissionUser harus sama dengan userRole)
-  if (submissionUser && submissionUser !== role) {
-    return false; // Bukan pembuat, tidak boleh edit
-  }
-  
-  // Pembuat pengajuan bisa edit jika status draft atau incomplete_sm
-  if (SUBMITTER_ROLES.includes(role) && status === 'incomplete_sm') return true;
-  if (SUBMITTER_ROLES.includes(role) && status === 'draft') return true;
+  if (submissionUser && submissionUser !== role) return false;
+  if (SUBMITTER_ROLES.includes(role) && (status === 'rejected_sm' || status === 'draft')) return true;
   return false;
 }
 
 export function getRelevantTimestamp(submission: Submission): string | null {
-  if (submission.status === 'complete_arsip' && submission.waktuArsip) {
+  if (submission.status === 'completed' && submission.waktuArsip) {
     return submission.waktuArsip;
   }
-  if ((submission.status === 'sent_kppn' || submission.status === 'incomplete_kppn') && submission.waktuKppn) {
+  if (submission.status === 'pending_arsip' && submission.waktuKppn) {
     return submission.waktuKppn;
   }
-  if (['pending_ppspm', 'incomplete_ppspm'].includes(submission.status) && submission.waktuPPSPM) {
+  if (['pending_ppspm', 'rejected_ppk'].includes(submission.status) && submission.waktuPPSPM) {
     return submission.waktuPPSPM;
   }
-  if (['pending_ppk', 'incomplete_ppk'].includes(submission.status) && submission.waktuPpk) {
+  if (['pending_ppk', 'rejected_bendahara'].includes(submission.status) && submission.waktuPpk) {
     return submission.waktuPpk;
   }
-  if (['pending_bendahara', 'incomplete_bendahara'].includes(submission.status) && submission.waktuBendahara) {
+  if (['pending_bendahara', 'rejected_sm'].includes(submission.status) && submission.waktuBendahara) {
     return submission.waktuBendahara;
   }
   return submission.waktuPengajuan || null;
