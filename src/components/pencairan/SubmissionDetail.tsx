@@ -1,4 +1,4 @@
-import { Submission, UserRole, STATUS_LABELS, PaymentType } from '@/types/pencairan';
+import { Submission, UserRole, STATUS_LABELS, PaymentType, canTakeAction } from '@/types/pencairan';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -37,7 +37,8 @@ export function SubmissionDetail({
   if (!submission) return null;
 
   const isBendahara = userRole === 'Bendahara';
-  const requiresPaymentSelection = isBendahara && submission.status === 'submitted_sm';
+  const hasActionPermission = canTakeAction(userRole, submission.status);
+  const requiresPaymentSelection = isBendahara && submission.status === 'pending_bendahara';
 
   const handleApprove = async () => {
     if (!onApprove) return;
@@ -151,7 +152,7 @@ export function SubmissionDetail({
           </Card>
 
           {/* Bendahara Payment Selection */}
-          {requiresPaymentSelection && onApprove && (
+          {requiresPaymentSelection && hasActionPermission && onApprove && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Pilih Tipe Pembayaran</CardTitle>
@@ -187,8 +188,8 @@ export function SubmissionDetail({
             </Card>
           )}
 
-          {/* Notes */}
-          {(onApprove || onReject) && (
+          {/* Notes & Actions - only show when role has permission */}
+          {hasActionPermission && (onApprove || onReject) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Catatan</CardTitle>
