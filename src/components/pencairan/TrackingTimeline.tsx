@@ -1,5 +1,5 @@
 import { Submission } from '@/types/pencairan';
-import { CheckCircle2, XCircle, FileText } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface TrackingTimelineProps {
   submission: Submission;
@@ -81,56 +81,79 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
   }
 
   const getIcon = (status: string) => {
-    if (status === 'approved') return <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0" />;
-    if (status === 'rejected') return <XCircle className="w-6 h-6 text-red-500 flex-shrink-0" />;
-    return <div className="w-6 h-6 rounded-full bg-blue-500 flex-shrink-0" />;
+    if (status === 'approved') return '✅';
+    if (status === 'rejected') return '❌';
+    return '●';
   };
 
   if (entries.length === 0) {
     return (
-      <div className="flex items-center justify-center py-8 text-muted-foreground">
-        <FileText className="w-4 h-4 mr-2" />
-        <p>Tidak ada riwayat pelacakan</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Tracking Pengajuan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            📋 Tidak ada riwayat pelacakan
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {entries.map((entry, idx) => (
-        <div key={idx} className="flex gap-3 pb-3 border-b last:border-b-0">
-          <div className="flex flex-col items-center gap-1 pt-1">
-            {getIcon(entry.status)}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-gray-700">
-                {entry.timestamp}
-              </span>
-              <span className="text-sm font-medium text-gray-700">
-                {entry.stage}:
-              </span>
-              <span className="text-sm text-gray-600">
-                {entry.status === 'approved' ? 'Disetujui' : entry.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
-              </span>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Tracking Pengajuan</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {entries.map((entry, idx) => (
+            <div key={idx} className="flex gap-3 pb-4 border-b last:border-b-0 last:pb-0">
+              {/* Timeline dot and line */}
+              <div className="flex flex-col items-center pt-1">
+                <span className="text-xl">{getIcon(entry.status)}</span>
+                {idx < entries.length - 1 && (
+                  <div className="w-0.5 h-12 bg-gray-300 mt-2" />
+                )}
+              </div>
+              
+              {/* Content */}
+              <div className="flex-1 min-w-0 pt-0.5">
+                {/* Date and Stage */}
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <div>
+                    <span className="text-xs font-medium text-gray-600">
+                      {entry.timestamp}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Stage and Status */}
+                <p className="text-sm font-medium text-gray-800 mb-2">
+                  {entry.stage}: {entry.status === 'approved' ? 'Diserahkan' : entry.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
+                </p>
+                
+                {/* Badge with notes */}
+                {entry.notes && (
+                  <div className="inline-block">
+                    <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                      ✓ {entry.notes}
+                    </span>
+                  </div>
+                )}
+                {!entry.notes && (
+                  <div className="inline-block">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                      ✓ {STAGE_ROLES[entry.stage]}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-            {entry.notes && (
-              <div className="mt-2 flex items-center gap-2">
-                <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded font-medium">
-                  ✓ {entry.notes || STAGE_ROLES[entry.stage]}
-                </span>
-              </div>
-            )}
-            {!entry.notes && (
-              <div className="mt-1">
-                <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded font-medium">
-                  {STAGE_ROLES[entry.stage]}
-                </span>
-              </div>
-            )}
-          </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </CardContent>
+    </Card>
   );
 }

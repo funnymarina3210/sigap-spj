@@ -3,14 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/StatusBadge';
 import { WorkflowProgress } from '@/components/WorkflowProgress';
-import { TrackingTimeline } from '@/components/TrackingTimeline';
+import { TrackingTimeline } from '@/components/pencairan/TrackingTimeline';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useState } from 'react';
-import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface SubmissionDetailProps {
   submission: Submission | null;
@@ -99,13 +98,42 @@ export function SubmissionDetail({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Status Header */}
+          <div className="flex items-center justify-between gap-3 pb-2 border-b">
+            <h3 className="text-sm font-semibold text-gray-700">Status Berlaku</h3>
+            <StatusBadge status={submission.status} size="md" />
+          </div>
+
           {/* Workflow Progress */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Progres Alur Kerja</CardTitle>
+              <CardTitle className="text-base">Progress Pengajuan</CardTitle>
             </CardHeader>
             <CardContent>
               <WorkflowProgress status={submission.status} />
+            </CardContent>
+          </Card>
+
+          {/* Submitter Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Informasi Pengajuan</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">👤 Pengaju</p>
+                  <p className="font-medium">{submission.submitterName}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">📅 Tanggal Pengajuan</p>
+                  <p className="font-medium">{submission.waktuPengajuan || '-'}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">💰 Jenis Belanja</p>
+                <p className="font-medium">{submission.jenisBelanja}</p>
+              </div>
             </CardContent>
           </Card>
 
@@ -115,35 +143,21 @@ export function SubmissionDetail({
           {/* Basic Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Informasi Dasar</CardTitle>
+              <CardTitle className="text-base">Detail Lainnya</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">ID Pengajuan</p>
-                  <p className="font-medium">{submission.id}</p>
+                  <p className="text-xs text-muted-foreground">🆔 ID Pengajuan</p>
+                  <p className="font-medium text-sm">{submission.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <div className="mt-1">
-                    <StatusBadge status={submission.status} />
-                  </div>
+                  <p className="text-xs text-muted-foreground">📂 Sub Jenis</p>
+                  <p className="font-medium text-sm">{submission.subJenisBelanja || '-'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Nama Pengaju</p>
-                  <p className="font-medium">{submission.submitterName}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Jenis Belanja</p>
-                  <p className="font-medium">{submission.jenisBelanja}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Sub Jenis</p>
-                  <p className="font-medium">{submission.subJenisBelanja || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Tipe Pembayaran</p>
-                  <p className="font-medium">{submission.pembayaran || '-'}</p>
+                  <p className="text-xs text-muted-foreground">💳 Tipe Pembayaran</p>
+                  <p className="font-medium text-sm">{submission.pembayaran || '-'}</p>
                 </div>
               </div>
             </CardContent>
@@ -156,13 +170,13 @@ export function SubmissionDetail({
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Nomor SPM</p>
-                  <p className="font-medium">{submission.nomorSPM || '-'}</p>
+              <div>
+                  <p className="text-xs text-muted-foreground">📄 Nomor SPM</p>
+                  <p className="font-medium text-sm">{submission.nomorSPM || '-'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Nomor SPPD</p>
-                  <p className="font-medium">{submission.nomorSPPD || '-'}</p>
+                  <p className="text-xs text-muted-foreground">📋 Nomor SPPD</p>
+                  <p className="font-medium text-sm">{submission.nomorSPPD || '-'}</p>
                 </div>
               </div>
             </CardContent>
@@ -223,10 +237,8 @@ export function SubmissionDetail({
                     <Button
                       onClick={handleApprove}
                       disabled={isApproving}
-                      className="gap-2"
                     >
-                      <CheckCircle2 className="w-4 h-4" />
-                      {isApproving ? 'Memproses...' : getApproveLabel()}
+                      {isApproving ? '⏳ Memproses...' : `✅ ${getApproveLabel()}`}
                     </Button>
                   )}
                   {onReject && (
@@ -234,10 +246,8 @@ export function SubmissionDetail({
                       onClick={handleReject}
                       disabled={isRejecting}
                       variant="destructive"
-                      className="gap-2"
                     >
-                      <XCircle className="w-4 h-4" />
-                      {isRejecting ? 'Memproses...' : getRejectLabel()}
+                      {isRejecting ? '⏳ Memproses...' : `❌ ${getRejectLabel()}`}
                     </Button>
                   )}
                 </div>
