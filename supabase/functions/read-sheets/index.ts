@@ -138,13 +138,9 @@ serve(async (req) => {
     let data: any[] = [];
 
     if (sheetType === 'submissions') {
-      // Read submissions from data sheet
-      // Headers: ID | Uraian Pengajuan | Nama Pengaju | Jenis Pengajuan | Kelengkapan | Catatan | 
-      // Status Pengajuan | Waktu Pengajuan | Status PPK | Waktu PPK | Status Bendahara | Waktu Bendahara | Status KPPN
       const spreadsheetId = '1fVVqmK0LANErtoiuSlKY8YAk9Nsu4sXQ33BwzRlQhNE';
-      const values = await readSheet(accessToken, spreadsheetId, 'data', 'A:M');
+      const values = await readSheet(accessToken, spreadsheetId, 'data', 'A:U');
       
-      // Skip header row, map to objects
       if (values.length > 1) {
         data = values.slice(1).map((row) => ({
           id: row[0] || '',
@@ -155,14 +151,20 @@ serve(async (req) => {
           notes: row[5] || '',
           statusPengajuan: row[6] || '',
           waktuPengajuan: row[7] || '',
-          statusPpk: row[8] || '',
+          waktuBendahara: row[8] || '',
           waktuPpk: row[9] || '',
-          statusBendahara: row[10] || '',
-          waktuBendahara: row[11] || '',
-          statusKppn: row[12] || '',
-          // Map to internal status code for UI
+          waktuPPSPM: row[10] || '',
+          waktuArsip: row[11] || '',
+          statusBendahara: row[12] || '',
+          statusPpk: row[13] || '',
+          statusPPSPM: row[14] || '',
+          statusArsip: row[15] || '',
+          updatedAt: row[16] || '',
+          user: row[17] || '',
+          pembayaran: row[18] || '',
+          nomorSPM: row[19] || '',
+          nomorSPPD: row[20] || '',
           status: mapStatusToCode(row[6] || ''),
-          updatedAt: row[7] || '',
         }));
       }
     } else if (sheetType === 'organik') {
