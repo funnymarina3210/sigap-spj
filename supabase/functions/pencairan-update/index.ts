@@ -28,6 +28,29 @@ const SUBMITTER_ROLES: UserRole[] = [
   'Bendahara', 'Pejabat Pembuat Komitmen', 'Pejabat Pengadaan', 'Pejabat Penandatangan Surat Perintah Membayar'
 ];
 
+// Role normalization helper
+function normalizeRole(role: string): UserRole {
+  const roleLower = role.toLowerCase().trim();
+  
+  // Map common variations to standard role names
+  if (roleLower.includes('bendahara')) return 'Bendahara';
+  if (roleLower.includes('fungsi sosial')) return 'Fungsi Sosial';
+  if (roleLower.includes('fungsi neraca')) return 'Fungsi Neraca';
+  if (roleLower.includes('fungsi produksi')) return 'Fungsi Produksi';
+  if (roleLower.includes('fungsi distribusi')) return 'Fungsi Distribusi';
+  if (roleLower.includes('fungsi ipds')) return 'Fungsi IPDS';
+  if (roleLower.includes('pejabat pembuat komitmen')) return 'Pejabat Pembuat Komitmen';
+  if (roleLower.includes('pejabat pengadaan')) return 'Pejabat Pengadaan';
+  if (roleLower.includes('pejabat penandatangan')) return 'Pejabat Penandatangan Surat Perintah Membayar';
+  if (roleLower.includes('kppn')) return 'KPPN';
+  if (roleLower.includes('arsip')) return 'Arsip';
+  if (roleLower.includes('padamel')) return 'Padamel BPS 3210';
+  if (roleLower.includes('operator')) return 'operator';
+  if (roleLower.includes('admin')) return 'admin';
+  
+  return role as UserRole;
+}
+
 // Rejection handling - validate that correct role can take action on rejection
 function canTakeActionOnRejected(role: UserRole, status: SubmissionStatus): boolean {
   if (role === 'admin') return true;
@@ -279,10 +302,11 @@ serve(async (req: Request) => {
       throw new Error(`Submission with ID ${id} not found`);
     }
 
-    // Validate that actor can take action on rejected statuses
+    // Normalize actor role and validate that actor can take action on rejected statuses
+    const normalizedActor = normalizeRole(actor);
     const currentStatus = rows[foundRowIndex][COLUMNS.status] as SubmissionStatus;
     if (currentStatus.startsWith('rejected_')) {
-      if (!canTakeActionOnRejected(actor as UserRole, currentStatus)) {
+      if (!canTakeActionOnRejected(normalizedActor, currentStatus)) {
         throw new Error(`User role '${actor}' is not authorized to take action on status '${currentStatus}'`);
       }
     }
@@ -319,16 +343,16 @@ serve(async (req: Request) => {
     }
 
     // Update role-specific status notes (only from that role)
-    if (actor === 'Bendahara' && catatan) {
+    if (normalizedActor === 'Bendahara' && catatan) {
       updatedRow[COLUMNS.statusBendahara] = catatan;
     }
-    if (actor === 'Pejabat Pembuat Komitmen' && catatan) {
+    if (normalizedActor === 'Pejabat Pembuat Komitmen' && catatan) {
       updatedRow[COLUMNS.statusPPK] = catatan;
     }
-    if (actor === 'Pejabat Penandatangan Surat Perintah Membayar' && catatan) {
+    if (normalizedActor === 'Pejabat Penandatangan Surat Perintah Membayar' && catatan) {
       updatedRow[COLUMNS.statusPPSPM] = catatan;
     }
-    if ((actor === 'KPPN' || actor === 'Arsip') && catatan) {
+    if ((normalizedActor === 'KPPN' || normalizedActor === 'Arsip') && catatan) {
       updatedRow[COLUMNS.statusArsip] = catatan;
     }
 

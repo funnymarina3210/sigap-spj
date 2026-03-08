@@ -178,8 +178,8 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
       toast({ title: 'Error', description: 'Sub-jenis belanja harus dipilih', variant: 'destructive' });
       return false;
     }
-    if (pembayaran === 'LS' && !nomorSPM.trim()) {
-      toast({ title: 'Error', description: 'Nomor SPM harus diisi untuk pembayaran LS', variant: 'destructive' });
+    if (pembayaran && !nomorSPM.trim()) {
+      toast({ title: 'Error', description: 'Nomor SPM harus diisi', variant: 'destructive' });
       return false;
     }
     return true;
@@ -507,7 +507,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
                   </SelectContent>
                 </Select>
               </div>
-              {pembayaran === 'LS' && (
+              {pembayaran && (
                 <div>
                   <Label className="text-destructive">Nomor SPM *</Label>
                   <Input
@@ -516,10 +516,10 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
                     onChange={(e) => setNomorSPM(e.target.value)}
                     className="h-11 rounded-xl border-red-300"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Wajib diisi untuk pembayaran LS</p>
+                  <p className="text-xs text-muted-foreground mt-1">Wajib diisi</p>
                 </div>
               )}
-              {pembayaran === 'LS' && (
+              {pembayaran && (
                 <div>
                   <Label>Nomor SP2D (Opsional)</Label>
                   <Input
