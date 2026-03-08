@@ -1,582 +1,215 @@
-import { useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useSatkerConfigContext } from '@/contexts/SatkerConfigContext';
-import { useNotificationsContext, NotificationsContextType } from '@/contexts/NotificationsContext';
-import { Notification, PencairanNotification, SBMLNotification } from '@/types/notifications';
+import { useNotificationsContext } from '@/contexts/NotificationsContext';
+import { Notification } from '@/types/notifications';
+import { usePencairanData } from '@/hooks/use-pencairan-data';
+import { Submission, SubmissionStatus, UserRole } from '@/types/pencairan';
 
-const POLLING_INTERVAL = 3600000; // 1 hour - polling interval
-const MIN_REQUEST_INTERVAL = 60000; // 1 minute - minimum time between requests to debounce
+/**
+ * Generate notifications from pencairan submissions based on user role.
+ * Uses the already-fetched data from usePencairanData (no extra API calls).
+ */
+function generateNotificationsFromSubmissions(
+  submissions: Submission[],
+  userRole: string
+): Notification[] {
+  const notifications: Notification[] = [];
+
+  const normalizeRole = (role: string): string => {
+    const lower = role.toLowerCase();
+    if (lower.includes('bendahara')) return 'Bendahara';
+    if (lower.includes('pejabat pembuat komitmen')) return 'PPK';
+    if (lower.includes('pejabat penandatangan') || lower.includes('ppspm')) return 'PPSPM';
+    if (lower.includes('kppn')) return 'KPPN';
+    if (lower.includes('arsip')) return 'Arsip';
+    if (lower.includes('fungsi')) return 'Fungsi';
+    return role;
+  };
+
+  const normalized = normalizeRole(userRole);
+  const isFungsi = normalized === 'Fungsi' || userRole.includes('Fungsi');
+
+  for (const sub of submissions) {
+    let title = '';
+    let message = '';
+    let shouldShow = false;
+    let priority: 'high' | 'medium' | 'low' = 'medium';
+
+    const status = sub.status;
+    const judul = sub.title || 'Pengajuan';
+    const isCreator = sub.user === userRole || sub.user === normalized;
+
+    switch (status) {
+      // Draft - notify creator to complete
+      case 'draft':
+        if (isCreator || (isFungsi && !sub.user)) {
+          title = 'Sigap SPJ - Pengajuan Baru';
+          message = `${judul} masih belum dilengkapi Subjek Metter`;
+          shouldShow = true;
+        }
+        break;
+
+      // Submitted SM - notify creator
+      case 'submitted_sm':
+        if (isCreator) {
+          title = 'Sigap SPJ - Pengajuan Dikirim';
+          message = `${judul} sudah dikirim, menunggu pemeriksaan Bendahara`;
+          shouldShow = true;
+        }
+        break;
+
+      // Pending Bendahara - notify Bendahara
+      case 'pending_bendahara':
+        if (normalized === 'Bendahara') {
+          title = 'Sigap SPJ - Pengajuan Baru';
+          message = `Harap periksa kelengkapan berkas dari pengajuan ${judul}`;
+          shouldShow = true;
+        }
+        break;
+
+      // Pending PPK - notify PPK
+      case 'pending_ppk':
+        if (normalized === 'PPK') {
+          title = 'Sigap SPJ - Pengajuan Baru';
+          message = `Harap periksa kelengkapan berkas dari pengajuan ${judul}`;
+          shouldShow = true;
+        }
+        break;
+
+      // Pending PPSPM - notify PPSPM
+      case 'pending_ppspm':
+        if (normalized === 'PPSPM') {
+          title = 'Sigap SPJ - Pengajuan Baru';
+          message = `${judul} untuk diperiksa dan ditandatangani`;
+          shouldShow = true;
+        }
+        break;
+
+      // Pending KPPN - notify KPPN
+      case 'pending_kppn':
+        if (normalized === 'KPPN') {
+          title = 'Sigap SPJ - Pengajuan Baru';
+          message = `${judul} siap dikirim ke KPPN`;
+          shouldShow = true;
+        }
+        break;
+
+      // Pending Arsip - notify Arsip
+      case 'pending_arsip':
+        if (normalized === 'Arsip') {
+          title = 'Sigap SPJ - Pengajuan Baru';
+          message = `${judul} untuk diarsipkan`;
+          shouldShow = true;
+        }
+        break;
+
+      // Rejected by SM - notify creator
+      case 'rejected_sm':
+        if (isCreator) {
+          title = 'Sigap SPJ - Pengajuan Ditolak';
+          message = `${judul} ditolak SM. Mohon untuk segera memperbaiki`;
+          shouldShow = true;
+          priority = 'high';
+        }
+        break;
+
+      // Rejected by Bendahara - notify creator
+      case 'rejected_bendahara':
+        if (isCreator) {
+          title = 'Sigap SPJ - Pengajuan Ditolak';
+          message = `${judul} ditolak Bendahara. Mohon untuk segera memperbaiki`;
+          shouldShow = true;
+          priority = 'high';
+        }
+        break;
+
+      // Rejected by PPK - notify Bendahara (who forwarded it)
+      case 'rejected_ppk':
+        if (normalized === 'Bendahara' || isCreator) {
+          title = 'Sigap SPJ - Pengajuan Ditolak';
+          message = `${judul} ditolak PPK. Mohon segera memperbaiki`;
+          shouldShow = true;
+          priority = 'high';
+        }
+        break;
+
+      // Rejected by PPSPM - notify PPK
+      case 'rejected_ppspm':
+        if (normalized === 'PPK' || isCreator) {
+          title = 'Sigap SPJ - Pengajuan Ditolak';
+          message = `${judul} ditolak PPSPM. Mohon segera memperbaiki`;
+          shouldShow = true;
+          priority = 'high';
+        }
+        break;
+
+      // Rejected by KPPN - notify PPSPM
+      case 'rejected_kppn':
+        if (normalized === 'PPSPM' || isCreator) {
+          title = 'Sigap SPJ - Pengajuan Ditolak';
+          message = `${judul} ditolak KPPN. Mohon segera memperbaiki`;
+          shouldShow = true;
+          priority = 'high';
+        }
+        break;
+
+      // Completed - notify creator
+      case 'completed':
+        if (isCreator) {
+          title = 'Sigap SPJ - Pengajuan Selesai';
+          message = `${judul} sudah selesai diproses dan diarsipkan`;
+          shouldShow = true;
+          priority = 'low';
+        }
+        break;
+    }
+
+    if (shouldShow && title) {
+      const displayTime = sub.updatedAtString
+        ? `Update terakhir: ${sub.updatedAtString}`
+        : sub.waktuPengajuan
+          ? `Update terakhir: ${sub.waktuPengajuan}`
+          : 'Baru saja';
+
+      notifications.push({
+        id: `pencairan-${sub.id}`,
+        type: 'pencairan',
+        title,
+        message,
+        priority,
+        targetRoles: [],
+        relatedId: sub.id,
+        status: sub.status,
+        createdAt: sub.updatedAt || sub.submittedAt || new Date(),
+        displayTime,
+        actionUrl: '/pencairan',
+      });
+    }
+  }
+
+  return notifications;
+}
 
 export function useNotifications() {
   const { user } = useAuth();
-  const satkerContext = useSatkerConfigContext();
   const notificationsContext = useNotificationsContext();
-  const lastFetchRef = useRef<number>(0);
-  const quotaExceededRef = useRef<boolean>(false);
-  const hasInitialFetchRef = useRef<boolean>(false);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { data: submissions } = usePencairanData();
+  const prevCountRef = useRef<number>(-1);
 
-  // Get current user data
-  const currentUser = user ? user : null;
-  const userRole = currentUser?.role || '';
-  const userSatker = currentUser?.satker || '';
+  const userRole = user?.role || '';
 
-  // Map full role names to abbreviations
-  const normalizeRole = (role: string): string => {
-    const lowerRole = role.toLowerCase();
-    // Map full names to abbreviations
-    if (lowerRole.includes('bendahara')) return 'Bendahara';
-    if (lowerRole.includes('pejabat pembuat komitmen')) return 'PPK';
-    if (lowerRole.includes('pejabat penandatangan') || lowerRole.includes('ppspm')) return 'PPSPM';
-    if (lowerRole.includes('kppn')) return 'KPPN';
-    if (lowerRole.includes('arsip')) return 'Arsip';
-    if (lowerRole.includes('fungsi')) return 'Fungsi';
-    return role; // Return original if no mapping
-  };
-
-  // Check if satker config is ready
-  const satkerConfigReady = satkerContext?.configs && satkerContext.configs.length > 0;
-  console.log(`[useNotifications] satkerContext ready: ${satkerConfigReady}, configs length: ${satkerContext?.configs?.length || 0}`);
-
-  // Function to check if role matches target role
-  const roleMatches = (userRole: string, targetRoles: string[]): boolean => {
-    const normalizedUserRole = normalizeRole(userRole);
-    return targetRoles.some(targetRole => {
-      if (targetRole.includes('Fungsi')) {
-        return normalizedUserRole.includes('Fungsi') || userRole.includes('Fungsi');
-      }
-      return normalizedUserRole === targetRole || userRole === targetRole;
-    });
-  };
-
-  // Fetch Pencairan submissions and generate notifikasi
-  const fetchPencairanNotifications = useCallback(async (): Promise<Notification[]> => {
-    try {
-      // Only fetch for current satker
-      if (!userSatker) {
-        console.log('[fetchPencairanNotifications] No satker');
-        return [];
-      }
-
-      const pencairanSheetId = satkerContext?.getUserSatkerSheetId('pencairan') || '';
-      console.log(`[fetchPencairanNotifications] userSatker=${userSatker}, sheetId=${pencairanSheetId ? 'found' : 'NOT_FOUND'}`);
-      if (!pencairanSheetId) return [];
-
-      console.log(`[fetchPencairanNotifications] Fetching from sheet...`);
-      const { data, error } = await supabase.functions.invoke('google-sheets', {
-        body: {
-          spreadsheetId: pencairanSheetId,
-          operation: 'read',
-          range: 'data!A:R', // Include column R (User - pembuat pengajuan)
-        },
-      });
-
-      if (error) {
-        console.error('[fetchPencairanNotifications] Error:', error);
-        return [];
-      }
-
-      console.log('[fetchPencairanNotifications] API response:', JSON.stringify(data, null, 2));
-      
-      // Check for quota exceeded error (429)
-      if (data?.error?.code === 429) {
-        console.warn('[fetchPencairanNotifications] Google Sheets API quota exceeded (429) - will backoff for 10 minutes');
-        quotaExceededRef.current = true;
-        return [];
-      }
-      
-      if (!data?.values) {
-        console.log('[fetchPencairanNotifications] No data returned - values is', data?.values);
-        return [];
-      }
-
-      const rows = data.values;
-      console.log(`[fetchPencairanNotifications] Retrieved ${rows.length} rows`);
-      console.log(`[fetchPencairanNotifications] Raw headers:`, JSON.stringify(rows[0], null, 2));
-      const headers = rows[0] || [];
-      const notifs: Notification[] = [];
-
-      // Column indices - use hardcoded indices based on sheet structure (A:R = 18 columns)
-      // A(0)=ID, B(1)=Title, C(2)=Submitter, D(3)=Jenis, E(4)=Documents, F(5)=Notes, G(6)=Status
-      // H(7)=WaktuPengajuan, I(8)=WaktuBendahara, J(9)=WaktuPPK, K(10)=WaktuPPSPM, L(11)=WaktuKPPN
-      // M(12)=StatusBendahara, N(13)=StatusPPK, O(14)=StatusPPSPM, P(15)=StatusArsip, Q(16)=UpdateTerakhir, R(17)=User
-      const idxId = 0; // Column A
-      const idxTitle = 1; // Column B
-      const idxStatus = 6; // Column G
-      const idxUpdateTime = 16; // Column Q - Update Terakhir
-      const idxUser = 17; // Column R - User (pembuat pengajuan)
-
-      console.log(`[fetchPencairanNotifications] Using column indices - id:${idxId}(A), title:${idxTitle}(B), status:${idxStatus}(G), updateTime:${idxUpdateTime}(Q)`);
-      console.log(`[fetchPencairanNotifications] Status column (G) header: "${headers[idxStatus]}", UpdateTime column (Q) header: "${headers[idxUpdateTime]}"`);
-
-      // Collect all unique statuses found
-      const allStatuses = new Set<string>();
-      
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        if (!row || !row[idxStatus]) continue;
-
-        // Detect structure: OLD (16 cols, P=Update) or NEW (17 cols, Q=Update) or NEWEST (18 cols, Q=Update, R=User)
-        let idxUpdateTimeActual = idxUpdateTime;
-        let idxUserActual = idxUser;
-        if (row.length <= 16) {
-          // OLD STRUCTURE - update is at column P (index 15)
-          idxUpdateTimeActual = 15;
-          idxUserActual = -1; // User column doesn't exist
-          if (i === 1) console.log(`[fetchPencairanNotifications] Detected OLD STRUCTURE (${row.length} cols), Update at P(15)`);
-        } else if (row.length === 17) {
-          // MIDDLE STRUCTURE - update is at column Q (index 16), no user yet
-          idxUpdateTimeActual = 16;
-          idxUserActual = -1;
-          if (i === 1) console.log(`[fetchPencairanNotifications] Detected MIDDLE STRUCTURE (${row.length} cols), Update at Q(16)`);
-        } else {
-          // NEWEST STRUCTURE - update is at column Q (index 16), user is at column R (index 17)
-          idxUpdateTimeActual = 16;
-          idxUserActual = 17;
-          if (i === 1) console.log(`[fetchPencairanNotifications] Detected NEWEST STRUCTURE (${row.length} cols), Update at Q(16), User at R(17)`);
-        }
-
-        const statusRaw = row[idxStatus]?.toString() || '';
-        const status = statusRaw.toLowerCase().trim();
-        allStatuses.add(status);
-        console.log(`[fetchPencairanNotifications] Row ${i}: statusRaw="${statusRaw}", status="${status}"`);
-        
-        const judul = row[idxTitle]?.toString() || 'Pengajuan';
-        const submissionId = row[idxId]?.toString() || `pencairan-${i}`;
-        const updateTimeStr = row[idxUpdateTimeActual]?.toString() || '';
-        const submissionUser = idxUserActual >= 0 ? row[idxUserActual]?.toString() || '' : ''; // Pembuat pengajuan (kolom R)
-        
-        // Use timestamp text as-is from database
-        let updateTime = new Date();
-        let displayTime = updateTimeStr?.trim() ? `Update terakhir: ${updateTimeStr.trim()}` : 'Baru saja';
-        
-        console.log(`[fetchPencairanNotifications] Row ${i}: id=${submissionId}, title=${judul}, status=${status}, user="${submissionUser}", updateTimeStr="${updateTimeStr}", displayTime="${displayTime}"`);
-
-        let targetRoles: string[] = [];
-        let message = '';
-        let title = 'Sigap SPJ - Pengajuan Baru';
-        let isCreatorOnly = false; // Flag untuk notifikasi yang hanya untuk pembuat
-
-        // Map actual statuses to notification rules
-        // 🆕 Logika: Jika user adalah pembuat (kolom R), SEMUA status adalah untuk mereka
-        // Jika user bukan pembuat, hanya status tertentu yang sesuai role mereka
-        
-        // incomplete_sm = Ditolak ke SM (needs correction by submitter)
-        if (status === 'incomplete_sm') {
-          title = 'Sigap SPJ - Pengajuan Ditolak';
-          // Pembuat pengajuan ATAU roles di Fungsi* yang melakukan pengembalian
-          targetRoles = ['Fungsi', 'Bendahara', 'Pejabat Pembuat Komitmen'];
-          isCreatorOnly = true; // Prioritas: pembuat pengajuan
-          message = `${judul} ditolak Bendahara. Mohon untuk segera memperbaiki`;
-        }
-        // Draft status
-        else if (status === 'draft') {
-          targetRoles = ['Fungsi', 'Bendahara', 'Pejabat Pembuat Komitmen'];
-          isCreatorOnly = true; // Prioritas: pembuat pengajuan
-          message = `${judul} masih belum dilengkapi Subjek Metter`;
-        }
-        // Rejected by bendahara - needs correction
-        else if (status === 'incomplete_bendahara') {
-          title = 'Sigap SPJ - Pengajuan Ditolak';
-          targetRoles = ['Bendahara'];
-          isCreatorOnly = true; // Pembuat yang juga bendahara perlu tahu
-          message = `${judul} ditolak PPK. Mohon segera memperbaiki`;
-        }
-        else if (status === 'incomplete_ppk') {
-          title = 'Sigap SPJ - Pengajuan Ditolak';
-          targetRoles = ['PPK', 'Pejabat Pembuat Komitmen'];
-          isCreatorOnly = true;
-          message = `${judul} ditolak PPSPM. Mohon segera memperbaiki`;
-        }
-        else if (status === 'incomplete_ppspm') {
-          title = 'Sigap SPJ - Pengajuan Ditolak';
-          targetRoles = ['PPSPM'];
-          isCreatorOnly = true;
-          message = `${judul} ditolak KPPN. Mohon segera memperbaiki`;
-        }
-        else if (status === 'incomplete_kppn') {
-          title = 'Sigap SPJ - Pengajuan Ditolak';
-          targetRoles = ['Arsip'];
-          isCreatorOnly = true;
-          message = `${judul} ditolak Arsip. Mohon segera memperbaiki`;
-        }
-        // Pending at bendahara
-        else if (status === 'pending_bendahara') {
-          targetRoles = ['Bendahara'];
-          message = `Harap periksa kelengkapan berkas dari pengajuan ${judul}`;
-        }
-        // Pending at PPK
-        else if (status === 'pending_ppk') {
-          targetRoles = ['PPK', 'Pejabat Pembuat Komitmen'];
-          message = `${judul} untuk diperiksa`;
-        }
-        // Pending at PPSPM
-        else if (status === 'pending_ppspm') {
-          targetRoles = ['PPSPM'];
-          message = `${judul} untuk diperiksa`;
-        }
-        // Sent to KPPN
-        else if (status === 'sent_kppn') {
-          targetRoles = ['Arsip'];
-          message = `${judul} untuk di arsipkan`;
-        }
-
-        if (targetRoles.length > 0) {
-          const matches = roleMatches(userRole, targetRoles);
-          const normalizedUserRole = normalizeRole(userRole);
-          const isCreator = submissionUser && (submissionUser === userRole || submissionUser === normalizedUserRole);
-          
-          // 🆕 Logika: Tampilkan notifikasi jika:
-          // 1. isCreatorOnly === true DAN user adalah creator, ATAU
-          // 2. isCreatorOnly === false DAN user role match dengan targetRoles
-          const shouldShow = isCreatorOnly ? isCreator : matches;
-          
-          console.log(`[fetchPencairanNotifications] Row ${i}: status=${status}, judul=${judul}, user="${submissionUser}", userRole=${userRole}, normalizedUserRole=${normalizedUserRole}, isCreator=${isCreator}, isCreatorOnly=${isCreatorOnly}, shouldShow=${shouldShow}`);
-          
-          if (shouldShow) {
-            const notif: PencairanNotification = {
-              id: `pencairan-${submissionId}`,
-              type: 'pencairan',
-              title,
-              message,
-              priority: (status?.includes('incomplete') || status === 'pending_ppspm') ? 'high' : 'medium',
-              targetRoles,
-              relatedId: submissionId,
-              status: status as any,
-              createdAt: updateTime,
-              displayTime,
-              judulPengajuan: judul,
-              submissionStatus: status as any,
-              actionUrl: '/usulan-pencairan',
-            };
-            notifs.push(notif);
-            console.log(`[fetchPencairanNotifications] Added notification: ${notif.id}`);
-          }
-        }
-      }
-
-      console.log(`[fetchPencairanNotifications] All statuses found in sheet:`, Array.from(allStatuses));
-      console.log(`[fetchPencairanNotifications] Total notifications: ${notifs.length}`);
-      return notifs;
-    } catch (error) {
-      console.error('Error fetching pencairan notifications:', error);
-      return [];
-    }
-  }, [satkerContext, userRole, userSatker]);
-
-  // Fetch SBML & SPK-BAST data and generate notifikasi
-  const fetchSBMLNotifications = useCallback(async (): Promise<Notification[]> => {
-    try {
-      // Only fetch for current satker
-      if (!userSatker) {
-        console.log('[fetchSBMLNotifications] No satker');
-        return [];
-      }
-
-      // Check if user is in excluded roles
-      const normalizedUserRole = normalizeRole(userRole);
-      if (normalizedUserRole === 'PPSPM' || normalizedUserRole === 'Arsip') {
-        console.log(`[fetchSBMLNotifications] User role ${userRole} (normalized: ${normalizedUserRole}) is excluded`);
-        return [];
-      }
-
-      const spkBastSheetId = satkerContext?.getUserSatkerSheetId('entrikegiatan') || '';
-      console.log(`[fetchSBMLNotifications] userSatker=${userSatker}, sheetId=${spkBastSheetId ? 'found' : 'NOT_FOUND'}`);
-      if (!spkBastSheetId) return [];
-
-      const notifs: Notification[] = [];
-
-      // Fetch signature data from Sheet1
-      console.log(`[fetchSBMLNotifications] Fetching TTD data from Sheet1...`);
-      const { data: sbmlData, error: sbmlError } = await supabase.functions.invoke('google-sheets', {
-        body: {
-          spreadsheetId: spkBastSheetId,
-          operation: 'read',
-          range: 'Sheet1!A:Z',
-        },
-      });
-
-      if (sbmlError) {
-        console.error('[fetchSBMLNotifications] SBML Error:', sbmlError);
-      } else if (sbmlData?.error?.code === 429) {
-        console.warn('[fetchSBMLNotifications] Google Sheets API quota exceeded (429) - will backoff for 10 minutes');
-        quotaExceededRef.current = true;
-        // Early return to avoid further API calls when quota is exceeded
-        console.log('[fetchSBMLNotifications] Total SBML notifications: 0 (quota exceeded)');
-        return notifs;
-      } else if (!sbmlData?.values) {
-        console.log('[fetchSBMLNotifications] No SBML data returned - values is', sbmlData?.values);
-        console.log('[fetchSBMLNotifications] SBML API response:', JSON.stringify(sbmlData, null, 2));
-      } else {
-        const rows = sbmlData.values;
-        console.log(`[fetchSBMLNotifications] Retrieved ${rows.length} SBML rows`);
-        console.log(`[fetchSBMLNotifications] SBML raw data:`, JSON.stringify(rows.slice(0, 5), null, 2));
-        const headers = rows[0] || [];
-
-        const idxNama = headers.findIndex((h: string) => h?.toLowerCase().includes('nama'));
-        const idxStatus = headers.findIndex((h: string) => h?.toLowerCase().includes('status') && !h?.toLowerCase().includes('ttd'));
-        const idxTtd = headers.findIndex((h: string) => h?.toLowerCase().includes('status ttd') || h?.toLowerCase().includes('status') && h?.toLowerCase().includes('ttd'));
-        const idxPeriode = 2; // Column C - Periode
-        const idxStatusNotif = 24; // Column Y - Status Notif
-        
-        console.log(`[fetchSBMLNotifications] Header indices - nama:${idxNama}, status:${idxStatus}, ttd:${idxTtd}, periode:${idxPeriode}(C), statusNotif:${idxStatusNotif}(Y)`);
-
-        // Collect all unique TTD statuses found
-        const allTtdStatuses = new Set<string>();
-        // Map to group petugas by periode
-        const petugarByPeriode = new Map<string, string[]>();
-
-        for (let i = 1; i < rows.length; i++) {
-          const row = rows[i];
-          if (!row || !row[idxNama]) continue;
-
-          const nama = row[idxNama]?.toString() || '';
-          const status = row[idxStatus]?.toString().toLowerCase().trim();
-          const ttdRaw = row[idxTtd]?.toString().toLowerCase().trim();
-          const periode = row[idxPeriode]?.toString() || 'Unknown';
-          const statusNotifRaw = row[idxStatusNotif]?.toString().toLowerCase().trim() || '';
-
-          // Check Status Notif (column Y) - only process if contains 'sudah'
-          // If blank or 'belum', skip this row
-          const statusNotifValues = statusNotifRaw?.split('|').map(s => s.trim()) || [];
-          const hasSudahNotif = statusNotifValues.some(s => s.includes('sudah'));
-          
-          if (!hasSudahNotif) {
-            console.log(`[fetchSBMLNotifications] SBML Row ${i}: Skip - Status Notif is blank or doesn't contain 'sudah': "${statusNotifRaw}"`);
-            continue;
-          }
-
-          // Handle pipe-separated values (multiple signers) - extract unique statuses
-          const ttdStatuses = ttdRaw?.split('|').map(s => s.trim()) || [];
-          ttdStatuses.forEach(t => allTtdStatuses.add(t));
-
-          // Check if ANY of the TTD statuses indicate not signed yet
-          // Matches: "belum", "tidak", "belum ditandatangani", "tidak ditandatangani"
-          const hasPendingTtd = ttdStatuses.some(t => 
-            t.includes('belum') || t.includes('tidak') || status?.includes('belum ttd')
-          );
-          
-          if (hasPendingTtd) {
-            console.log(`[fetchSBMLNotifications] SBML Row ${i}: nama=${nama}, ttd=${ttdRaw}, statusNotif=${statusNotifRaw}, periode=${periode}`);
-            // Group by periode
-            if (!petugarByPeriode.has(periode)) {
-              petugarByPeriode.set(periode, []);
-            }
-            petugarByPeriode.get(periode)?.push(nama);
-          }
-        }
-        
-        // Create one notification per periode, combining all petugas
-        // SBML CEKTD notifications are NOT displayed - only Rekap SPK-BAST is shown
-        // petugarByPeriode is still collected but notifications are skipped
-        console.log(`[fetchSBMLNotifications] Cek SBML TTTD notifications suppressed - only Rekap SPK-BAST will be displayed`);
-        
-        console.log(`[fetchSBMLNotifications] All TTD statuses found in SBML:`, Array.from(allTtdStatuses));
-      }
-
-      // Fetch Rekap SPK-BAST data (reuse Sheet1 data from above)
-      console.log(`[fetchSBMLNotifications] Reusing Sheet1 data for rekap analysis...`);
-      const rekapData = sbmlData; // Reuse the same data to reduce API calls
-      const rekapError = sbmlError;
-
-      if (rekapError) {
-        console.error('[fetchSBMLNotifications] Rekap Error:', rekapError);
-      } else if (rekapData?.error?.code === 429) {
-        console.warn('[fetchSBMLNotifications] Google Sheets API quota exceeded (429) - will backoff for 10 minutes');
-        quotaExceededRef.current = true;
-        // Early return when quota is exceeded
-        console.log('[fetchSBMLNotifications] Total SBML notifications: 0 (quota exceeded)');
-        return notifs;
-      } else if (!rekapData?.values) {
-        console.log('[fetchSBMLNotifications] No Rekap data returned - values is', rekapData?.values);
-        console.log('[fetchSBMLNotifications] Rekap API response:', JSON.stringify(rekapData, null, 2));
-      } else {
-        const rows = rekapData.values;
-        console.log(`[fetchSBMLNotifications] Retrieved ${rows.length} Rekap rows`);
-        console.log(`[fetchSBMLNotifications] Rekap raw data:`, JSON.stringify(rows.slice(0, 5), null, 2));
-        const headers = rows[0] || [];
-
-        const idxNama = headers.findIndex((h: string) => h?.toLowerCase().includes('nama'));
-        const idxStatus = headers.findIndex((h: string) => h?.toLowerCase().includes('status') && !h?.toLowerCase().includes('ttd'));
-        const idxTtd = headers.findIndex((h: string) => h?.toLowerCase().includes('status ttd') || h?.toLowerCase().includes('status') && h?.toLowerCase().includes('ttd'));
-        const idxPeriode = headers.findIndex((h: string) => h?.toLowerCase().includes('periode') || h?.toLowerCase().includes('bulan'));
-        const idxStatusNotif = 24; // Column Y - Status Notif
-
-        console.log(`[fetchSBMLNotifications] Rekap header indices - nama:${idxNama}, status:${idxStatus}, ttd:${idxTtd}, periode:${idxPeriode}, statusNotif:${idxStatusNotif}(Y)`);
-
-        // Collect all unique TTD statuses found
-        const allRekCapTtdStatuses = new Set<string>();
-        // Map to group petugas by periode
-        const rekapPetuargByPeriode = new Map<string, string[]>();
-
-        for (let i = 1; i < rows.length; i++) {
-          const row = rows[i];
-          if (!row || !row[idxNama]) continue;
-
-          const nama = row[idxNama]?.toString() || '';
-          const status = row[idxStatus]?.toString().toLowerCase().trim();
-          const ttdRaw = row[idxTtd]?.toString().toLowerCase().trim();
-          const periode = row[idxPeriode]?.toString() || 'Unknown';
-          const statusNotifRaw = row[idxStatusNotif]?.toString().toLowerCase().trim() || '';
-
-          // Check Status Notif (column Y) - only process if contains 'sudah'
-          // If blank or 'belum', skip this row
-          const statusNotifValues = statusNotifRaw?.split('|').map(s => s.trim()) || [];
-          const hasSudahNotif = statusNotifValues.some(s => s.includes('sudah'));
-          
-          if (!hasSudahNotif) {
-            console.log(`[fetchSBMLNotifications] Rekap Row ${i}: Skip - Status Notif is blank or doesn't contain 'sudah': "${statusNotifRaw}"`);
-            continue;
-          }
-
-          // Handle pipe-separated values (multiple signers) - extract unique statuses
-          const ttdStatuses = ttdRaw?.split('|').map(s => s.trim()) || [];
-          ttdStatuses.forEach(t => allRekCapTtdStatuses.add(t));
-
-          // Check if ANY of the TTD statuses indicate not signed yet
-          // Matches: "belum", "tidak", "belum ditandatangani", "tidak ditandatangani"
-          const hasPendingTtd = ttdStatuses.some(t => 
-            t.includes('belum') || t.includes('tidak') || status?.includes('belum ttd')
-          );
-          
-          if (hasPendingTtd) {
-            console.log(`[fetchSBMLNotifications] Rekap Row ${i}: nama=${nama}, ttd=${ttdRaw}, statusNotif=${statusNotifRaw}, periode=${periode}`);
-            // Group by periode
-            if (!rekapPetuargByPeriode.has(periode)) {
-              rekapPetuargByPeriode.set(periode, []);
-            }
-            rekapPetuargByPeriode.get(periode)?.push(nama);
-          }
-        }
-        
-        // Create one notification per periode, combining all petugas
-        rekapPetuargByPeriode.forEach((petugas, periode) => {
-          const notif: SBMLNotification = {
-            id: `rekap-periode-${periode}`,
-            type: 'sbml_spk',
-            title: 'Rekap SPK-BAST - Tandatangan Mitra Belum Lengkap',
-            message: `Periode SPK-BAST ${periode}. Mohon bantuannya untuk mengingatkan mitra terkait tanda tangan dokumen SPK–BAST yang belum lengkap.`,
-            priority: 'high',
-            targetRoles: [],
-            relatedId: `periode-${periode}`,
-            createdAt: new Date(),
-            namaPetugas: petugas.join(', '),
-            periode,
-            sheetName: 'Rekap SPK-BAST',
-            actionUrl: '/spk-bast/rekap-spk',
-          };
-          notifs.push(notif);
-          console.log(`[fetchSBMLNotifications] Added grouped Rekap notification for ${periode}: ${petugas.length} petugas`);
-        });
-        
-        console.log(`[fetchSBMLNotifications] All TTD statuses found in Rekap:`, Array.from(allRekCapTtdStatuses));
-      }
-
-      console.log(`[fetchSBMLNotifications] Total SBML notifications: ${notifs.length}`);
-      return notifs;
-    } catch (error) {
-      console.error('Error fetching SBML notifications:', error);
-      return [];
-    }
-  }, [satkerContext, userRole, userSatker]);
-
-  // Main fetch function
-  const fetchAllNotifications = useCallback(async () => {
-    console.log(`[fetchAllNotifications] Starting - currentUser=${!!currentUser}, userSatker=${userSatker}, satkerConfigReady=${satkerConfigReady}`);
-    if (!currentUser || !userSatker || !satkerConfigReady) {
-      console.log('[fetchAllNotifications] Skipping - no currentUser, userSatker, or satkerConfig not ready');
-      return;
-    }
-
-    try {
-      const pencairanNotifs = await fetchPencairanNotifications();
-      console.log(`[fetchAllNotifications] Pencairan: ${pencairanNotifs.length} notifications`);
-      
-      const sbmlNotifs = await fetchSBMLNotifications();
-      console.log(`[fetchAllNotifications] SBML: ${sbmlNotifs.length} notifications`);
-      
-      // Show TTD notifications first, then Pencairan
-      let allNotifs = [...sbmlNotifs, ...pencairanNotifs];
-      console.log(`[fetchAllNotifications] Total: ${allNotifs.length} notifications to set`);
-      
-      // Add test data if no real notifications found (for development)
-      if (allNotifs.length === 0) {
-        console.log('[fetchAllNotifications] No notifications found - adding test data for UI verification');
-        allNotifs = [
-          {
-            id: 'test-draft-1',
-            type: 'pencairan',
-            title: 'Sigap SPJ - Pengajuan Baru',
-            message: 'Honorsf KSA Padi Februari 2026 masih belum dilengkapi: Subjek Metter',
-            priority: 'medium',
-            targetRoles: [],
-            relatedId: 'test-1',
-            status: 'draft',
-            createdAt: new Date(new Date().getTime() - 60 * 60 * 1000),
-            displayTime: 'Update terakhir: 11:19 - 26/02/2026',
-            judulPengajuan: 'Honorsf KSA Padi Februari 2026',
-            submissionStatus: 'draft',
-            actionUrl: '/usulan-pencairan',
-          } as any,
-          {
-            id: 'test-rejected-1',
-            type: 'pencairan',
-            title: 'Sigap SPJ - Pengajuan Ditolak',
-            message: 'Honors KSA Jagung Februari 2026 ditolak Bendahara. Mohon untuk segera memperbaiki',
-            priority: 'high',
-            targetRoles: [],
-            relatedId: 'test-2',
-            status: 'incomplete_sm',
-            createdAt: new Date(new Date().getTime() - 2 * 60 * 60 * 1000),
-            displayTime: 'Update terakhir: 10:06 - 03/03/2026',
-            judulPengajuan: 'Honors KSA Jagung Februari 2026',
-            submissionStatus: 'incomplete_sm',
-            actionUrl: '/usulan-pencairan',
-          } as any,
-        ];
-      }
-      
-      notificationsContext._setNotifications(allNotifs);
-      console.log(`[fetchAllNotifications] Notifications updated in context`);
-    } catch (error) {
-      console.error('Error in fetchAllNotifications:', error);
-    }
-  }, [currentUser, userSatker, userRole, satkerConfigReady, notificationsContext, fetchPencairanNotifications, fetchSBMLNotifications]);
-
-  // Fetch notifications on page load and set up polling every 1 hour
   useEffect(() => {
-    console.log(`[useNotifications] Effect triggered - currentUser=${!!currentUser}, userSatker=${userSatker}, satkerConfigReady=${satkerConfigReady}`);
-    
-    if (!currentUser || !userSatker || !satkerConfigReady) {
-      console.log('[useNotifications] Skipping - no currentUser, userSatker, or satkerConfig not ready');
+    if (!user || !submissions || submissions.length === 0) {
       return;
     }
 
-    // Only fetch once on initial mount + config ready
-    if (!hasInitialFetchRef.current) {
-      console.log('[useNotifications] Initial fetch on config ready');
-      hasInitialFetchRef.current = true;
-      fetchAllNotifications();
-    }
+    // Generate notifications from submissions
+    const notifs = generateNotificationsFromSubmissions(submissions, userRole);
 
-    // Set up polling interval - every 1 hour (only if not already set)
-    if (!pollIntervalRef.current) {
-      console.log('[useNotifications] Starting polling interval - 1 hour');
-      pollIntervalRef.current = setInterval(() => {
-        console.log('[useNotifications] Polling interval triggered - fetching...');
-        fetchAllNotifications();
-      }, POLLING_INTERVAL);
+    // Only update if count changed to avoid infinite loops
+    if (notifs.length !== prevCountRef.current) {
+      prevCountRef.current = notifs.length;
+      notificationsContext._setNotifications(notifs);
     }
-
-    // Cleanup on unmount
-    return () => {
-      console.log('[useNotifications] Cleanup on unmount');
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
-      }
-    };
-    
-  }, [satkerConfigReady]); // Only depend on satkerConfigReady to prevent infinite loops
+  }, [submissions, userRole, user]);
 }
