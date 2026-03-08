@@ -269,6 +269,22 @@ export function SubmissionDetail({
       
       newStatus = 'pending_arsip';
       actor = 'kppn';
+    } else if (submission.status === 'rejected_bendahara') {
+      // SM/Submitter correcting and resubmitting to Bendahara
+      newStatus = 'pending_bendahara';
+      actor = 'bendahara';
+    } else if (submission.status === 'rejected_ppk') {
+      // Bendahara correcting rejected PPK feedback and resubmitting to PPK
+      newStatus = 'pending_ppk';
+      actor = 'bendahara';
+    } else if (submission.status === 'rejected_ppspm') {
+      // PPK correcting rejected PPSPM feedback and resubmitting to PPSPM
+      newStatus = 'pending_ppspm';
+      actor = 'ppk';
+    } else if (submission.status === 'rejected_kppn') {
+      // PPSPM correcting rejected KPPN feedback and resubmitting to KPPN
+      newStatus = 'pending_kppn';
+      actor = 'ppspm';
     } else {
       return;
     }
@@ -428,6 +444,14 @@ export function SubmissionDetail({
       return 'Setujui dan Kirim ke KPPN';
     } else if (submission.status === 'pending_kppn') {
       return 'Catat dan Selesaikan';
+    } else if (submission.status === 'rejected_bendahara') {
+      return 'Kirim Ulang ke Bendahara';
+    } else if (submission.status === 'rejected_ppk') {
+      return 'Kirim Ulang ke PPK';
+    } else if (submission.status === 'rejected_ppspm') {
+      return 'Kirim Ulang ke PPSPM';
+    } else if (submission.status === 'rejected_kppn') {
+      return 'Kirim Ulang ke KPPN';
     }
     return 'Setujui';
   };

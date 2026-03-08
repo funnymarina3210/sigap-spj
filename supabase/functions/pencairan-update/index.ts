@@ -372,12 +372,25 @@ serve(async (req: Request) => {
       updatedRow[COLUMNS.nomorSPPD] = generateSPPDNumber(id);
     }
 
-    // Handle rejection flows - clear future stage notes/timestamps
+    // Handle rejection flows - clear future stage notes/timestamps when rejection happens
+    // When a stage rejects, we clear notes from that stage onward so they can be re-reviewed
     if (action === 'reject') {
       switch (status) {
         case 'rejected_sm':
-          // Rejected by Bendahara - clear Bendahara notes onward
+          // Rejected at SM stage (by Bendahara) - SM needs to fix it
+          // Clear Bendahara notes onward since Bendahara will review again
           updatedRow[COLUMNS.statusBendahara] = '';
+          updatedRow[COLUMNS.statusPPK] = '';
+          updatedRow[COLUMNS.statusPPSPM] = '';
+          updatedRow[COLUMNS.statusArsip] = '';
+          updatedRow[COLUMNS.waktuBendahara] = '';
+          updatedRow[COLUMNS.waktuPPK] = '';
+          updatedRow[COLUMNS.waktuPPSPM] = '';
+          updatedRow[COLUMNS.waktuArsip] = '';
+          break;
+        case 'rejected_bendahara':
+          // Rejected at Bendahara stage (by PPK) - Bendahara needs to fix it
+          // Clear PPK notes onward since PPK will review again
           updatedRow[COLUMNS.statusPPK] = '';
           updatedRow[COLUMNS.statusPPSPM] = '';
           updatedRow[COLUMNS.statusArsip] = '';
@@ -385,22 +398,23 @@ serve(async (req: Request) => {
           updatedRow[COLUMNS.waktuPPSPM] = '';
           updatedRow[COLUMNS.waktuArsip] = '';
           break;
-        case 'rejected_bendahara':
-          // Rejected by PPK - clear PPK notes onward
-          updatedRow[COLUMNS.statusPPK] = '';
+        case 'rejected_ppk':
+          // Rejected at PPK stage (by PPSPM) - PPK needs to fix it
+          // Clear PPSPM notes onward since PPSPM will review again
           updatedRow[COLUMNS.statusPPSPM] = '';
           updatedRow[COLUMNS.statusArsip] = '';
           updatedRow[COLUMNS.waktuPPSPM] = '';
           updatedRow[COLUMNS.waktuArsip] = '';
           break;
-        case 'rejected_ppk':
-          // Rejected by PPSPM - clear PPSPM notes onward
-          updatedRow[COLUMNS.statusPPSPM] = '';
+        case 'rejected_ppspm':
+          // Rejected at PPSPM stage (by KPPN) - PPSPM needs to fix it
+          // Clear KPPN notes onward since KPPN will review again
           updatedRow[COLUMNS.statusArsip] = '';
           updatedRow[COLUMNS.waktuArsip] = '';
           break;
-        case 'rejected_ppspm':
-          // Rejected by KPPN - clear Arsip notes
+        case 'rejected_kppn':
+          // Rejected at KPPN stage (by Arsip) - KPPN needs to fix it
+          // Clear Arsip notes since Arsip will review again
           updatedRow[COLUMNS.statusArsip] = '';
           break;
       }

@@ -26,11 +26,10 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
 
   // Latest first
   if (submission.waktuArsip) {
-    const isArsipActive = ['pending_arsip', 'completed'].includes(submission.status);
     entries.push({
       stage: 'Arsip',
       timestamp: submission.waktuArsip,
-      status: submission.status === 'completed' ? 'approved' : submission.status === 'rejected_kppn' ? 'rejected' : 'pending',
+      status: submission.status === 'completed' ? 'approved' : submission.status === 'pending_arsip' ? 'pending' : submission.status === 'rejected_kppn' ? 'rejected' : 'rejected',
       notes: submission.statusArsip,
     });
   }
@@ -39,7 +38,7 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     entries.push({
       stage: 'KPPN',
       timestamp: submission.waktuKppn,
-      status: ['pending_kppn', 'pending_arsip', 'completed'].includes(submission.status) ? 'approved' : 'rejected',
+      status: submission.status === 'pending_kppn' || submission.status === 'pending_arsip' || submission.status === 'completed' ? (submission.status === 'pending_kppn' ? 'pending' : 'approved') : submission.status === 'rejected_ppspm' ? 'rejected' : 'rejected',
       notes: 'Diproses KPPN',
     });
   }
@@ -48,7 +47,7 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     entries.push({
       stage: 'PPSPM',
       timestamp: submission.waktuPPSPM,
-      status: ['pending_kppn', 'pending_arsip', 'completed'].includes(submission.status) ? 'approved' : 'rejected',
+      status: submission.status === 'pending_ppspm' || submission.status === 'pending_kppn' || submission.status === 'pending_arsip' || submission.status === 'completed' ? (submission.status === 'pending_ppspm' ? 'pending' : 'approved') : submission.status === 'rejected_ppk' ? 'rejected' : 'rejected',
       notes: submission.statusPPSPM,
     });
   }
@@ -57,7 +56,7 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     entries.push({
       stage: 'PPK',
       timestamp: submission.waktuPpk,
-      status: ['pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status) ? 'approved' : 'rejected',
+      status: submission.status === 'pending_ppk' || submission.status === 'pending_ppspm' || submission.status === 'pending_kppn' || submission.status === 'pending_arsip' || submission.status === 'completed' ? (submission.status === 'pending_ppk' ? 'pending' : 'approved') : submission.status === 'rejected_bendahara' ? 'rejected' : 'rejected',
       notes: submission.statusPpk,
     });
   }
@@ -66,7 +65,7 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     entries.push({
       stage: 'Bendahara',
       timestamp: submission.waktuBendahara,
-      status: ['pending_ppk', 'pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status) ? 'approved' : 'rejected',
+      status: submission.status === 'pending_bendahara' || submission.status === 'pending_ppk' || submission.status === 'pending_ppspm' || submission.status === 'pending_kppn' || submission.status === 'pending_arsip' || submission.status === 'completed' ? (submission.status === 'pending_bendahara' ? 'pending' : 'approved') : submission.status === 'rejected_sm' ? 'rejected' : 'rejected',
       notes: submission.statusBendahara,
     });
   }
@@ -83,7 +82,7 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
   const getIcon = (status: string) => {
     if (status === 'approved') return '✅';
     if (status === 'rejected') return '❌';
-    return '●';
+    return '⏳'; // hourglass for pending
   };
 
   if (entries.length === 0) {
@@ -131,21 +130,29 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
                 
                 {/* Stage and Status */}
                 <p className="text-sm font-medium text-gray-800 mb-2">
-                  {entry.stage}: {entry.status === 'approved' ? 'Diserahkan' : entry.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
+                  {entry.stage}: {entry.status === 'approved' ? 'Diserahkan' : entry.status === 'rejected' ? 'Ditolak' : 'Menunggu verifikasi'}
                 </p>
                 
                 {/* Badge with notes */}
                 {entry.notes && (
                   <div className="inline-block">
-                    <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                      ✓ {entry.notes}
+                    <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+                      entry.status === 'approved' ? 'bg-green-100 text-green-700' :
+                      entry.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {entry.status === 'approved' ? '✓' : entry.status === 'rejected' ? '✗' : '◐'} {entry.notes}
                     </span>
                   </div>
                 )}
                 {!entry.notes && (
                   <div className="inline-block">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
-                      ✓ {STAGE_ROLES[entry.stage]}
+                    <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+                      entry.status === 'approved' ? 'bg-green-100 text-green-700' :
+                      entry.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {entry.status === 'approved' ? '✓' : entry.status === 'rejected' ? '✗' : '◐'} {STAGE_ROLES[entry.stage]}
                     </span>
                   </div>
                 )}
