@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useCallback, useMemo } from 'react';
 import { useSatkerConfig, SatkerConfig, getSheetIdBySatkerAndModule } from '@/hooks/use-satker-config';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SatkerConfigContextType {
   configs: SatkerConfig[] | undefined;
