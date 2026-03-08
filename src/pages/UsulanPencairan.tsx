@@ -48,12 +48,15 @@ export default function UsulanPencairan() {
   const filteredSubmissions = useMemo(() => {
     let result = submissions;
     
-    // 🆕 Filter berdasarkan role visibility
-    // - Jika role bisa lihat semua (Bendahara, PPK, PPSPM, KPPN, Arsip, admin, operator): lihat semua
-    // - Jika role adalah submitter (Fungsi*): hanya lihat pengajuan yang dibuat sendiri
     result = result.filter(sub => shouldShowSubmission(sub, userRole, sub.user));
     
-    if (activeFilter !== 'all') {
+    if (activeFilter === 'rejected') {
+      // Combined rejected filter
+      result = result.filter(sub => sub.status.startsWith('rejected_'));
+    } else if (activeFilter === 'spby') {
+      // SPBy: UP submissions at pending_bendahara
+      result = result.filter(sub => sub.pembayaran === 'UP' && sub.status === 'pending_bendahara');
+    } else if (activeFilter !== 'all') {
       result = result.filter(sub => sub.status === activeFilter);
     }
     
