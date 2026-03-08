@@ -96,6 +96,7 @@ export default function UsulanPencairan() {
 
     const result: Record<string, number> = {
       all: visibleSubmissions.length,
+      spby: visibleSubmissions.filter(s => s.pembayaran === 'UP' && s.status === 'pending_bendahara').length,
     };
 
     allStatuses.forEach(status => {
