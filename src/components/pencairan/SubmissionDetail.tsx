@@ -341,6 +341,42 @@ export function SubmissionDetail({
     onClose();
   };
 
+  const handleSaveNotes = async () => {
+    setIsUpdating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('pencairan-update', {
+        body: {
+          id: submission.id,
+          status: submission.status,
+          catatan: notes.trim(),
+          actor: userRole?.toLowerCase().replace(/\s+/g, '') || 'bendahara',
+          action: 'save_note',
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data?.success) {
+        toast({
+          title: 'Catatan berhasil disimpan',
+          description: 'Catatan telah disimpan ke Google Sheets',
+        });
+        onRefresh();
+      } else {
+        throw new Error(data?.error || 'Gagal menyimpan catatan');
+      }
+    } catch (err) {
+      console.error('Error saving notes:', err);
+      toast({
+        title: 'Gagal menyimpan catatan',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleSaveSPBy = async () => {
     setIsUpdating(true);
     try {
@@ -764,6 +800,17 @@ export function SubmissionDetail({
                   <p className="text-sm text-muted-foreground bg-secondary/50 p-3 rounded-lg">
                     {submission.notes || 'Tidak ada catatan'}
                   </p>
+                )}
+                {(canAction || canReturnArsip) && notes && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full text-xs"
+                    onClick={handleSaveNotes}
+                    disabled={isUpdating}
+                    size="sm"
+                  >
+                    {isUpdating ? '⏳ Memproses...' : '💾 Simpan Catatan'}
+                  </Button>
                 )}
               </CardContent>
             </Card>

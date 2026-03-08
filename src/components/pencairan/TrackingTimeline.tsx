@@ -26,46 +26,86 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
 
   // Latest first
   if (submission.waktuArsip) {
+    let arsipStatus: 'pending' | 'approved' | 'rejected' = 'pending';
+    if (submission.status === 'completed') {
+      arsipStatus = 'approved';
+    } else if (submission.status === 'pending_arsip') {
+      arsipStatus = 'pending';
+    } else if (submission.status === 'rejected_kppn') {
+      arsipStatus = 'rejected'; // KPPN rejected it, so Arsip won't process
+    }
     entries.push({
       stage: 'Arsip',
       timestamp: submission.waktuArsip,
-      status: submission.status === 'completed' ? 'approved' : submission.status === 'pending_arsip' ? 'pending' : submission.status === 'rejected_kppn' ? 'rejected' : 'rejected',
+      status: arsipStatus,
       notes: submission.statusArsip,
     });
   }
 
   if (submission.waktuKppn) {
+    let kppnStatus: 'pending' | 'approved' | 'rejected' = 'pending';
+    if (submission.status === 'pending_kppn') {
+      kppnStatus = 'pending';
+    } else if (['pending_arsip', 'completed'].includes(submission.status)) {
+      kppnStatus = 'approved';
+    } else if (submission.status === 'rejected_ppspm') {
+      kppnStatus = 'rejected';
+    }
     entries.push({
       stage: 'KPPN',
       timestamp: submission.waktuKppn,
-      status: submission.status === 'pending_kppn' || submission.status === 'pending_arsip' || submission.status === 'completed' ? (submission.status === 'pending_kppn' ? 'pending' : 'approved') : submission.status === 'rejected_ppspm' ? 'rejected' : 'rejected',
+      status: kppnStatus,
       notes: 'Diproses KPPN',
     });
   }
 
   if (submission.waktuPPSPM) {
+    let ppspmStatus: 'pending' | 'approved' | 'rejected' = 'pending';
+    if (submission.status === 'pending_ppspm') {
+      ppspmStatus = 'pending';
+    } else if (['pending_kppn', 'pending_arsip', 'completed'].includes(submission.status)) {
+      ppspmStatus = 'approved';
+    } else if (submission.status === 'rejected_ppk') {
+      ppspmStatus = 'rejected';
+    }
     entries.push({
       stage: 'PPSPM',
       timestamp: submission.waktuPPSPM,
-      status: submission.status === 'pending_ppspm' || submission.status === 'pending_kppn' || submission.status === 'pending_arsip' || submission.status === 'completed' ? (submission.status === 'pending_ppspm' ? 'pending' : 'approved') : submission.status === 'rejected_ppk' ? 'rejected' : 'rejected',
+      status: ppspmStatus,
       notes: submission.statusPPSPM,
     });
   }
 
   if (submission.waktuPpk) {
+    let ppkStatus: 'pending' | 'approved' | 'rejected' = 'pending';
+    if (submission.status === 'pending_ppk') {
+      ppkStatus = 'pending';
+    } else if (['pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status)) {
+      ppkStatus = 'approved';
+    } else if (submission.status === 'rejected_bendahara') {
+      ppkStatus = 'rejected';
+    }
     entries.push({
       stage: 'PPK',
       timestamp: submission.waktuPpk,
-      status: submission.status === 'pending_ppk' || submission.status === 'pending_ppspm' || submission.status === 'pending_kppn' || submission.status === 'pending_arsip' || submission.status === 'completed' ? (submission.status === 'pending_ppk' ? 'pending' : 'approved') : submission.status === 'rejected_bendahara' ? 'rejected' : 'rejected',
+      status: ppkStatus,
       notes: submission.statusPpk,
     });
   }
 
   if (submission.waktuBendahara) {
+    let bendaharaStatus: 'pending' | 'approved' | 'rejected' = 'pending';
+    if (submission.status === 'pending_bendahara') {
+      bendaharaStatus = 'pending';
+    } else if (['pending_ppk', 'pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status)) {
+      bendaharaStatus = 'approved';
+    } else if (submission.status === 'rejected_sm') {
+      bendaharaStatus = 'rejected';
+    }
     entries.push({
       stage: 'Bendahara',
       timestamp: submission.waktuBendahara,
-      status: submission.status === 'pending_bendahara' || submission.status === 'pending_ppk' || submission.status === 'pending_ppspm' || submission.status === 'pending_kppn' || submission.status === 'pending_arsip' || submission.status === 'completed' ? (submission.status === 'pending_bendahara' ? 'pending' : 'approved') : submission.status === 'rejected_sm' ? 'rejected' : 'rejected',
+      status: bendaharaStatus,
       notes: submission.statusBendahara,
     });
   }
