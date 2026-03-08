@@ -18,7 +18,8 @@ export function SubmissionTable({ submissions, onRowClick, userRole }: Submissio
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Judul Pengajuan</TableHead>
-            <TableHead>User Pengaju</TableHead>
+            <TableHead>User</TableHead>
+            <TableHead>Pengaju</TableHead>
             <TableHead>Jenis Belanja</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Update Terakhir</TableHead>
@@ -29,7 +30,7 @@ export function SubmissionTable({ submissions, onRowClick, userRole }: Submissio
         <TableBody>
           {submissions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                 Tidak ada data
               </TableCell>
             </TableRow>
@@ -38,6 +39,7 @@ export function SubmissionTable({ submissions, onRowClick, userRole }: Submissio
               <TableRow key={submission.id} className="cursor-pointer hover:bg-muted">
                 <TableCell className="text-sm">{submission.id}</TableCell>
                 <TableCell className="text-sm font-medium max-w-[200px] truncate">{submission.title || '-'}</TableCell>
+                <TableCell className="text-sm">{submission.user || '-'}</TableCell>
                 <TableCell className="text-sm">{submission.submitterName}</TableCell>
                 <TableCell className="text-sm truncate max-w-[150px]">{submission.jenisBelanja}</TableCell>
                 <TableCell>
