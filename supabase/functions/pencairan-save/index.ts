@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Default SPREADSHEET_ID (fallback untuk 3210)
-const DEFAULT_SPREADSHEET_ID = '1hnNCHxmQQ5rjVcxIBvJk5lEdZ8aki4YUMBi1s33cnGI';
+const DEFAULT_SPREADSHEET_ID = '1fVVqmK0LANErtoiuSlKY8YAk9Nsu4sXQ33BwzRlQhNE';
 const SHEET_NAME = 'data';
 
 // Master Config Spreadsheet untuk multi-satker
