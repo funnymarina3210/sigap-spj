@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotificationsContext } from '@/contexts/NotificationsContext';
 import { Notification } from '@/types/notifications';
-import { usePencairanData } from '@/hooks/use-pencairan-data';
-import { Submission, SubmissionStatus, UserRole } from '@/types/pencairan';
+import { Submission, SubmissionStatus } from '@/types/pencairan';
 
 /**
  * Generate notifications from pencairan submissions based on user role.
@@ -193,11 +193,13 @@ function generateNotificationsFromSubmissions(
 export function useNotifications() {
   const { user } = useAuth();
   const notificationsContext = useNotificationsContext();
-  const { data: submissions } = usePencairanData();
+  const queryClient = useQueryClient();
   const prevCountRef = useRef<number>(-1);
 
   const userRole = user?.role || '';
 
+  // Read submissions from the query cache instead of calling useQuery
+  const submissions = queryClient.getQueryData<Submission[]>(['pencairan-data']);
   useEffect(() => {
     if (!user || !submissions || submissions.length === 0) {
       return;
