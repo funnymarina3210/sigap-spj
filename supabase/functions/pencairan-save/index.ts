@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Default SPREADSHEET_ID (fallback untuk 3210)
-const DEFAULT_SPREADSHEET_ID = '1hnNCHxmQQ5rjVcxIBvJk5lEdZ8aki4YUMBi1s33cnGI';
+const DEFAULT_SPREADSHEET_ID = '1fVVqmK0LANErtoiuSlKY8YAk9Nsu4sXQ33BwzRlQhNE';
 const SHEET_NAME = 'data';
 
 // Master Config Spreadsheet untuk multi-satker
@@ -18,35 +18,24 @@ const MASTER_CONFIG_SHEET_NAME = 'satker_config';
 async function getAccessToken() {
   console.log('Getting access token for pencairan-save...');
   
-  let privateKey: string;
-  let serviceAccountEmail: string;
-  
   // @ts-ignore - Deno runtime API
-  const googlePrivateKeyEnv = Deno.env.get('GOOGLE_PRIVATE_KEY');
-  // @ts-ignore - Deno runtime API
-  const googleServiceAccountEmailEnv = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL');
-  
-  try {
-    if (googlePrivateKeyEnv?.includes('"type"')) {
-      const serviceAccount = JSON.parse(googlePrivateKeyEnv);
-      privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
-      serviceAccountEmail = serviceAccount.client_email;
-    } else if (googleServiceAccountEmailEnv?.includes('"type"')) {
-      const serviceAccount = JSON.parse(googleServiceAccountEmailEnv);
-      privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
-      serviceAccountEmail = serviceAccount.client_email;
-    } else {
-      privateKey = googlePrivateKeyEnv?.replace(/\\n/g, '\n') || '';
-      serviceAccountEmail = googleServiceAccountEmailEnv || '';
-    }
-  } catch (e) {
-    console.error('Error parsing credentials:', e);
-    privateKey = googlePrivateKeyEnv?.replace(/\\n/g, '\n') || '';
-    serviceAccountEmail = googleServiceAccountEmailEnv || '';
+  const googleJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
+  if (!googleJson) {
+    throw new Error('Missing Google credentials: GOOGLE_SERVICE_ACCOUNT_JSON not set');
   }
 
+  let serviceAccount: any;
+  try {
+    serviceAccount = JSON.parse(googleJson);
+  } catch (e) {
+    throw new Error('Failed to parse GOOGLE_SERVICE_ACCOUNT_JSON');
+  }
+
+  const privateKey = serviceAccount.private_key?.replace(/\\n/g, '\n');
+  const serviceAccountEmail = serviceAccount.client_email;
+
   if (!privateKey || !serviceAccountEmail) {
-    throw new Error('Missing Google credentials');
+    throw new Error('Missing Google credentials: private_key or client_email not found in JSON');
   }
 
   const now = Math.floor(Date.now() / 1000);
