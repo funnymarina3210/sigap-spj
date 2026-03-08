@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useSatkerConfigContext } from '@/contexts/SatkerConfigContext';
 import { useNotificationsContext, NotificationsContextType } from '@/contexts/NotificationsContext';
 import { Notification, PencairanNotification, SBMLNotification } from '@/types/notifications';
