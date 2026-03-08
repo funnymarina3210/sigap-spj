@@ -193,11 +193,13 @@ function generateNotificationsFromSubmissions(
 export function useNotifications() {
   const { user } = useAuth();
   const notificationsContext = useNotificationsContext();
-  const { data: submissions } = usePencairanData();
+  const queryClient = useQueryClient();
   const prevCountRef = useRef<number>(-1);
 
   const userRole = user?.role || '';
 
+  // Read submissions from the query cache instead of calling useQuery
+  const submissions = queryClient.getQueryData<Submission[]>(['pencairan-data']);
   useEffect(() => {
     if (!user || !submissions || submissions.length === 0) {
       return;
