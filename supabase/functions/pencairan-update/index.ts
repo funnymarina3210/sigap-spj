@@ -230,8 +230,9 @@ serve(async (req: Request) => {
       catatan,
       actor,      // UserRole
       action,     // 'approve' | 'reject' | 'submit' | 'save_draft'
-      pembayaran, // 'LS' | 'UP' (from Bendahara)
-      nomorSPM,   // SPM number (from Bendahara for LS)
+      pembayaran, // 'LS' | 'UP' (from Bendahara or SM)
+      nomorSPM,   // SPM number (from Bendahara or SM for LS)
+      nomorSPPD,  // SPPD number (from SM)
     } = body;
     
     if (!id || !status) {
@@ -331,12 +332,15 @@ serve(async (req: Request) => {
       updatedRow[COLUMNS.statusArsip] = catatan;
     }
 
-    // Handle Bendahara-specific payment type assignment
-    if (actor === 'Bendahara' && pembayaran) {
+    // Handle payment method assignment (from SM or Bendahara)
+    if (pembayaran) {
       updatedRow[COLUMNS.pembayaran] = pembayaran;
-      if (pembayaran === 'LS' && nomorSPM) {
-        updatedRow[COLUMNS.nomorSPM] = nomorSPM;
-      }
+    }
+    if (nomorSPM) {
+      updatedRow[COLUMNS.nomorSPM] = nomorSPM;
+    }
+    if (nomorSPPD) {
+      updatedRow[COLUMNS.nomorSPPD] = nomorSPPD;
     }
 
     // Generate and set SPPD number when completed

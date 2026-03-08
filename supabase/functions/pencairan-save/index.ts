@@ -200,6 +200,9 @@ serve(async (req: Request) => {
       documents,
       notes,
       status,
+      pembayaran,
+      nomorSPM,
+      nomorSPPD,
     } = body;
     
     console.log('[pencairan-save] Received request:', { satker, id });
@@ -240,9 +243,9 @@ serve(async (req: Request) => {
       '',                                             // P: Status Arsip
       waktuPengajuan,                                 // Q: Update terakhir
       user || '',                                     // R: User (role login pembuat)
-      '',                                             // S: Pembayaran (kosong untuk baru)
-      '',                                             // T: Nomor SPM (kosong untuk baru)
-      '',                                             // U: Nomor SPPD (kosong untuk baru)
+      pembayaran || '',                               // S: Pembayaran (UP/LS)
+      nomorSPM || '',                                 // T: Nomor SPM
+      nomorSPPD || '',                                // U: Nomor SPPD
     ];
 
     console.log('Appending row with 21 columns:', rowData);

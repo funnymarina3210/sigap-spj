@@ -259,15 +259,6 @@ export default function UsulanPencairan() {
               ➕ Buat Pengajuan Baru
             </Button>
           )}
-          {userRole === 'Bendahara' && (
-            <Button
-              variant="outline"
-              onClick={() => setShowSpBy(true)}
-              className="rounded-xl"
-            >
-              📦 Kelompok UP
-            </Button>
-          )}
           <Button
             variant="outline"
             size="icon"

@@ -18,7 +18,6 @@ const filters: { value: string; label: string; icon: React.ReactNode; activeColo
   { value: 'pending_ppspm', label: 'PPSPM', icon: <Clock className="w-3.5 h-3.5" />, activeColor: 'bg-violet-500 text-white', badgeColor: 'bg-violet-500 text-white' },
   { value: 'pending_kppn', label: 'KPPN', icon: <Send className="w-3.5 h-3.5" />, activeColor: 'bg-teal-500 text-white', badgeColor: 'bg-teal-500 text-white' },
   { value: 'pending_arsip', label: 'Arsip', icon: <Archive className="w-3.5 h-3.5" />, activeColor: 'bg-emerald-500 text-white', badgeColor: 'bg-emerald-500 text-white' },
-  { value: 'spby', label: 'SPBy', icon: <Package className="w-3.5 h-3.5" />, activeColor: 'bg-cyan-500 text-white', badgeColor: 'bg-cyan-500 text-white', roleOnly: 'Bendahara' },
 ];
 
 // Helper to compute combined "rejected" count
@@ -29,9 +28,6 @@ function getFilterCount(value: string, counts: Record<string, number>): number {
       (counts['rejected_ppk'] || 0) +
       (counts['rejected_ppspm'] || 0) +
       (counts['rejected_kppn'] || 0);
-  }
-  if (value === 'spby') {
-    return counts['spby'] || 0;
   }
   return counts[value] || 0;
 }

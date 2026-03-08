@@ -86,6 +86,9 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
   const [jenisBelanja, setJenisBelanja] = useState(editData?.jenisBelanja || '');
   const [subJenisBelanja, setSubJenisBelanja] = useState(editData?.subJenisBelanja || '');
   const [notes, setNotes] = useState(editData?.notes || '');
+  const [pembayaran, setPembayaran] = useState(editData?.pembayaran || '');
+  const [nomorSPM, setNomorSPM] = useState(editData?.nomorSPM || '');
+  const [nomorSPPD, setNomorSPPD] = useState(editData?.nomorSPPD || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [documents, setDocuments] = useState<Document[]>(editData?.documents || []);
   const [showDraftConfirmation, setShowDraftConfirmation] = useState(false);
@@ -122,6 +125,9 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
         setJenisBelanja(editData.jenisBelanja);
         setSubJenisBelanja(editData.subJenisBelanja || '');
         setNotes(editData.notes || '');
+        setPembayaran(editData.pembayaran || '');
+        setNomorSPM(editData.nomorSPM || '');
+        setNomorSPPD(editData.nomorSPPD || '');
         const defaultDocs = getDocumentsByJenisBelanja(editData.jenisBelanja, editData.subJenisBelanja || '');
         if (editData.documents && editData.documents.length > 0) {
           const checkedTypes = editData.documents.filter(d => d.isChecked).map(d => d.type);
@@ -139,6 +145,9 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
         setJenisBelanja('');
         setSubJenisBelanja('');
         setNotes('');
+        setPembayaran('');
+        setNomorSPM('');
+        setNomorSPPD('');
         setDocuments([]);
       }
     }
@@ -167,6 +176,10 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
     }
     if (!subJenisBelanja) {
       toast({ title: 'Error', description: 'Sub-jenis belanja harus dipilih', variant: 'destructive' });
+      return false;
+    }
+    if (pembayaran === 'LS' && !nomorSPM.trim()) {
+      toast({ title: 'Error', description: 'Nomor SPM harus diisi untuk pembayaran LS', variant: 'destructive' });
       return false;
     }
     return true;
@@ -201,6 +214,9 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             namaPengaju: submitterName.trim(),
             jenisPengajuan: jenisPengajuan,
             kelengkapan: kelengkapan,
+            pembayaran: pembayaran || undefined,
+            nomorSPM: nomorSPM || undefined,
+            nomorSPPD: nomorSPPD || undefined,
           },
         });
         if (error) throw new Error(error.message || 'Gagal menyimpan draft');
@@ -225,6 +241,9 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             waktuBendahara: '',
             statusKppn: '',
             user: user?.role || '',
+            pembayaran: pembayaran || '',
+            nomorSPM: nomorSPM || '',
+            nomorSPPD: nomorSPPD || '',
           },
         });
         
@@ -297,6 +316,9 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             namaPengaju: submitterName.trim(),
             jenisPengajuan: jenisPengajuan,
             kelengkapan: kelengkapan,
+            pembayaran: pembayaran || undefined,
+            nomorSPM: nomorSPM || undefined,
+            nomorSPPD: nomorSPPD || undefined,
           },
         });
         if (error) throw new Error(error.message || 'Gagal mengirim pengajuan');
@@ -320,6 +342,9 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
           waktuBendahara: '',
           statusKppn: '',
           user: user?.role || '',
+          pembayaran: pembayaran || '',
+          nomorSPM: nomorSPM || '',
+          nomorSPPD: nomorSPPD || '',
         };
 
         console.log('[SubmissionForm] Sending payload to pencairan-save:', payload);
@@ -465,6 +490,46 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
                   ))}
                 </TabsList>
               </Tabs>
+            </div>
+          )}
+          {/* Payment Method & SPM Section */}
+          {user?.role?.toLowerCase().includes('bendahara') && (
+            <div className="space-y-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div>
+                <Label>Metode Pembayaran</Label>
+                <Select value={pembayaran} onValueChange={setPembayaran}>
+                  <SelectTrigger className="h-11 rounded-xl">
+                    <SelectValue placeholder="Pilih metode pembayaran" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="UP">Uang Persediaan (UP)</SelectItem>
+                    <SelectItem value="LS">Langsung (LS)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {pembayaran === 'LS' && (
+                <div>
+                  <Label className="text-destructive">Nomor SPM *</Label>
+                  <Input
+                    placeholder="Masukkan nomor SPM..."
+                    value={nomorSPM}
+                    onChange={(e) => setNomorSPM(e.target.value)}
+                    className="h-11 rounded-xl border-red-300"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Wajib diisi untuk pembayaran LS</p>
+                </div>
+              )}
+              {pembayaran === 'LS' && (
+                <div>
+                  <Label>Nomor SP2D (Opsional)</Label>
+                  <Input
+                    placeholder="Masukkan nomor SP2D..."
+                    value={nomorSPPD}
+                    onChange={(e) => setNomorSPPD(e.target.value)}
+                    className="h-11 rounded-xl"
+                  />
+                </div>
+              )}
             </div>
           )}
           {hasJenisBelanja && (
