@@ -173,7 +173,7 @@ export function SubmissionDetail({
         body: {
           id: submission.id,
           status: newStatus,
-          notes: newNotes || notes || undefined,
+          catatan: newNotes || notes || undefined,
           actor,
           action,
           kelengkapan,

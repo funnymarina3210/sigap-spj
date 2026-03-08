@@ -207,7 +207,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
           body: {
             id: editData.id,
             status: 'draft',
-            notes: notes.trim() || undefined,
+            catatan: notes.trim() || undefined,
             actor: 'sm',
             action: 'edit',
             uraianPengajuan: title.trim(),
@@ -309,7 +309,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
           body: {
             id: editData.id,
             status: 'pending_bendahara',
-            notes: notes.trim() || undefined,
+            catatan: notes.trim() || undefined,
             actor: 'sm',
             action: 'edit',
             uraianPengajuan: title.trim(),
