@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotificationsContext } from '@/contexts/NotificationsContext';
 import { Notification } from '@/types/notifications';
-import { usePencairanData } from '@/hooks/use-pencairan-data';
-import { Submission, SubmissionStatus, UserRole } from '@/types/pencairan';
+import { Submission, SubmissionStatus } from '@/types/pencairan';
 
 /**
  * Generate notifications from pencairan submissions based on user role.
