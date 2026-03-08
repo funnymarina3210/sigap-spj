@@ -91,7 +91,7 @@ export function NotificationsCenter() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-primary-foreground hover:bg-primary-foreground/10"
+          className="relative text-muted-foreground hover:text-foreground hover:bg-secondary/80 rounded-xl"
           title="Notifikasi"
         >
           <Bell className="h-5 w-5" />

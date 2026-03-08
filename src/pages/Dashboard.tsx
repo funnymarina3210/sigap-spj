@@ -487,7 +487,7 @@ export default function Dashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ArrowRightCircle className="w-5 h-5" />
-            Antrean Saat Ini per Tahap
+            Tracking Pengajuan
           </CardTitle>
           <CardDescription>Distribusi pengajuan yang sedang dalam proses</CardDescription>
         </CardHeader>
