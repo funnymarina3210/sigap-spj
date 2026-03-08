@@ -6,6 +6,7 @@ interface User {
   role: UserRole;
   nama: string;
   password: string;
+  satker?: string;
 }
 
 interface AuthContextType {
