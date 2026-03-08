@@ -284,6 +284,7 @@ export default function UsulanPencairan() {
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
         counts={counts}
+        userRole={userRole}
       />
 
       {/* DAFTAR PENGAJUAN */}
