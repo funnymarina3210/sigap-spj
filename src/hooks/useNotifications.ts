@@ -497,8 +497,45 @@ export function useNotifications() {
       console.log(`[fetchAllNotifications] SBML: ${sbmlNotifs.length} notifications`);
       
       // Show TTD notifications first, then Pencairan
-      const allNotifs = [...sbmlNotifs, ...pencairanNotifs];
+      let allNotifs = [...sbmlNotifs, ...pencairanNotifs];
       console.log(`[fetchAllNotifications] Total: ${allNotifs.length} notifications to set`);
+      
+      // Add test data if no real notifications found (for development)
+      if (allNotifs.length === 0) {
+        console.log('[fetchAllNotifications] No notifications found - adding test data for UI verification');
+        allNotifs = [
+          {
+            id: 'test-draft-1',
+            type: 'pencairan',
+            title: 'Sigap SPJ - Pengajuan Baru',
+            message: 'Honorsf KSA Padi Februari 2026 masih belum dilengkapi: Subjek Metter',
+            priority: 'medium',
+            targetRoles: [],
+            relatedId: 'test-1',
+            status: 'draft',
+            createdAt: new Date(new Date().getTime() - 60 * 60 * 1000),
+            displayTime: 'Update terakhir: 11:19 - 26/02/2026',
+            judulPengajuan: 'Honorsf KSA Padi Februari 2026',
+            submissionStatus: 'draft',
+            actionUrl: '/usulan-pencairan',
+          } as any,
+          {
+            id: 'test-rejected-1',
+            type: 'pencairan',
+            title: 'Sigap SPJ - Pengajuan Ditolak',
+            message: 'Honors KSA Jagung Februari 2026 ditolak Bendahara. Mohon untuk segera memperbaiki',
+            priority: 'high',
+            targetRoles: [],
+            relatedId: 'test-2',
+            status: 'incomplete_sm',
+            createdAt: new Date(new Date().getTime() - 2 * 60 * 60 * 1000),
+            displayTime: 'Update terakhir: 10:06 - 03/03/2026',
+            judulPengajuan: 'Honors KSA Jagung Februari 2026',
+            submissionStatus: 'incomplete_sm',
+            actionUrl: '/usulan-pencairan',
+          } as any,
+        ];
+      }
       
       notificationsContext._setNotifications(allNotifs);
       console.log(`[fetchAllNotifications] Notifications updated in context`);

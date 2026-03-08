@@ -13,6 +13,7 @@ interface SheetUser {
   role: string;
   nama: string;
   password: string;
+  satker?: string;
 }
 
 export default function Login() {
@@ -80,6 +81,7 @@ export default function Login() {
           role: getRoleFromSheet(user.role) as any,
           nama: user.nama,
           password: user.password,
+          satker: user.satker || 'BPS Kabupaten Majalengka', // Default satker
         };
         console.log('Login successful, storing user:', userData);
         setUser(userData);
