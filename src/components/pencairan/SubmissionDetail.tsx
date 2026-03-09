@@ -162,9 +162,9 @@ export function SubmissionDetail({
   };
 
   const updateStatusInSheet = async (
-    newStatus: string, 
-    newNotes?: string, 
-    actor: 'ppk' | 'ppspm' | 'bendahara' | 'arsip' | 'kppn' = 'ppk',
+    newStatus: string,
+    newNotes?: string,
+    actor: string = 'ppk',
     action: 'approve' | 'reject' | 'return' | 'save_spby' = 'approve'
   ) => {
     setIsUpdating(true);
