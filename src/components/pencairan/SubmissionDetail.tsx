@@ -331,36 +331,6 @@ import { cn } from '@/lib/utils';
     }
   };
 
-  const getConfirmMessage = () => {
-    switch (confirmDialog.action) {
-      case 'approve':
-        if (submission.status === 'pending_bendahara') {
-          return 'Apakah Anda yakin ingin menyetujui dan mengirim ke PPK?';
-        } else if (submission.status === 'pending_ppk') {
-          return 'Apakah Anda yakin ingin menyetujui dan mengirim ke PPSPM?';
-        } else if (submission.status === 'pending_ppspm') {
-          return 'Apakah Anda yakin ingin menyetujui dan mengirim ke KPPN?';
-        } else if (submission.status === 'pending_kppn') {
-          return 'Apakah Anda yakin ingin menyelesaikan pengajuan ini?';
-        }
-        return 'Apakah Anda yakin ingin menyetujui pengajuan ini?';
-      case 'reject':
-        if (submission.status === 'pending_bendahara') {
-          return 'Apakah Anda yakin ingin menolak dan mengembalikan ke SM?';
-        } else if (submission.status === 'pending_ppk') {
-          return 'Apakah Anda yakin ingin menolak dan mengembalikan ke Bendahara?';
-        } else if (submission.status === 'pending_ppspm') {
-          return 'Apakah Anda yakin ingin menolak dan mengembalikan ke PPK?';
-        } else if (submission.status === 'pending_kppn') {
-          return 'Apakah Anda yakin ingin menolak dan mengembalikan ke PPSPM?';
-        }
-        return 'Apakah Anda yakin ingin menolak pengajuan ini?';
-      case 'return':
-        return 'Apakah Anda yakin ingin mengembalikan ke PPSPM?';
-      default:
-        return 'Apakah Anda yakin?';
-    }
-  };
 
   const getApproveButtonLabel = () => {
     if (submission.status === 'pending_bendahara') {
