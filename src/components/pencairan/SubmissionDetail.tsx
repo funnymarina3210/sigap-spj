@@ -42,7 +42,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
+interface SubmissionDetailProps {
+  submission: Submission | null;
+  open: boolean;
+  onClose: () => void;
+  onUpdateSubmission: (id: string, updates: Partial<Submission>) => void;
+  userRole: UserRole;
+  onRefresh: () => void;
+  onEdit?: (submission: Submission) => void;
+}
 
+export function SubmissionDetail({
+  submission,
+  open,
+  onClose,
+  onUpdateSubmission,
+  userRole,
+  onRefresh,
+  onEdit,
+}: SubmissionDetailProps) {
   const [notes, setNotes] = useState('');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
