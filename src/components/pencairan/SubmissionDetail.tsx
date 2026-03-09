@@ -42,14 +42,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-interface SubmissionDetailProps {
-  submission: Submission | null;
-  open: boolean;
-  onClose: () => void;
-  onUpdateSubmission: (id: string, updates: Partial<Submission>) => void;
-  userRole: UserRole;
-  onRefresh: () => void;
-}
 
 export function SubmissionDetail({ 
   submission, 
