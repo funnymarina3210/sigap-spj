@@ -111,11 +111,12 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
   }
 
   if (submission.waktuPengajuan) {
+    const isDraft = submission.status === 'draft';
     entries.push({
       stage: 'SM',
       timestamp: submission.waktuPengajuan,
-      status: 'approved',
-      notes: `Pengajuan telah dikirim ke Bendahara`,
+      status: isDraft ? 'pending' : 'approved',
+      notes: isDraft ? 'Masih dalam persiapan SM (Draft)' : 'Pengajuan telah dikirim ke Bendahara',
     });
   }
 
@@ -170,7 +171,14 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
                 
                 {/* Stage and Status */}
                 <p className="text-sm font-medium text-gray-800 mb-2">
-                  {entry.stage}: {entry.status === 'approved' ? 'Diserahkan' : entry.status === 'rejected' ? 'Ditolak' : 'Menunggu verifikasi'}
+                  {entry.stage}:{' '}
+                  {entry.stage === 'SM' && entry.status === 'pending'
+                    ? 'Dalam persiapan'
+                    : entry.status === 'approved'
+                      ? 'Diserahkan'
+                      : entry.status === 'rejected'
+                        ? 'Ditolak'
+                        : 'Menunggu verifikasi'}
                 </p>
                 
                 {/* Badge with notes */}
