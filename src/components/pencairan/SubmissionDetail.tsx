@@ -209,8 +209,108 @@ export function SubmissionDetail({
     }
   };
 
+  const executeApprove = async () => {
+    let newStatus: string;
+    let actor: string;
 
-  const executeReject = async () => {
+    // SM/Submitter: dari draft kirim ke Bendahara (via status submitted_sm)
+    if (submission.status === 'draft') {
+      newStatus = 'submitted_sm';
+      actor = userRole; // simpan role asli pembuat
+    } else if (submission.status === 'submitted_sm') {
+      // Bendahara mulai memproses setelah SM mengirim
+      newStatus = 'pending_bendahara';
+      actor = 'bendahara';
+    } else if (submission.status === 'pending_bendahara') {
+      if (userRole === 'Bendahara') {
+        if (!pembayaran) {
+          toast({
+            title: 'Validasi gagal',
+            description: 'Pilih tipe pembayaran (UP atau LS) terlebih dahulu',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        if (pembayaran === 'LS' && !nomorSPM) {
+          toast({
+            title: 'Validasi gagal',
+            description: 'Nomor SPM wajib diisi untuk pembayaran Langsung (LS)',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        if (pembayaran === 'UP') {
+          toast({
+            title: 'Langkah salah',
+            description: 'Untuk Uang Persediaan (UP), gunakan tombol "Simpan SPBy"',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
+      newStatus = 'pending_ppk';
+      actor = 'bendahara';
+    } else if (submission.status === 'pending_ppk') {
+      newStatus = 'pending_ppspm';
+      actor = 'ppk';
+    } else if (submission.status === 'pending_ppspm') {
+      newStatus = 'pending_kppn';
+      actor = 'ppspm';
+    } else if (submission.status === 'pending_kppn') {
+      if (userRole === 'Arsip' && !nomorSPPD) {
+        toast({
+          title: 'Validasi gagal',
+          description: 'Nomor SPPD wajib diisi',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!notes) {
+        toast({
+          title: 'Validasi gagal',
+          description: 'Catatan wajib diisi',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      newStatus = 'pending_arsip';
+      actor = 'kppn';
+    } else if (submission.status === 'rejected_bendahara') {
+      // SM/Submitter correcting and resubmitting to Bendahara
+      newStatus = 'pending_bendahara';
+      actor = 'bendahara';
+    } else if (submission.status === 'rejected_ppk') {
+      // Bendahara correcting rejected PPK feedback and resubmitting to PPK
+      newStatus = 'pending_ppk';
+      actor = 'bendahara';
+    } else if (submission.status === 'rejected_ppspm') {
+      // PPK correcting rejected PPSPM feedback and resubmitting to PPSPM
+      newStatus = 'pending_ppspm';
+      actor = 'ppk';
+    } else if (submission.status === 'rejected_kppn') {
+      // PPSPM correcting rejected KPPN feedback and resubmitting to KPPN
+      newStatus = 'pending_kppn';
+      actor = 'ppspm';
+    } else {
+      return;
+    }
+
+    await updateStatusInSheet(newStatus, undefined, actor, 'approve');
+
+    onUpdateSubmission(submission.id, {
+      status: newStatus as Submission['status'],
+      documents,
+      pembayaran: actor === 'bendahara' ? (pembayaran as 'UP' | 'LS') : undefined,
+      nomorSPM: actor === 'bendahara' ? nomorSPM : undefined,
+    });
+    onClose();
+  };
+
     let newStatus: string;
     let actor: 'bendahara' | 'ppk' | 'ppspm' | 'kppn' | 'arsip';
     
