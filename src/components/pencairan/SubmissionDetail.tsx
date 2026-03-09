@@ -43,14 +43,6 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 
-export function SubmissionDetail({ 
-  submission, 
-  open, 
-  onClose,
-  onUpdateSubmission,
-  userRole,
-  onRefresh
-}: SubmissionDetailProps) {
   const [notes, setNotes] = useState('');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
