@@ -430,6 +430,7 @@ export function SubmissionDetail({
 
   const canAction = canTakeAction(userRole, submission.status);
   const canReturnArsip = canReturnFromArsip(userRole, submission.status);
+  const canEditDraft = Boolean(onEdit) && canEdit(userRole, submission.status, submission.user);
 
   const handleApprove = () => setConfirmDialog({ open: true, action: 'approve' });
   const handleReject = () => setConfirmDialog({ open: true, action: 'reject' });
