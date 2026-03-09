@@ -450,9 +450,86 @@ export function SubmissionDetail({
     }
   };
 
+  const getConfirmMessage = () => {
+    switch (confirmDialog.action) {
+      case 'approve':
+        if (submission.status === 'draft') {
+          return 'Kirim pengajuan ini ke Bendahara untuk diproses?';
+        }
+        if (submission.status === 'submitted_sm') {
+          return 'Mulai proses verifikasi sebagai Bendahara?';
+        }
+        if (submission.status === 'pending_bendahara') {
+          return 'Apakah Anda yakin ingin menyetujui dan mengirim ke PPK?';
+        }
+        if (submission.status === 'pending_ppk') {
+          return 'Apakah Anda yakin ingin menyetujui dan mengirim ke PPSPM?';
+        }
+        if (submission.status === 'pending_ppspm') {
+          return 'Apakah Anda yakin ingin menyetujui dan mengirim ke KPPN?';
+        }
+        if (submission.status === 'pending_kppn') {
+          return 'Apakah Anda yakin ingin mencatat dan melanjutkan ke Arsip?';
+        }
+        return 'Apakah Anda yakin ingin menyetujui pengajuan ini?';
+      case 'reject':
+        if (submission.status === 'submitted_sm') {
+          return 'Tolak dan kembalikan pengajuan ke SM?';
+        }
+        if (submission.status === 'pending_bendahara') {
+          return 'Apakah Anda yakin ingin menolak dan mengembalikan ke SM?';
+        }
+        if (submission.status === 'pending_ppk') {
+          return 'Apakah Anda yakin ingin menolak dan mengembalikan ke Bendahara?';
+        }
+        if (submission.status === 'pending_ppspm') {
+          return 'Apakah Anda yakin ingin menolak dan mengembalikan ke PPK?';
+        }
+        if (submission.status === 'pending_kppn') {
+          return 'Apakah Anda yakin ingin menolak dan mengembalikan ke PPSPM?';
+        }
+        return 'Apakah Anda yakin ingin menolak pengajuan ini?';
+      case 'return':
+        return 'Apakah Anda yakin ingin mengembalikan ke PPSPM?';
+      default:
+        return 'Apakah Anda yakin?';
+    }
+  };
 
+  const getApproveButtonLabel = () => {
+    if (submission.status === 'draft') {
+      return 'Kirim ke Bendahara';
+    }
+    if (submission.status === 'submitted_sm') {
+      return 'Mulai Verifikasi';
+    }
+    if (submission.status === 'pending_bendahara') {
+      return 'Setujui dan Kirim ke PPK';
+    }
+    if (submission.status === 'pending_ppk') {
+      return 'Setujui dan Kirim ke PPSPM';
+    }
+    if (submission.status === 'pending_ppspm') {
+      return 'Setujui dan Kirim ke KPPN';
+    }
+    if (submission.status === 'pending_kppn') {
+      return 'Catat dan Selesaikan';
+    }
+    if (submission.status === 'rejected_bendahara') {
+      return 'Kirim Ulang ke Bendahara';
+    }
+    if (submission.status === 'rejected_ppk') {
+      return 'Kirim Ulang ke PPK';
+    }
+    if (submission.status === 'rejected_ppspm') {
+      return 'Kirim Ulang ke PPSPM';
+    }
+    if (submission.status === 'rejected_kppn') {
+      return 'Kirim Ulang ke KPPN';
+    }
+    return 'Setujui';
+  };
 
-  const getRejectButtonLabel = () => {
     if (submission.status === 'pending_bendahara') {
       return 'Kembalikan ke SM';
     } else if (submission.status === 'pending_ppk') {
