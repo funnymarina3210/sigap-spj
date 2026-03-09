@@ -531,13 +531,20 @@ export function SubmissionDetail({
     return 'Setujui';
   };
 
+  const getRejectButtonLabel = () => {
+    if (submission.status === 'submitted_sm') {
+      return 'Kembalikan ke SM';
+    }
     if (submission.status === 'pending_bendahara') {
       return 'Kembalikan ke SM';
-    } else if (submission.status === 'pending_ppk') {
+    }
+    if (submission.status === 'pending_ppk') {
       return 'Kembalikan ke Bendahara';
-    } else if (submission.status === 'pending_ppspm') {
+    }
+    if (submission.status === 'pending_ppspm') {
       return 'Kembalikan ke PPK';
-    } else if (submission.status === 'pending_kppn') {
+    }
+    if (submission.status === 'pending_kppn') {
       return 'Kembalikan ke PPSPM';
     }
     return 'Tolak';
