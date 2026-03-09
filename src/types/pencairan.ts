@@ -465,17 +465,6 @@ export function canCreateSubmission(role: UserRole): boolean {
   return SUBMITTER_ROLES.includes(role) || role === 'admin';
 }
 
-export function canTakeAction(role: UserRole, status: SubmissionStatus): boolean {
-  if (role === 'admin') return true;
-  // Can take action on pending statuses based on role
-  if (role === 'Bendahara' && status === 'pending_bendahara') return true;
-  if (role === 'Pejabat Pembuat Komitmen' && status === 'pending_ppk') return true;
-  if (role === 'Pejabat Penandatangan Surat Perintah Membayar' && status === 'pending_ppspm') return true;
-  if (role === 'Arsip' && status === 'pending_arsip') return true;
-  // Can also take action on rejected statuses (resubmit)
-  if (canTakeActionOnRejected(role, status)) return true;
-  return false;
-}
 
 export function canTakeActionOnRejected(role: UserRole, status: SubmissionStatus): boolean {
   if (role === 'admin') return true;

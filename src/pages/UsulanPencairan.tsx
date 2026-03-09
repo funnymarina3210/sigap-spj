@@ -317,16 +317,6 @@ export default function UsulanPencairan() {
       />
 
       {/* DETAIL SHEET */}
-      <SubmissionDetail
-        submission={selectedDetail}
-        open={showDetail}
-        onClose={handleDetailClose}
-        userRole={userRole}
-        onUpdateSubmission={(id, updates) => {
-          setSubmissions(submissions.map(s => s.id === id ? { ...s, ...updates } : s));
-        }}
-        onRefresh={refetch}
-      />
 
       {/* SPBy GROUPING */}
       <Dialog open={showSpBy} onOpenChange={setShowSpBy}>

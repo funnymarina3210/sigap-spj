@@ -332,26 +332,6 @@ import { cn } from '@/lib/utils';
   };
 
 
-  const getApproveButtonLabel = () => {
-    if (submission.status === 'pending_bendahara') {
-      return 'Setujui dan Kirim ke PPK';
-    } else if (submission.status === 'pending_ppk') {
-      return 'Setujui dan Kirim ke PPSPM';
-    } else if (submission.status === 'pending_ppspm') {
-      return 'Setujui dan Kirim ke KPPN';
-    } else if (submission.status === 'pending_kppn') {
-      return 'Catat dan Selesaikan';
-    } else if (submission.status === 'rejected_bendahara') {
-      return 'Kirim Ulang ke Bendahara';
-    } else if (submission.status === 'rejected_ppk') {
-      return 'Kirim Ulang ke PPK';
-    } else if (submission.status === 'rejected_ppspm') {
-      return 'Kirim Ulang ke PPSPM';
-    } else if (submission.status === 'rejected_kppn') {
-      return 'Kirim Ulang ke KPPN';
-    }
-    return 'Setujui';
-  };
 
   const getRejectButtonLabel = () => {
     if (submission.status === 'pending_bendahara') {
