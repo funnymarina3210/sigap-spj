@@ -111,11 +111,12 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
   }
 
   if (submission.waktuPengajuan) {
+    const isDraft = submission.status === 'draft';
     entries.push({
       stage: 'SM',
       timestamp: submission.waktuPengajuan,
-      status: 'approved',
-      notes: `Pengajuan telah dikirim ke Bendahara`,
+      status: isDraft ? 'pending' : 'approved',
+      notes: isDraft ? 'Masih dalam persiapan SM (Draft)' : 'Pengajuan telah dikirim ke Bendahara',
     });
   }
 
