@@ -467,13 +467,22 @@ export function canCreateSubmission(role: UserRole): boolean {
 
 export function canTakeAction(role: UserRole, status: SubmissionStatus): boolean {
   if (role === 'admin') return true;
+
+  // Submitter/SM: boleh aksi pada draft (kirim) dan penolakan di SM
+  if (SUBMITTER_ROLES.includes(role) && (status === 'draft' || status === 'rejected_sm')) return true;
+
+  // Bendahara: bisa mulai memproses setelah SM mengirim
+  if (role === 'Bendahara' && (status === 'submitted_sm' || status === 'pending_bendahara')) return true;
+
   // Can take action on pending statuses based on role
-  if (role === 'Bendahara' && status === 'pending_bendahara') return true;
   if (role === 'Pejabat Pembuat Komitmen' && status === 'pending_ppk') return true;
   if (role === 'Pejabat Penandatangan Surat Perintah Membayar' && status === 'pending_ppspm') return true;
+  if (role === 'KPPN' && status === 'pending_kppn') return true;
   if (role === 'Arsip' && status === 'pending_arsip') return true;
+
   // Can also take action on rejected statuses (resubmit)
   if (canTakeActionOnRejected(role, status)) return true;
+
   return false;
 }
 

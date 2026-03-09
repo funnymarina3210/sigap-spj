@@ -4,6 +4,7 @@ import {
   UserRole, 
   canTakeAction, 
   canReturnFromArsip,
+  canEdit,
   getDocumentsByJenisBelanja,
   Document
 } from '@/types/pencairan';
@@ -49,15 +50,17 @@ interface SubmissionDetailProps {
   onUpdateSubmission: (id: string, updates: Partial<Submission>) => void;
   userRole: UserRole;
   onRefresh: () => void;
+  onEdit?: (submission: Submission) => void;
 }
 
-export function SubmissionDetail({ 
-  submission, 
-  open, 
+export function SubmissionDetail({
+  submission,
+  open,
   onClose,
   onUpdateSubmission,
   userRole,
-  onRefresh
+  onRefresh,
+  onEdit,
 }: SubmissionDetailProps) {
   const [notes, setNotes] = useState('');
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -159,9 +162,9 @@ export function SubmissionDetail({
   };
 
   const updateStatusInSheet = async (
-    newStatus: string, 
-    newNotes?: string, 
-    actor: 'ppk' | 'ppspm' | 'bendahara' | 'arsip' | 'kppn' = 'ppk',
+    newStatus: string,
+    newNotes?: string,
+    actor: string = 'ppk',
     action: 'approve' | 'reject' | 'return' | 'save_spby' = 'approve'
   ) => {
     setIsUpdating(true);
@@ -208,9 +211,17 @@ export function SubmissionDetail({
 
   const executeApprove = async () => {
     let newStatus: string;
-    let actor: 'bendahara' | 'ppk' | 'ppspm' | 'kppn' | 'arsip';
-    
-    if (submission.status === 'pending_bendahara') {
+    let actor: string;
+
+    // SM/Submitter: dari draft kirim ke Bendahara (via status submitted_sm)
+    if (submission.status === 'draft') {
+      newStatus = 'submitted_sm';
+      actor = userRole; // simpan role asli pembuat
+    } else if (submission.status === 'submitted_sm') {
+      // Bendahara mulai memproses setelah SM mengirim
+      newStatus = 'pending_bendahara';
+      actor = 'bendahara';
+    } else if (submission.status === 'pending_bendahara') {
       if (userRole === 'Bendahara') {
         if (!pembayaran) {
           toast({
@@ -220,7 +231,7 @@ export function SubmissionDetail({
           });
           return;
         }
-        
+
         if (pembayaran === 'LS' && !nomorSPM) {
           toast({
             title: 'Validasi gagal',
@@ -229,7 +240,7 @@ export function SubmissionDetail({
           });
           return;
         }
-        
+
         if (pembayaran === 'UP') {
           toast({
             title: 'Langkah salah',
@@ -239,7 +250,7 @@ export function SubmissionDetail({
           return;
         }
       }
-      
+
       newStatus = 'pending_ppk';
       actor = 'bendahara';
     } else if (submission.status === 'pending_ppk') {
@@ -257,7 +268,7 @@ export function SubmissionDetail({
         });
         return;
       }
-      
+
       if (!notes) {
         toast({
           title: 'Validasi gagal',
@@ -266,7 +277,7 @@ export function SubmissionDetail({
         });
         return;
       }
-      
+
       newStatus = 'pending_arsip';
       actor = 'kppn';
     } else if (submission.status === 'rejected_bendahara') {
@@ -290,11 +301,11 @@ export function SubmissionDetail({
     }
 
     await updateStatusInSheet(newStatus, undefined, actor, 'approve');
-    
+
     onUpdateSubmission(submission.id, {
       status: newStatus as Submission['status'],
       documents,
-      pembayaran: actor === 'bendahara' ? pembayaran as 'UP' | 'LS' : undefined,
+      pembayaran: actor === 'bendahara' ? (pembayaran as 'UP' | 'LS') : undefined,
       nomorSPM: actor === 'bendahara' ? nomorSPM : undefined,
     });
     onClose();
@@ -303,8 +314,11 @@ export function SubmissionDetail({
   const executeReject = async () => {
     let newStatus: string;
     let actor: 'bendahara' | 'ppk' | 'ppspm' | 'kppn' | 'arsip';
-    
-    if (submission.status === 'pending_bendahara') {
+
+    if (submission.status === 'submitted_sm') {
+      newStatus = 'rejected_sm';
+      actor = 'bendahara';
+    } else if (submission.status === 'pending_bendahara') {
       newStatus = 'rejected_bendahara';
       actor = 'bendahara';
     } else if (submission.status === 'pending_ppk') {
@@ -420,6 +434,7 @@ export function SubmissionDetail({
 
   const canAction = canTakeAction(userRole, submission.status);
   const canReturnArsip = canReturnFromArsip(userRole, submission.status);
+  const canEditDraft = Boolean(onEdit) && canEdit(userRole, submission.status, submission.user);
 
   const handleApprove = () => setConfirmDialog({ open: true, action: 'approve' });
   const handleReject = () => setConfirmDialog({ open: true, action: 'reject' });
@@ -443,24 +458,39 @@ export function SubmissionDetail({
   const getConfirmMessage = () => {
     switch (confirmDialog.action) {
       case 'approve':
+        if (submission.status === 'draft') {
+          return 'Kirim pengajuan ini ke Bendahara untuk diproses?';
+        }
+        if (submission.status === 'submitted_sm') {
+          return 'Mulai proses verifikasi sebagai Bendahara?';
+        }
         if (submission.status === 'pending_bendahara') {
           return 'Apakah Anda yakin ingin menyetujui dan mengirim ke PPK?';
-        } else if (submission.status === 'pending_ppk') {
+        }
+        if (submission.status === 'pending_ppk') {
           return 'Apakah Anda yakin ingin menyetujui dan mengirim ke PPSPM?';
-        } else if (submission.status === 'pending_ppspm') {
+        }
+        if (submission.status === 'pending_ppspm') {
           return 'Apakah Anda yakin ingin menyetujui dan mengirim ke KPPN?';
-        } else if (submission.status === 'pending_kppn') {
-          return 'Apakah Anda yakin ingin menyelesaikan pengajuan ini?';
+        }
+        if (submission.status === 'pending_kppn') {
+          return 'Apakah Anda yakin ingin mencatat dan melanjutkan ke Arsip?';
         }
         return 'Apakah Anda yakin ingin menyetujui pengajuan ini?';
       case 'reject':
+        if (submission.status === 'submitted_sm') {
+          return 'Tolak dan kembalikan pengajuan ke SM?';
+        }
         if (submission.status === 'pending_bendahara') {
           return 'Apakah Anda yakin ingin menolak dan mengembalikan ke SM?';
-        } else if (submission.status === 'pending_ppk') {
+        }
+        if (submission.status === 'pending_ppk') {
           return 'Apakah Anda yakin ingin menolak dan mengembalikan ke Bendahara?';
-        } else if (submission.status === 'pending_ppspm') {
+        }
+        if (submission.status === 'pending_ppspm') {
           return 'Apakah Anda yakin ingin menolak dan mengembalikan ke PPK?';
-        } else if (submission.status === 'pending_kppn') {
+        }
+        if (submission.status === 'pending_kppn') {
           return 'Apakah Anda yakin ingin menolak dan mengembalikan ke PPSPM?';
         }
         return 'Apakah Anda yakin ingin menolak pengajuan ini?';
@@ -472,34 +502,53 @@ export function SubmissionDetail({
   };
 
   const getApproveButtonLabel = () => {
+    if (submission.status === 'draft') {
+      return 'Kirim ke Bendahara';
+    }
+    if (submission.status === 'submitted_sm') {
+      return 'Mulai Verifikasi';
+    }
     if (submission.status === 'pending_bendahara') {
       return 'Setujui dan Kirim ke PPK';
-    } else if (submission.status === 'pending_ppk') {
+    }
+    if (submission.status === 'pending_ppk') {
       return 'Setujui dan Kirim ke PPSPM';
-    } else if (submission.status === 'pending_ppspm') {
+    }
+    if (submission.status === 'pending_ppspm') {
       return 'Setujui dan Kirim ke KPPN';
-    } else if (submission.status === 'pending_kppn') {
+    }
+    if (submission.status === 'pending_kppn') {
       return 'Catat dan Selesaikan';
-    } else if (submission.status === 'rejected_bendahara') {
+    }
+    if (submission.status === 'rejected_bendahara') {
       return 'Kirim Ulang ke Bendahara';
-    } else if (submission.status === 'rejected_ppk') {
+    }
+    if (submission.status === 'rejected_ppk') {
       return 'Kirim Ulang ke PPK';
-    } else if (submission.status === 'rejected_ppspm') {
+    }
+    if (submission.status === 'rejected_ppspm') {
       return 'Kirim Ulang ke PPSPM';
-    } else if (submission.status === 'rejected_kppn') {
+    }
+    if (submission.status === 'rejected_kppn') {
       return 'Kirim Ulang ke KPPN';
     }
     return 'Setujui';
   };
 
   const getRejectButtonLabel = () => {
+    if (submission.status === 'submitted_sm') {
+      return 'Kembalikan ke SM';
+    }
     if (submission.status === 'pending_bendahara') {
       return 'Kembalikan ke SM';
-    } else if (submission.status === 'pending_ppk') {
+    }
+    if (submission.status === 'pending_ppk') {
       return 'Kembalikan ke Bendahara';
-    } else if (submission.status === 'pending_ppspm') {
+    }
+    if (submission.status === 'pending_ppspm') {
       return 'Kembalikan ke PPK';
-    } else if (submission.status === 'pending_kppn') {
+    }
+    if (submission.status === 'pending_kppn') {
       return 'Kembalikan ke PPSPM';
     }
     return 'Tolak';
@@ -817,41 +866,66 @@ export function SubmissionDetail({
           )}
 
           {(canAction || canReturnArsip) && (
-            <div className="flex gap-3 pt-4">
-              <Button 
-                variant="destructive" 
-                className="flex-1"
-                onClick={canReturnArsip ? handleReturnFromArsip : handleReject}
-                disabled={isUpdating}
-              >
-                {isUpdating ? '⏳ Memproses...' : (canReturnArsip ? '↩️ Kembalikan ke PPSPM' : `❌ ${getRejectButtonLabel()}`)}
-              </Button>
-              
-              {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara') ? (
-                <Button 
-                  className="flex-1"
-                  onClick={handleSaveSPBy}
-                  disabled={isUpdating || !pembayaran}
-                >
-                  {isUpdating ? '⏳ Memproses...' : '💾 Simpan SPBy'}
-                </Button>
-              ) : (
-                <Button 
+            submission.status === 'draft' ? (
+              <div className="flex gap-3 pt-4">
+                {canEditDraft && (
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      onEdit?.(submission);
+                      onClose();
+                    }}
+                    disabled={isUpdating}
+                  >
+                    ✏️ Edit Pengajuan
+                  </Button>
+                )}
+                <Button
                   className="flex-1"
                   onClick={handleApprove}
-                  disabled={
-                    (canAction && !allDocsComplete) || 
-                    isUpdating || 
-                    (submission.status === 'pending_kppn' && !notes) ||
-                    (userRole === 'Bendahara' && !pembayaran) ||
-                    (userRole === 'Bendahara' && pembayaran === 'LS' && !nomorSPM) ||
-                    (userRole === 'Arsip' && !nomorSPPD)
-                  }
+                  disabled={!allDocsComplete || isUpdating}
                 >
-                  {isUpdating ? '⏳ Memproses...' : `✅ ${getApproveButtonLabel()}`}
+                  📤 {getApproveButtonLabel()}
                 </Button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="destructive" 
+                  className="flex-1"
+                  onClick={canReturnArsip ? handleReturnFromArsip : handleReject}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? '⏳ Memproses...' : (canReturnArsip ? '↩️ Kembalikan ke PPSPM' : `❌ ${getRejectButtonLabel()}`)}
+                </Button>
+                
+                {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara') ? (
+                  <Button 
+                    className="flex-1"
+                    onClick={handleSaveSPBy}
+                    disabled={isUpdating || !pembayaran}
+                  >
+                    {isUpdating ? '⏳ Memproses...' : '💾 Simpan SPBy'}
+                  </Button>
+                ) : (
+                  <Button 
+                    className="flex-1"
+                    onClick={handleApprove}
+                    disabled={
+                      (canAction && !allDocsComplete) || 
+                      isUpdating || 
+                      (submission.status === 'pending_kppn' && !notes) ||
+                      (userRole === 'Bendahara' && !pembayaran) ||
+                      (userRole === 'Bendahara' && pembayaran === 'LS' && !nomorSPM) ||
+                      (userRole === 'Arsip' && !nomorSPPD)
+                    }
+                  >
+                    {isUpdating ? '⏳ Memproses...' : `✅ ${getApproveButtonLabel()}`}
+                  </Button>
+                )}
+              </div>
+            )
           )}
         </div>
       </SheetContent>

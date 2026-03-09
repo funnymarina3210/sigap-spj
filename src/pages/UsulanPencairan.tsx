@@ -322,13 +322,18 @@ export default function UsulanPencairan() {
         open={showDetail}
         onClose={handleDetailClose}
         userRole={userRole}
+        onEdit={(sub) => {
+          setEditingSubmission(sub);
+          setShowForm(true);
+          setShowDetail(false);
+          setSelectedDetail(null);
+        }}
         onUpdateSubmission={(id, updates) => {
           setSubmissions(submissions.map(s => s.id === id ? { ...s, ...updates } : s));
         }}
         onRefresh={refetch}
       />
 
-      {/* SPBy GROUPING */}
       <Dialog open={showSpBy} onOpenChange={setShowSpBy}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
