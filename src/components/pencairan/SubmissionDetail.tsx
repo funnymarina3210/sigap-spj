@@ -855,41 +855,66 @@ export function SubmissionDetail({
           )}
 
           {(canAction || canReturnArsip) && (
-            <div className="flex gap-3 pt-4">
-              <Button 
-                variant="destructive" 
-                className="flex-1"
-                onClick={canReturnArsip ? handleReturnFromArsip : handleReject}
-                disabled={isUpdating}
-              >
-                {isUpdating ? '⏳ Memproses...' : (canReturnArsip ? '↩️ Kembalikan ke PPSPM' : `❌ ${getRejectButtonLabel()}`)}
-              </Button>
-              
-              {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara') ? (
-                <Button 
-                  className="flex-1"
-                  onClick={handleSaveSPBy}
-                  disabled={isUpdating || !pembayaran}
-                >
-                  {isUpdating ? '⏳ Memproses...' : '💾 Simpan SPBy'}
-                </Button>
-              ) : (
-                <Button 
+            submission.status === 'draft' ? (
+              <div className="flex gap-3 pt-4">
+                {canEditDraft && (
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      onEdit?.(submission);
+                      onClose();
+                    }}
+                    disabled={isUpdating}
+                  >
+                    ✏️ Edit Pengajuan
+                  </Button>
+                )}
+                <Button
                   className="flex-1"
                   onClick={handleApprove}
-                  disabled={
-                    (canAction && !allDocsComplete) || 
-                    isUpdating || 
-                    (submission.status === 'pending_kppn' && !notes) ||
-                    (userRole === 'Bendahara' && !pembayaran) ||
-                    (userRole === 'Bendahara' && pembayaran === 'LS' && !nomorSPM) ||
-                    (userRole === 'Arsip' && !nomorSPPD)
-                  }
+                  disabled={!allDocsComplete || isUpdating}
                 >
-                  {isUpdating ? '⏳ Memproses...' : `✅ ${getApproveButtonLabel()}`}
+                  📤 {getApproveButtonLabel()}
                 </Button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="destructive" 
+                  className="flex-1"
+                  onClick={canReturnArsip ? handleReturnFromArsip : handleReject}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? '⏳ Memproses...' : (canReturnArsip ? '↩️ Kembalikan ke PPSPM' : `❌ ${getRejectButtonLabel()}`)}
+                </Button>
+                
+                {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara') ? (
+                  <Button 
+                    className="flex-1"
+                    onClick={handleSaveSPBy}
+                    disabled={isUpdating || !pembayaran}
+                  >
+                    {isUpdating ? '⏳ Memproses...' : '💾 Simpan SPBy'}
+                  </Button>
+                ) : (
+                  <Button 
+                    className="flex-1"
+                    onClick={handleApprove}
+                    disabled={
+                      (canAction && !allDocsComplete) || 
+                      isUpdating || 
+                      (submission.status === 'pending_kppn' && !notes) ||
+                      (userRole === 'Bendahara' && !pembayaran) ||
+                      (userRole === 'Bendahara' && pembayaran === 'LS' && !nomorSPM) ||
+                      (userRole === 'Arsip' && !nomorSPPD)
+                    }
+                  >
+                    {isUpdating ? '⏳ Memproses...' : `✅ ${getApproveButtonLabel()}`}
+                  </Button>
+                )}
+              </div>
+            )
           )}
         </div>
       </SheetContent>
