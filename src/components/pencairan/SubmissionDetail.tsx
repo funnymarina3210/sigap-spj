@@ -311,10 +311,14 @@ export function SubmissionDetail({
     onClose();
   };
 
+  const executeReject = async () => {
     let newStatus: string;
     let actor: 'bendahara' | 'ppk' | 'ppspm' | 'kppn' | 'arsip';
-    
-    if (submission.status === 'pending_bendahara') {
+
+    if (submission.status === 'submitted_sm') {
+      newStatus = 'rejected_sm';
+      actor = 'bendahara';
+    } else if (submission.status === 'pending_bendahara') {
       newStatus = 'rejected_bendahara';
       actor = 'bendahara';
     } else if (submission.status === 'pending_ppk') {
