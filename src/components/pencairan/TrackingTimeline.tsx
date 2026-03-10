@@ -65,14 +65,14 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
       ppspmStatus = 'pending';
     } else if (['pending_kppn', 'pending_arsip', 'completed'].includes(submission.status)) {
       ppspmStatus = 'approved';
-    } else if (submission.status === 'rejected_ppk') {
+    } else if (submission.status === 'rejected_ppspm') {
       ppspmStatus = 'rejected';
     }
     entries.push({
       stage: 'PPSPM',
       timestamp: submission.waktuPPSPM,
       status: ppspmStatus,
-      notes: submission.statusPPSPM,
+      notes: submission.status === 'rejected_ppspm' ? (submission.statusPPSPM || 'Ditolak oleh PPSPM') : submission.statusPPSPM,
     });
   }
 
