@@ -688,7 +688,7 @@ export function SubmissionDetail({
             </Card>
           </Collapsible>
 
-          {userRole === 'Bendahara' && (submission.status === 'pending_bendahara') && (
+          {userRole === 'Bendahara' && (submission.status === 'pending_bendahara' || submission.status === 'submitted_sm') && (
             <>
               {false && (
                 <Card className="border-amber-200 bg-amber-50">
