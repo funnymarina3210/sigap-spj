@@ -179,7 +179,7 @@ export const STATUS_LABELS: Record<SubmissionStatus, string> = {
   pending_kppn: 'Menunggu KPPN',
   pending_arsip: 'Menunggu Arsip',
   completed: 'Selesai',
-  rejected_sm: 'Ditolak SM',
+  rejected_sm: 'Ditolak Bendahara',
   rejected_bendahara: 'Ditolak Bendahara',
   rejected_ppk: 'Ditolak PPK',
   rejected_ppspm: 'Ditolak PPSPM',

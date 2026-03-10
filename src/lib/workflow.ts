@@ -47,15 +47,15 @@ export const WORKFLOW_TRANSITIONS: Record<SubmissionStatus, Record<WorkflowActio
   },
   rejected_ppk: {
     approve: 'pending_ppk',  // Bendahara kirim ulang ke PPK
-    reject: null,
+    reject: 'rejected_bendahara',  // Bendahara tolak ke SM
   },
   rejected_ppspm: {
     approve: 'pending_ppspm',  // PPK kirim ulang ke PPSPM
-    reject: null,
+    reject: 'rejected_ppk',  // PPK tolak ke Bendahara
   },
   rejected_kppn: {
     approve: 'pending_kppn',  // PPSPM kirim ulang ke KPPN
-    reject: null,
+    reject: 'rejected_ppspm',  // PPSPM tolak ke PPK
   },
 };
 

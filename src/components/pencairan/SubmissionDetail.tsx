@@ -938,7 +938,7 @@ export function SubmissionDetail({
                   {isUpdating ? '⏳ Memproses...' : (canReturnArsip ? '↩️ Kembalikan ke PPSPM' : `❌ ${getRejectButtonLabel()}`)}
                 </Button>
                 
-                {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara') ? (
+                {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara' || submission.status === 'submitted_sm') ? (
                   <Button 
                     className="flex-1"
                     onClick={handleSaveSPBy}
