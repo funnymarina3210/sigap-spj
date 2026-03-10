@@ -56,9 +56,26 @@ export default function UsulanPencairan() {
     } else if (activeFilter === 'spby') {
       // SPBy: UP submissions at pending_bendahara
       result = result.filter(sub => sub.pembayaran === 'UP' && sub.status === 'pending_bendahara');
+    } else if (activeFilter === 'draft') {
+      // Draft tab includes draft + rejected_bendahara + rejected_sm (kembali ke SM)
+      result = result.filter(sub => 
+        sub.status === 'draft' || sub.status === 'rejected_bendahara' || sub.status === 'rejected_sm'
+      );
     } else if (activeFilter === 'pending_bendahara') {
-      // Bendahara tab includes submitted_sm + pending_bendahara
-      result = result.filter(sub => sub.status === 'pending_bendahara' || sub.status === 'submitted_sm');
+      // Bendahara tab includes submitted_sm + pending_bendahara + rejected_ppk (ditolak PPK → kembali ke Bendahara)
+      result = result.filter(sub => 
+        sub.status === 'pending_bendahara' || sub.status === 'submitted_sm' || sub.status === 'rejected_ppk'
+      );
+    } else if (activeFilter === 'pending_ppk') {
+      // PPK tab includes pending_ppk + rejected_ppspm (ditolak PPSPM → kembali ke PPK)
+      result = result.filter(sub => 
+        sub.status === 'pending_ppk' || sub.status === 'rejected_ppspm'
+      );
+    } else if (activeFilter === 'pending_ppspm') {
+      // PPSPM tab includes pending_ppspm + rejected_kppn (ditolak KPPN → kembali ke PPSPM)
+      result = result.filter(sub => 
+        sub.status === 'pending_ppspm' || sub.status === 'rejected_kppn'
+      );
     } else if (activeFilter !== 'all') {
       result = result.filter(sub => sub.status === activeFilter);
     }
