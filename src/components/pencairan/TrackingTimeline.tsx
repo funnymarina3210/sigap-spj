@@ -82,14 +82,14 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
       ppkStatus = 'pending';
     } else if (['pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status)) {
       ppkStatus = 'approved';
-    } else if (submission.status === 'rejected_bendahara') {
+    } else if (submission.status === 'rejected_ppk') {
       ppkStatus = 'rejected';
     }
     entries.push({
       stage: 'PPK',
       timestamp: submission.waktuPpk,
       status: ppkStatus,
-      notes: submission.statusPpk,
+      notes: submission.status === 'rejected_ppk' ? (submission.statusPpk || 'Ditolak oleh PPK') : submission.statusPpk,
     });
   }
 
