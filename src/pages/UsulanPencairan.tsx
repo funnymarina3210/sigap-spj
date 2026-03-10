@@ -123,8 +123,15 @@ export default function UsulanPencairan() {
       result[status] = visibleSubmissions.filter(s => s.status === status).length;
     });
 
-    // Bendahara count includes submitted_sm
-    result['pending_bendahara'] = (result['pending_bendahara'] || 0) + (result['submitted_sm'] || 0);
+    // Rejected items juga masuk ke tab role yang harus menangani
+    // Draft includes rejected_bendahara + rejected_sm
+    result['draft'] = (result['draft'] || 0) + (result['rejected_bendahara'] || 0) + (result['rejected_sm'] || 0);
+    // Bendahara includes submitted_sm + rejected_ppk
+    result['pending_bendahara'] = (result['pending_bendahara'] || 0) + (result['submitted_sm'] || 0) + (result['rejected_ppk'] || 0);
+    // PPK includes rejected_ppspm
+    result['pending_ppk'] = (result['pending_ppk'] || 0) + (result['rejected_ppspm'] || 0);
+    // PPSPM includes rejected_kppn
+    result['pending_ppspm'] = (result['pending_ppspm'] || 0) + (result['rejected_kppn'] || 0);
 
     return result;
   }, [submissions, userRole]);
