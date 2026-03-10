@@ -56,6 +56,9 @@ export default function UsulanPencairan() {
     } else if (activeFilter === 'spby') {
       // SPBy: UP submissions at pending_bendahara
       result = result.filter(sub => sub.pembayaran === 'UP' && sub.status === 'pending_bendahara');
+    } else if (activeFilter === 'pending_bendahara') {
+      // Bendahara tab includes submitted_sm + pending_bendahara
+      result = result.filter(sub => sub.status === 'pending_bendahara' || sub.status === 'submitted_sm');
     } else if (activeFilter !== 'all') {
       result = result.filter(sub => sub.status === activeFilter);
     }
@@ -102,6 +105,9 @@ export default function UsulanPencairan() {
     allStatuses.forEach(status => {
       result[status] = visibleSubmissions.filter(s => s.status === status).length;
     });
+
+    // Bendahara count includes submitted_sm
+    result['pending_bendahara'] = (result['pending_bendahara'] || 0) + (result['submitted_sm'] || 0);
 
     return result;
   }, [submissions, userRole]);
