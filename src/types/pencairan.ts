@@ -472,7 +472,7 @@ export function canTakeAction(role: UserRole, status: SubmissionStatus): boolean
   if (SUBMITTER_ROLES.includes(role) && (status === 'draft' || status === 'rejected_sm')) return true;
 
   // Bendahara: bisa mulai memproses setelah SM mengirim
-  if (role === 'Bendahara' && (status === 'submitted_sm' || status === 'pending_bendahara')) return true;
+  if (role === 'Bendahara' && (status === 'submitted_sm' || status === 'pending_bendahara' || status === 'rejected_ppk')) return true;
 
   // Can take action on pending statuses based on role
   if (role === 'Pejabat Pembuat Komitmen' && status === 'pending_ppk') return true;
