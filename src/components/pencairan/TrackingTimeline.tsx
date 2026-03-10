@@ -48,14 +48,14 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
       kppnStatus = 'pending';
     } else if (['pending_arsip', 'completed'].includes(submission.status)) {
       kppnStatus = 'approved';
-    } else if (submission.status === 'rejected_ppspm') {
+    } else if (submission.status === 'rejected_kppn') {
       kppnStatus = 'rejected';
     }
     entries.push({
       stage: 'KPPN',
       timestamp: submission.waktuKppn,
       status: kppnStatus,
-      notes: 'Diproses KPPN',
+      notes: submission.status === 'rejected_kppn' ? (submission.statusKppn || 'Ditolak oleh KPPN') : 'Diproses KPPN',
     });
   }
 
@@ -65,14 +65,14 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
       ppspmStatus = 'pending';
     } else if (['pending_kppn', 'pending_arsip', 'completed'].includes(submission.status)) {
       ppspmStatus = 'approved';
-    } else if (submission.status === 'rejected_ppk') {
+    } else if (submission.status === 'rejected_ppspm') {
       ppspmStatus = 'rejected';
     }
     entries.push({
       stage: 'PPSPM',
       timestamp: submission.waktuPPSPM,
       status: ppspmStatus,
-      notes: submission.statusPPSPM,
+      notes: submission.status === 'rejected_ppspm' ? (submission.statusPPSPM || 'Ditolak oleh PPSPM') : submission.statusPPSPM,
     });
   }
 
@@ -82,14 +82,14 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
       ppkStatus = 'pending';
     } else if (['pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status)) {
       ppkStatus = 'approved';
-    } else if (submission.status === 'rejected_bendahara') {
+    } else if (submission.status === 'rejected_ppk') {
       ppkStatus = 'rejected';
     }
     entries.push({
       stage: 'PPK',
       timestamp: submission.waktuPpk,
       status: ppkStatus,
-      notes: submission.statusPpk,
+      notes: submission.status === 'rejected_ppk' ? (submission.statusPpk || 'Ditolak oleh PPK') : submission.statusPpk,
     });
   }
 
@@ -99,14 +99,16 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
       bendaharaStatus = 'pending';
     } else if (['pending_ppk', 'pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status)) {
       bendaharaStatus = 'approved';
-    } else if (submission.status === 'rejected_sm') {
+    } else if (submission.status === 'rejected_bendahara' || submission.status === 'rejected_sm') {
       bendaharaStatus = 'rejected';
     }
     entries.push({
       stage: 'Bendahara',
       timestamp: submission.waktuBendahara,
       status: bendaharaStatus,
-      notes: submission.statusBendahara,
+      notes: (submission.status === 'rejected_bendahara' || submission.status === 'rejected_sm') 
+        ? (submission.statusBendahara || 'Ditolak oleh Bendahara') 
+        : submission.statusBendahara,
     });
   }
 
@@ -170,16 +172,16 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
                 </div>
                 
                 {/* Stage and Status */}
-                <p className="text-sm font-medium text-gray-800 mb-2">
-                  {entry.stage}:{' '}
-                  {entry.stage === 'SM' && entry.status === 'pending'
-                    ? 'Dalam persiapan'
-                    : entry.status === 'approved'
-                      ? 'Diserahkan'
-                      : entry.status === 'rejected'
-                        ? 'Ditolak'
-                        : 'Menunggu verifikasi'}
-                </p>
+                 <p className="text-sm font-medium text-gray-800 mb-2">
+                   {entry.stage}:{' '}
+                   {entry.stage === 'SM' && entry.status === 'pending'
+                     ? 'Dalam persiapan'
+                     : entry.status === 'approved'
+                       ? 'Diserahkan'
+                       : entry.status === 'rejected'
+                         ? 'Ditolak'
+                         : 'Menunggu verifikasi'}
+                 </p>
                 
                 {/* Badge with notes */}
                 {entry.notes && (

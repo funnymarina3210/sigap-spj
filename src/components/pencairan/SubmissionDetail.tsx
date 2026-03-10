@@ -218,8 +218,34 @@ export function SubmissionDetail({
       newStatus = 'submitted_sm';
       actor = userRole; // simpan role asli pembuat
     } else if (submission.status === 'submitted_sm') {
-      // Bendahara mulai memproses setelah SM mengirim
-      newStatus = 'pending_bendahara';
+      // Bendahara memproses dan langsung kirim ke PPK
+      if (userRole === 'Bendahara') {
+        if (!pembayaran) {
+          toast({
+            title: 'Validasi gagal',
+            description: 'Pilih tipe pembayaran (UP atau LS) terlebih dahulu',
+            variant: 'destructive',
+          });
+          return;
+        }
+        if (pembayaran === 'LS' && !nomorSPM) {
+          toast({
+            title: 'Validasi gagal',
+            description: 'Nomor SPM wajib diisi untuk pembayaran Langsung (LS)',
+            variant: 'destructive',
+          });
+          return;
+        }
+        if (pembayaran === 'UP') {
+          toast({
+            title: 'Langkah salah',
+            description: 'Untuk Uang Persediaan (UP), gunakan tombol "Simpan SPBy"',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+      newStatus = 'pending_ppk';
       actor = 'bendahara';
     } else if (submission.status === 'pending_bendahara') {
       if (userRole === 'Bendahara') {
@@ -330,6 +356,18 @@ export function SubmissionDetail({
     } else if (submission.status === 'pending_kppn') {
       newStatus = 'rejected_kppn';
       actor = 'kppn';
+    } else if (submission.status === 'rejected_ppk') {
+      // Bendahara menolak kembali ke SM
+      newStatus = 'rejected_bendahara';
+      actor = 'bendahara';
+    } else if (submission.status === 'rejected_ppspm') {
+      // PPK menolak kembali ke Bendahara
+      newStatus = 'rejected_ppk';
+      actor = 'ppk';
+    } else if (submission.status === 'rejected_kppn') {
+      // PPSPM menolak kembali ke PPK
+      newStatus = 'rejected_ppspm';
+      actor = 'ppspm';
     } else {
       return;
     }
@@ -506,7 +544,7 @@ export function SubmissionDetail({
       return 'Kirim ke Bendahara';
     }
     if (submission.status === 'submitted_sm') {
-      return 'Mulai Verifikasi';
+      return 'Setujui dan Kirim ke PPK';
     }
     if (submission.status === 'pending_bendahara') {
       return 'Setujui dan Kirim ke PPK';
@@ -550,6 +588,15 @@ export function SubmissionDetail({
     }
     if (submission.status === 'pending_kppn') {
       return 'Kembalikan ke PPSPM';
+    }
+    if (submission.status === 'rejected_ppk') {
+      return 'Kembalikan ke SM';
+    }
+    if (submission.status === 'rejected_ppspm') {
+      return 'Kembalikan ke Bendahara';
+    }
+    if (submission.status === 'rejected_kppn') {
+      return 'Kembalikan ke PPK';
     }
     return 'Tolak';
   };
@@ -650,7 +697,7 @@ export function SubmissionDetail({
             </Card>
           </Collapsible>
 
-          {userRole === 'Bendahara' && (submission.status === 'pending_bendahara') && (
+          {userRole === 'Bendahara' && (submission.status === 'pending_bendahara' || submission.status === 'submitted_sm') && (
             <>
               {false && (
                 <Card className="border-amber-200 bg-amber-50">
@@ -900,7 +947,7 @@ export function SubmissionDetail({
                   {isUpdating ? '⏳ Memproses...' : (canReturnArsip ? '↩️ Kembalikan ke PPSPM' : `❌ ${getRejectButtonLabel()}`)}
                 </Button>
                 
-                {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara') ? (
+                {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara' || submission.status === 'submitted_sm') ? (
                   <Button 
                     className="flex-1"
                     onClick={handleSaveSPBy}

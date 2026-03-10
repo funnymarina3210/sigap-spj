@@ -179,7 +179,7 @@ export const STATUS_LABELS: Record<SubmissionStatus, string> = {
   pending_kppn: 'Menunggu KPPN',
   pending_arsip: 'Menunggu Arsip',
   completed: 'Selesai',
-  rejected_sm: 'Ditolak SM',
+  rejected_sm: 'Ditolak Bendahara',
   rejected_bendahara: 'Ditolak Bendahara',
   rejected_ppk: 'Ditolak PPK',
   rejected_ppspm: 'Ditolak PPSPM',
@@ -472,11 +472,11 @@ export function canTakeAction(role: UserRole, status: SubmissionStatus): boolean
   if (SUBMITTER_ROLES.includes(role) && (status === 'draft' || status === 'rejected_sm')) return true;
 
   // Bendahara: bisa mulai memproses setelah SM mengirim
-  if (role === 'Bendahara' && (status === 'submitted_sm' || status === 'pending_bendahara')) return true;
+  if (role === 'Bendahara' && (status === 'submitted_sm' || status === 'pending_bendahara' || status === 'rejected_ppk')) return true;
 
   // Can take action on pending statuses based on role
-  if (role === 'Pejabat Pembuat Komitmen' && status === 'pending_ppk') return true;
-  if (role === 'Pejabat Penandatangan Surat Perintah Membayar' && status === 'pending_ppspm') return true;
+  if (role === 'Pejabat Pembuat Komitmen' && (status === 'pending_ppk' || status === 'rejected_ppspm')) return true;
+  if (role === 'Pejabat Penandatangan Surat Perintah Membayar' && (status === 'pending_ppspm' || status === 'rejected_kppn')) return true;
   if (role === 'KPPN' && status === 'pending_kppn') return true;
   if (role === 'Arsip' && status === 'pending_arsip') return true;
 
