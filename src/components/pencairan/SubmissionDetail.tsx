@@ -218,8 +218,34 @@ export function SubmissionDetail({
       newStatus = 'submitted_sm';
       actor = userRole; // simpan role asli pembuat
     } else if (submission.status === 'submitted_sm') {
-      // Bendahara mulai memproses setelah SM mengirim
-      newStatus = 'pending_bendahara';
+      // Bendahara memproses dan langsung kirim ke PPK
+      if (userRole === 'Bendahara') {
+        if (!pembayaran) {
+          toast({
+            title: 'Validasi gagal',
+            description: 'Pilih tipe pembayaran (UP atau LS) terlebih dahulu',
+            variant: 'destructive',
+          });
+          return;
+        }
+        if (pembayaran === 'LS' && !nomorSPM) {
+          toast({
+            title: 'Validasi gagal',
+            description: 'Nomor SPM wajib diisi untuk pembayaran Langsung (LS)',
+            variant: 'destructive',
+          });
+          return;
+        }
+        if (pembayaran === 'UP') {
+          toast({
+            title: 'Langkah salah',
+            description: 'Untuk Uang Persediaan (UP), gunakan tombol "Simpan SPBy"',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+      newStatus = 'pending_ppk';
       actor = 'bendahara';
     } else if (submission.status === 'pending_bendahara') {
       if (userRole === 'Bendahara') {
