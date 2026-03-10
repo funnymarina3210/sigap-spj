@@ -356,6 +356,18 @@ export function SubmissionDetail({
     } else if (submission.status === 'pending_kppn') {
       newStatus = 'rejected_kppn';
       actor = 'kppn';
+    } else if (submission.status === 'rejected_ppk') {
+      // Bendahara menolak kembali ke SM
+      newStatus = 'rejected_bendahara';
+      actor = 'bendahara';
+    } else if (submission.status === 'rejected_ppspm') {
+      // PPK menolak kembali ke Bendahara
+      newStatus = 'rejected_ppk';
+      actor = 'ppk';
+    } else if (submission.status === 'rejected_kppn') {
+      // PPSPM menolak kembali ke PPK
+      newStatus = 'rejected_ppspm';
+      actor = 'ppspm';
     } else {
       return;
     }
