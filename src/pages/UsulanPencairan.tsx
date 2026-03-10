@@ -106,6 +106,9 @@ export default function UsulanPencairan() {
       result[status] = visibleSubmissions.filter(s => s.status === status).length;
     });
 
+    // Bendahara count includes submitted_sm
+    result['pending_bendahara'] = (result['pending_bendahara'] || 0) + (result['submitted_sm'] || 0);
+
     return result;
   }, [submissions, userRole]);
 
