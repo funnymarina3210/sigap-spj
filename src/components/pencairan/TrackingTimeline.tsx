@@ -48,14 +48,14 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
       kppnStatus = 'pending';
     } else if (['pending_arsip', 'completed'].includes(submission.status)) {
       kppnStatus = 'approved';
-    } else if (submission.status === 'rejected_ppspm') {
+    } else if (submission.status === 'rejected_kppn') {
       kppnStatus = 'rejected';
     }
     entries.push({
       stage: 'KPPN',
       timestamp: submission.waktuKppn,
       status: kppnStatus,
-      notes: 'Diproses KPPN',
+      notes: submission.status === 'rejected_kppn' ? (submission.statusKppn || 'Ditolak oleh KPPN') : 'Diproses KPPN',
     });
   }
 
