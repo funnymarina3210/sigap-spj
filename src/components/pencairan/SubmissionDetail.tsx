@@ -589,6 +589,15 @@ export function SubmissionDetail({
     if (submission.status === 'pending_kppn') {
       return 'Kembalikan ke PPSPM';
     }
+    if (submission.status === 'rejected_ppk') {
+      return 'Kembalikan ke SM';
+    }
+    if (submission.status === 'rejected_ppspm') {
+      return 'Kembalikan ke Bendahara';
+    }
+    if (submission.status === 'rejected_kppn') {
+      return 'Kembalikan ke PPK';
+    }
     return 'Tolak';
   };
 
