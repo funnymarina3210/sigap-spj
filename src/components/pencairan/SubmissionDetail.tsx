@@ -544,7 +544,7 @@ export function SubmissionDetail({
       return 'Kirim ke Bendahara';
     }
     if (submission.status === 'submitted_sm') {
-      return 'Mulai Verifikasi';
+      return 'Setujui dan Kirim ke PPK';
     }
     if (submission.status === 'pending_bendahara') {
       return 'Setujui dan Kirim ke PPK';
