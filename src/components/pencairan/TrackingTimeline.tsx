@@ -99,14 +99,16 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
       bendaharaStatus = 'pending';
     } else if (['pending_ppk', 'pending_ppspm', 'pending_kppn', 'pending_arsip', 'completed'].includes(submission.status)) {
       bendaharaStatus = 'approved';
-    } else if (submission.status === 'rejected_sm') {
+    } else if (submission.status === 'rejected_bendahara' || submission.status === 'rejected_sm') {
       bendaharaStatus = 'rejected';
     }
     entries.push({
       stage: 'Bendahara',
       timestamp: submission.waktuBendahara,
       status: bendaharaStatus,
-      notes: submission.statusBendahara,
+      notes: (submission.status === 'rejected_bendahara' || submission.status === 'rejected_sm') 
+        ? (submission.statusBendahara || 'Ditolak oleh Bendahara') 
+        : submission.statusBendahara,
     });
   }
 
