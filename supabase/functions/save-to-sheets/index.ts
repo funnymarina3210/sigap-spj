@@ -142,8 +142,8 @@ function generateSubmissionId(existingIds: string[]): string {
   return `${prefix}${String(nextSeq).padStart(3, '0')}`;
 }
 
-async function appendToSheet(accessToken: string, spreadsheetId: string, sheetName: string, values: string[][]): Promise<void> {
-  const range = `${sheetName}!A:M`;
+async function appendToSheet(accessToken: string, spreadsheetId: string, sheetName: string, values: (string | number)[][]): Promise<void> {
+  const range = `${sheetName}!A:V`;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
 
   console.log('Appending to sheet:', { spreadsheetId, sheetName, valuesLength: values.length, rowData: values[0] });
