@@ -138,7 +138,7 @@ export function usePencairanData() {
           sheetType: 'submissions',
           spreadsheetId: SPREADSHEET_ID,
           sheetName: SHEET_NAME,
-          range: 'A:U',
+          range: 'A:V',
         },
       });
 
