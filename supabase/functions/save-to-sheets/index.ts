@@ -14,6 +14,7 @@ interface SubmissionData {
   documents: string;
   notes?: string;
   status: string;
+  totalNilai?: number;
 }
 
 async function getAccessToken(serviceAccount: any): Promise<string> {
