@@ -19,6 +19,7 @@ interface UpdateData {
   submitterName?: string;
   jenisBelanja?: string;
   documents?: string;
+  totalNilai?: number;
 }
 
 async function getAccessToken(serviceAccount: any): Promise<string> {
