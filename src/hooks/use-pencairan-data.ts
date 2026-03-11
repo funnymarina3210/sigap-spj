@@ -175,6 +175,7 @@ export function usePencairanData() {
           pembayaran: row.pembayaran || '',
           nomorSPM: row.nomorSPM || '',
           nomorSPPD: row.nomorSPPD || '',
+          totalNilai: row.totalNilai || '',
         };
         
         return mapRawToSubmission(rawData);
