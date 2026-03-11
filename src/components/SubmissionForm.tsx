@@ -347,7 +347,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
         <div className="space-y-6 py-2">
           {/* Judul Pengajuan */}
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-sm font-semibold">Judul Pengajuan *</Label>
+            <Label htmlFor="title" className="text-sm font-semibold">Uraian Pengajuan *</Label>
             <Input
               id="title"
               placeholder="Contoh: Pengadaan ATK Bulan Januari 2025"
