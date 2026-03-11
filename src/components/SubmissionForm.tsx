@@ -47,11 +47,27 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
   const { data: existingSubmissions } = useSubmissionsData();
   
   const [title, setTitle] = useState(editData?.title || '');
+  const [totalNilai, setTotalNilai] = useState(editData?.totalNilai?.toString() || '');
   const [submitterName, setSubmitterName] = useState(editData?.submitterName || '');
   const [jenisBelanja, setJenisBelanja] = useState(editData?.jenisBelanja || '');
   const [subJenisBelanja, setSubJenisBelanja] = useState(editData?.subJenisBelanja || '');
   const [notes, setNotes] = useState(editData?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Format number with thousand separators (dots)
+  const formatRibuan = (value: string) => {
+    const num = value.replace(/\D/g, '');
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const handleTotalNilaiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    setTotalNilai(raw);
+  };
+
+  const parseTotalNilai = (): number => {
+    return parseInt(totalNilai.replace(/\D/g, ''), 10) || 0;
+  };
   const [documents, setDocuments] = useState<Document[]>(
     editData?.documents || []
   );
@@ -101,6 +117,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
   useEffect(() => {
     if (open && editData) {
       setTitle(editData.title);
+      setTotalNilai(editData.totalNilai?.toString() || '');
       setSubmitterName(editData.submitterName);
       setJenisBelanja(editData.jenisBelanja);
       setSubJenisBelanja(editData.subJenisBelanja || '');
@@ -120,6 +137,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
     } else if (!open) {
       // Reset when closing
       setTitle('');
+      setTotalNilai('');
       setSubmitterName('');
       setJenisBelanja('');
       setSubJenisBelanja('');
@@ -141,6 +159,14 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
       toast({
         title: 'Error',
         description: 'Judul pengajuan harus diisi',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!totalNilai || parseTotalNilai() <= 0) {
+      toast({
+        title: 'Error',
+        description: 'Total Nilai harus diisi dengan angka lebih dari 0',
         variant: 'destructive',
       });
       return;
@@ -201,6 +227,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             jenisBelanja: `${jenisBelanja} - ${subJenisBelanja}`,
             documents: documentsString,
             notes: notes.trim() || undefined,
+            totalNilai: parseTotalNilai(),
             actor: 'user',
             action: 'edit',
             updateDataOnly: true,
@@ -228,6 +255,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             jenisBelanja: `${jenisBelanja} - ${subJenisBelanja}`,
             documents: documentsString,
             notes: notes.trim() || undefined,
+            totalNilai: parseTotalNilai(),
             status: 'pending_ppk',
           },
         });
@@ -250,9 +278,11 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
         submittedAt: new Date(),
         documents,
         notes: notes.trim() || undefined,
+        totalNilai: parseTotalNilai(),
       });
 
       setTitle('');
+      setTotalNilai('');
       setSubmitterName('');
       setJenisBelanja('');
       setSubJenisBelanja('');
@@ -280,6 +310,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
 
   const handleCancel = () => {
     setTitle(editData?.title || '');
+    setTotalNilai(editData?.totalNilai?.toString() || '');
     setSubmitterName(editData?.submitterName || '');
     setJenisBelanja(editData?.jenisBelanja || '');
     setSubJenisBelanja(editData?.subJenisBelanja || '');
@@ -324,6 +355,22 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
               onChange={(e) => setTitle(e.target.value)}
               className="h-11 rounded-xl"
             />
+          </div>
+
+          {/* Total Nilai */}
+          <div className="space-y-2">
+            <Label htmlFor="totalNilai" className="text-sm font-semibold">Total Nilai *</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">Rp</span>
+              <Input
+                id="totalNilai"
+                placeholder="Contoh: 1.000.000"
+                value={totalNilai ? formatRibuan(totalNilai) : ''}
+                onChange={handleTotalNilaiChange}
+                className="h-11 rounded-xl pl-10"
+                inputMode="numeric"
+              />
+            </div>
           </div>
 
           {/* Nama Pengaju - Dropdown from organik */}

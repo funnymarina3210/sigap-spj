@@ -19,6 +19,7 @@ interface UpdateData {
   submitterName?: string;
   jenisBelanja?: string;
   documents?: string;
+  totalNilai?: number;
 }
 
 async function getAccessToken(serviceAccount: any): Promise<string> {
@@ -224,6 +225,9 @@ serve(async (req) => {
       }
       if (updateData.documents) {
         await updateCell(accessToken, spreadsheetId, `${sheetName}!E${rowNumber}`, updateData.documents);
+      }
+      if (updateData.totalNilai !== undefined) {
+        await updateCell(accessToken, spreadsheetId, `${sheetName}!V${rowNumber}`, String(updateData.totalNilai));
       }
       
       console.log('Data updated successfully (edit mode)');

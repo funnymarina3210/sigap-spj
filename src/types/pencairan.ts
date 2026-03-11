@@ -168,6 +168,7 @@ export interface Submission {
   pembayaran?: 'UP' | 'LS'; // 🆕 Kolom S - Tipe pembayaran (Uang Persediaan atau Langsung)
   nomorSPM?: string; // 🆕 Kolom T - Nomor SPM
   nomorSPPD?: string; // 🆕 Untuk Arsip - Nomor SPPD
+  totalNilai?: number; // 🆕 Kolom V - Nominal/Total Nilai
 }
 
 export const STATUS_LABELS: Record<SubmissionStatus, string> = {

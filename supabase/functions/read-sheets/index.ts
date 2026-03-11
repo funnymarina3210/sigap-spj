@@ -152,7 +152,7 @@ serve(async (req) => {
 
     if (sheetType === 'submissions') {
       const spreadsheetId = '1fVVqmK0LANErtoiuSlKY8YAk9Nsu4sXQ33BwzRlQhNE';
-      const values = await readSheet(accessToken, spreadsheetId, 'data', 'A:U');
+      const values = await readSheet(accessToken, spreadsheetId, 'data', 'A:V');
       
       if (values.length > 1) {
         data = values.slice(1).map((row) => ({
@@ -177,6 +177,7 @@ serve(async (req) => {
           pembayaran: row[18] || '',
           nomorSPM: row[19] || '',
           nomorSPPD: row[20] || '',
+          totalNilai: row[21] || '',
           status: mapStatusToCode(row[6] || ''),
         }));
       }

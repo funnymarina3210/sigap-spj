@@ -14,6 +14,7 @@ interface SubmissionData {
   documents: string;
   notes?: string;
   status: string;
+  totalNilai?: number;
 }
 
 async function getAccessToken(serviceAccount: any): Promise<string> {
@@ -141,8 +142,8 @@ function generateSubmissionId(existingIds: string[]): string {
   return `${prefix}${String(nextSeq).padStart(3, '0')}`;
 }
 
-async function appendToSheet(accessToken: string, spreadsheetId: string, sheetName: string, values: string[][]): Promise<void> {
-  const range = `${sheetName}!A:M`;
+async function appendToSheet(accessToken: string, spreadsheetId: string, sheetName: string, values: (string | number)[][]): Promise<void> {
+  const range = `${sheetName}!A:V`;
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
 
   console.log('Appending to sheet:', { spreadsheetId, sheetName, valuesLength: values.length, rowData: values[0] });
@@ -214,11 +215,20 @@ serve(async (req) => {
         submission.notes || '',          // F: Catatan
         'Menunggu Verifikasi PPK',       // G: Status Pengajuan
         formattedDate,                   // H: Waktu Pengajuan
-        '',                              // I: Status PPK
+        '',                              // I: Waktu Bendahara
         '',                              // J: Waktu PPK
-        '',                              // K: Status Bendahara
-        '',                              // L: Waktu Bendahara
-        '',                              // M: Status KPPN
+        '',                              // K: Waktu PPSPM
+        '',                              // L: Waktu Arsip
+        '',                              // M: Status Bendahara
+        '',                              // N: Status PPK
+        '',                              // O: Status PPSPM
+        '',                              // P: Status Arsip
+        '',                              // Q: Updated At
+        '',                              // R: User
+        '',                              // S: Pembayaran
+        '',                              // T: Nomor SPM
+        '',                              // U: Nomor SPPD
+        submission.totalNilai || '',     // V: Nominal
       ],
     ];
 
