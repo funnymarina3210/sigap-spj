@@ -90,6 +90,7 @@ const COLUMNS = {
   pembayaran: 18,     // S - LS or UP
   nomorSPM: 19,       // T
   nomorSPPD: 20,      // U
+  totalNilai: 21,     // V - Total Nilai / Nominal
 };
 
 async function getAccessToken() {
@@ -256,6 +257,7 @@ serve(async (req: Request) => {
       pembayaran, // 'LS' | 'UP' (from Bendahara or SM)
       nomorSPM,   // SPM number (from Bendahara or SM for LS)
       nomorSPPD,  // SPPD number (from SM)
+      totalNilai, // Total Nilai / Nominal
     } = body;
     
     if (!id || !status) {
@@ -271,7 +273,7 @@ serve(async (req: Request) => {
     
     // Fetch all data from sheet
     const getResponse = await fetch(
-      `${baseUrl}/values/${SHEET_NAME}!A:U`,
+      `${baseUrl}/values/${SHEET_NAME}!A:V`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
@@ -366,6 +368,9 @@ serve(async (req: Request) => {
     if (nomorSPPD) {
       updatedRow[COLUMNS.nomorSPPD] = nomorSPPD;
     }
+    if (totalNilai) {
+      updatedRow[COLUMNS.totalNilai] = totalNilai;
+    }
 
     // Generate and set SPPD number when completed
     if (status === 'completed' && !updatedRow[COLUMNS.nomorSPPD]) {
@@ -426,7 +431,7 @@ serve(async (req: Request) => {
     // Update sheet with batchUpdate
     const rowIndex = foundRowIndex;
     const updateResponse = await fetch(
-      `${baseUrl}/values/${SHEET_NAME}!A${rowIndex + 1}:U${rowIndex + 1}?valueInputOption=USER_ENTERED`,
+      `${baseUrl}/values/${SHEET_NAME}!A${rowIndex + 1}:V${rowIndex + 1}?valueInputOption=USER_ENTERED`,
       {
         method: 'PUT',
         headers: {

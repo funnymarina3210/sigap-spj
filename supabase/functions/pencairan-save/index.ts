@@ -203,6 +203,7 @@ serve(async (req: Request) => {
       pembayaran,
       nomorSPM,
       nomorSPPD,
+      totalNilai,
     } = body;
     
     console.log('[pencairan-save] Received request:', { satker, id });
@@ -219,11 +220,11 @@ serve(async (req: Request) => {
     const baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;
     const waktuPengajuan = formatDateTime();
 
-    // Struktur kolom sesuai request (21 kolom A:U):
+    // Struktur kolom sesuai request (22 kolom A:V):
     // A: ID, B: Uraian Pengajuan, C: Nama Pengaju, D: Jenis Pengajuan, E: Kelengkapan
     // F: Catatan, G: Status Pengajuan, H: Waktu Pengajuan, I: Waktu Bendahara, J: Waktu PPK
     // K: Waktu PPSPM, L: Waktu Arsip, M: Status Bendahara, N: Status PPK, O: Status PPSPM, P: Status Arsip
-    // Q: Update terakhir, R: User (role login pembuat), S: Pembayaran (UP/LS), T: Nomor SPM, U: Nomor SPPD
+    // Q: Update terakhir, R: User (role login pembuat), S: Pembayaran (UP/LS), T: Nomor SPM, U: Nomor SPPD, V: Total Nilai (Nominal)
     const rowData = [
       id || '',                                        // A: ID
       uraianPengajuan || title || '',                 // B: Uraian Pengajuan
@@ -246,14 +247,15 @@ serve(async (req: Request) => {
       pembayaran || '',                               // S: Pembayaran (UP/LS)
       nomorSPM || '',                                 // T: Nomor SPM
       nomorSPPD || '',                                // U: Nomor SPPD
+      totalNilai || 0,                                // V: Total Nilai (Nominal)
     ];
 
-    console.log('Appending row with 21 columns:', rowData);
+    console.log('Appending row with 22 columns:', rowData);
     console.log('Row length:', rowData.length);
 
-    // Append dengan range A:U untuk 21 kolom
+    // Append dengan range A:V untuk 22 kolom
     const response = await fetch(
-      `${baseUrl}/values/${SHEET_NAME}!A:U:append?valueInputOption=USER_ENTERED`,
+      `${baseUrl}/values/${SHEET_NAME}!A:V:append?valueInputOption=USER_ENTERED`,
       {
         method: 'POST',
         headers: {

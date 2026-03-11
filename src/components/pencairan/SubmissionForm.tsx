@@ -76,6 +76,20 @@ function getJakartaTimeString(): string {
   return `${hours}:${minutes} - ${day}/${month}/${year}`;
 }
 
+// Format number as Indonesian currency (Rp format with thousands separator)
+function formatCurrency(value: string): string {
+  // Remove non-digits
+  const numericValue = value.replace(/\D/g, '');
+  if (!numericValue) return '';
+  // Add thousands separator
+  return numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Parse currency string to number
+function parseCurrency(value: string): number {
+  return parseInt(value.replace(/\D/g, ''), 10) || 0;
+}
+
 export function SubmissionForm({ open, onClose, onSubmit, editData }: SubmissionFormProps) {
   const { user } = useAuth();
   const { data: organikList = [], isLoading: isLoadingOrganik } = useOrganikPencairan();
@@ -89,6 +103,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
   const [pembayaran, setPembayaran] = useState(editData?.pembayaran || '');
   const [nomorSPM, setNomorSPM] = useState(editData?.nomorSPM || '');
   const [nomorSPPD, setNomorSPPD] = useState(editData?.nomorSPPD || '');
+  const [totalNilai, setTotalNilai] = useState(editData?.totalNilai?.toString() || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [documents, setDocuments] = useState<Document[]>(editData?.documents || []);
   const [showDraftConfirmation, setShowDraftConfirmation] = useState(false);
@@ -128,6 +143,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
         setPembayaran(editData.pembayaran || '');
         setNomorSPM(editData.nomorSPM || '');
         setNomorSPPD(editData.nomorSPPD || '');
+        setTotalNilai(editData.totalNilai?.toString() || '');
         const defaultDocs = getDocumentsByJenisBelanja(editData.jenisBelanja, editData.subJenisBelanja || '');
         if (editData.documents && editData.documents.length > 0) {
           const checkedTypes = editData.documents.filter(d => d.isChecked).map(d => d.type);
@@ -148,6 +164,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
         setPembayaran('');
         setNomorSPM('');
         setNomorSPPD('');
+        setTotalNilai('');
         setDocuments([]);
       }
     }
@@ -164,6 +181,14 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
   const validateForm = () => {
     if (!title.trim()) {
       toast({ title: 'Error', description: 'Uraian pengajuan harus diisi', variant: 'destructive' });
+      return false;
+    }
+    if (!totalNilai.trim()) {
+      toast({ title: 'Error', description: 'Total Nilai harus diisi', variant: 'destructive' });
+      return false;
+    }
+    if (parseCurrency(totalNilai) === 0) {
+      toast({ title: 'Error', description: 'Total Nilai harus lebih dari 0', variant: 'destructive' });
       return false;
     }
     if (!submitterName.trim()) {
@@ -217,6 +242,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             pembayaran: pembayaran || undefined,
             nomorSPM: nomorSPM || undefined,
             nomorSPPD: nomorSPPD || undefined,
+            totalNilai: totalNilai ? parseCurrency(totalNilai) : undefined,
           },
         });
         if (error) throw new Error(error.message || 'Gagal menyimpan draft');
@@ -244,6 +270,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             pembayaran: pembayaran || '',
             nomorSPM: nomorSPM || '',
             nomorSPPD: nomorSPPD || '',
+            totalNilai: totalNilai ? parseCurrency(totalNilai) : 0,
           },
         });
         
@@ -319,6 +346,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             pembayaran: pembayaran || undefined,
             nomorSPM: nomorSPM || undefined,
             nomorSPPD: nomorSPPD || undefined,
+            totalNilai: totalNilai ? parseCurrency(totalNilai) : undefined,
           },
         });
         if (error) throw new Error(error.message || 'Gagal mengirim pengajuan');
@@ -345,6 +373,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
           pembayaran: pembayaran || '',
           nomorSPM: nomorSPM || '',
           nomorSPPD: nomorSPPD || '',
+          totalNilai: totalNilai ? parseCurrency(totalNilai) : 0,
         };
 
         console.log('[SubmissionForm] Sending payload to pencairan-save:', payload);
@@ -375,6 +404,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
       setJenisBelanja('');
       setSubJenisBelanja('');
       setNotes('');
+      setTotalNilai('');
       setDocuments([]);
       onClose();
       toast({
@@ -399,6 +429,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
     setJenisBelanja(editData?.jenisBelanja || '');
     setSubJenisBelanja(editData?.subJenisBelanja || '');
     setNotes(editData?.notes || '');
+    setTotalNilai(editData?.totalNilai?.toString() || '');
     setDocuments(editData?.documents || []);
     onClose();
   };
@@ -408,7 +439,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
   const requiredCheckedCount = requiredDocs.filter(d => d.isChecked).length;
   const uncheckedRequiredCount = requiredDocs.filter(d => !d.isChecked).length;
   const hasJenisBelanja = Boolean(jenisBelanja && subJenisBelanja);
-  const isFormValid = title.trim() && submitterName.trim() && jenisBelanja && subJenisBelanja;
+  const isFormValid = title.trim() && totalNilai.trim() && submitterName.trim() && jenisBelanja && subJenisBelanja;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleCancel()}>
@@ -438,6 +469,19 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
               onChange={(e) => setTitle(e.target.value)}
               className="h-11 rounded-xl"
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Total Nilai *</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-3 text-gray-600 font-medium">Rp</span>
+              <Input
+                placeholder="0"
+                value={totalNilai}
+                onChange={(e) => setTotalNilai(formatCurrency(e.target.value))}
+                className="h-11 rounded-xl pl-10 text-right font-mono"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">Format: Rp 1.000.000</p>
           </div>
           <div className="space-y-2">
             <Label>Nama Pengaju *</Label>
