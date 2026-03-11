@@ -227,6 +227,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             jenisBelanja: `${jenisBelanja} - ${subJenisBelanja}`,
             documents: documentsString,
             notes: notes.trim() || undefined,
+            totalNilai: parseTotalNilai(),
             actor: 'user',
             action: 'edit',
             updateDataOnly: true,
