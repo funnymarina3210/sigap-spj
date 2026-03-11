@@ -177,6 +177,7 @@ serve(async (req) => {
           pembayaran: row[18] || '',
           nomorSPM: row[19] || '',
           nomorSPPD: row[20] || '',
+          totalNilai: row[21] || '',
           status: mapStatusToCode(row[6] || ''),
         }));
       }

@@ -215,11 +215,20 @@ serve(async (req) => {
         submission.notes || '',          // F: Catatan
         'Menunggu Verifikasi PPK',       // G: Status Pengajuan
         formattedDate,                   // H: Waktu Pengajuan
-        '',                              // I: Status PPK
+        '',                              // I: Waktu Bendahara
         '',                              // J: Waktu PPK
-        '',                              // K: Status Bendahara
-        '',                              // L: Waktu Bendahara
-        '',                              // M: Status KPPN
+        '',                              // K: Waktu PPSPM
+        '',                              // L: Waktu Arsip
+        '',                              // M: Status Bendahara
+        '',                              // N: Status PPK
+        '',                              // O: Status PPSPM
+        '',                              // P: Status Arsip
+        '',                              // Q: Updated At
+        '',                              // R: User
+        '',                              // S: Pembayaran
+        '',                              // T: Nomor SPM
+        '',                              // U: Nomor SPPD
+        submission.totalNilai || '',     // V: Nominal
       ],
     ];
 

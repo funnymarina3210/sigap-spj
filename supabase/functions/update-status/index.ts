@@ -226,6 +226,9 @@ serve(async (req) => {
       if (updateData.documents) {
         await updateCell(accessToken, spreadsheetId, `${sheetName}!E${rowNumber}`, updateData.documents);
       }
+      if (updateData.totalNilai !== undefined) {
+        await updateCell(accessToken, spreadsheetId, `${sheetName}!V${rowNumber}`, String(updateData.totalNilai));
+      }
       
       console.log('Data updated successfully (edit mode)');
       return new Response(
