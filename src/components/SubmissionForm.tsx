@@ -47,11 +47,27 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
   const { data: existingSubmissions } = useSubmissionsData();
   
   const [title, setTitle] = useState(editData?.title || '');
+  const [totalNilai, setTotalNilai] = useState(editData?.totalNilai?.toString() || '');
   const [submitterName, setSubmitterName] = useState(editData?.submitterName || '');
   const [jenisBelanja, setJenisBelanja] = useState(editData?.jenisBelanja || '');
   const [subJenisBelanja, setSubJenisBelanja] = useState(editData?.subJenisBelanja || '');
   const [notes, setNotes] = useState(editData?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Format number with thousand separators (dots)
+  const formatRibuan = (value: string) => {
+    const num = value.replace(/\D/g, '');
+    return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const handleTotalNilaiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    setTotalNilai(raw);
+  };
+
+  const parseTotalNilai = (): number => {
+    return parseInt(totalNilai.replace(/\D/g, ''), 10) || 0;
+  };
   const [documents, setDocuments] = useState<Document[]>(
     editData?.documents || []
   );
