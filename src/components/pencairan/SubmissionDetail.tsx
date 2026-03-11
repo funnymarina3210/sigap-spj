@@ -665,6 +665,17 @@ export function SubmissionDetail({
                     </p>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-muted">💰</div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Nilai</p>
+                    <p className="font-medium">
+                      {submission.totalNilai
+                        ? `Rp ${submission.totalNilai.toLocaleString('id-ID')}`
+                        : '-'}
+                    </p>
+                  </div>
+                </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Jenis Belanja</p>
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
