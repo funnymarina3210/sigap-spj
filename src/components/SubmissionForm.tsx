@@ -282,6 +282,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
       });
 
       setTitle('');
+      setTotalNilai('');
       setSubmitterName('');
       setJenisBelanja('');
       setSubJenisBelanja('');
