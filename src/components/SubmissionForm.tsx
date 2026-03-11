@@ -137,6 +137,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
     } else if (!open) {
       // Reset when closing
       setTitle('');
+      setTotalNilai('');
       setSubmitterName('');
       setJenisBelanja('');
       setSubJenisBelanja('');
