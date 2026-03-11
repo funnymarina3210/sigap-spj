@@ -278,6 +278,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
         submittedAt: new Date(),
         documents,
         notes: notes.trim() || undefined,
+        totalNilai: parseTotalNilai(),
       });
 
       setTitle('');
