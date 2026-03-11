@@ -357,6 +357,22 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
             />
           </div>
 
+          {/* Total Nilai */}
+          <div className="space-y-2">
+            <Label htmlFor="totalNilai" className="text-sm font-semibold">Total Nilai *</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">Rp</span>
+              <Input
+                id="totalNilai"
+                placeholder="Contoh: 1.000.000"
+                value={totalNilai ? formatRibuan(totalNilai) : ''}
+                onChange={handleTotalNilaiChange}
+                className="h-11 rounded-xl pl-10"
+                inputMode="numeric"
+              />
+            </div>
+          </div>
+
           {/* Nama Pengaju - Dropdown from organik */}
           <div className="space-y-2">
             <Label htmlFor="submitter" className="text-sm font-semibold">Nama Pengaju *</Label>
