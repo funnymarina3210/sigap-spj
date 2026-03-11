@@ -163,6 +163,14 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
       });
       return;
     }
+    if (!totalNilai || parseTotalNilai() <= 0) {
+      toast({
+        title: 'Error',
+        description: 'Total Nilai harus diisi dengan angka lebih dari 0',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (!submitterName.trim()) {
       toast({
         title: 'Error',
