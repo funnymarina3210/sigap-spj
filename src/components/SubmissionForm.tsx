@@ -310,6 +310,7 @@ export function SubmissionForm({ open, onClose, onSubmit, editData }: Submission
 
   const handleCancel = () => {
     setTitle(editData?.title || '');
+    setTotalNilai(editData?.totalNilai?.toString() || '');
     setSubmitterName(editData?.submitterName || '');
     setJenisBelanja(editData?.jenisBelanja || '');
     setSubJenisBelanja(editData?.subJenisBelanja || '');
