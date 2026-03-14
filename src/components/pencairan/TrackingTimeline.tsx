@@ -43,8 +43,8 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
   if (submission.waktuKppn) {
     let kppnStatus: 'pending' | 'approved' | 'rejected' = 'pending';
     if (submission.status === 'pending_kppn') {
-      kppnStatus = 'pending';
-    } else if (['pending_arsip', 'completed'].includes(submission.status)) {
+      kppnStatus = 'approved'; // KPPN stage is passed, now waiting for Arsip
+    } else if (submission.status === 'completed') {
       kppnStatus = 'approved';
     } else if (submission.status === 'rejected_kppn') {
       kppnStatus = 'rejected';

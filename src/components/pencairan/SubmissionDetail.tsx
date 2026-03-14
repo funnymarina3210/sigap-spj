@@ -297,8 +297,8 @@ export function SubmissionDetail({
 
       // Notes are now optional (tidak lagi wajib)
 
-      newStatus = 'pending_arsip';
-      actor = 'kppn';
+      newStatus = 'completed';
+      actor = 'arsip';
     } else if (submission.status === 'rejected_bendahara') {
       // SM/Submitter correcting and resubmitting to Bendahara
       newStatus = 'pending_bendahara';
