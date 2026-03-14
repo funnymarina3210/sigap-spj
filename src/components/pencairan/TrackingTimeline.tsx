@@ -25,7 +25,8 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
   }> = [];
 
   // Latest first
-  if (submission.waktuArsip) {
+  // Arsip entry: show when completed or pending_kppn (Arsip's responsibility)
+  if (submission.waktuArsip || submission.status === 'pending_kppn' || submission.status === 'completed') {
     let arsipStatus: 'pending' | 'approved' | 'rejected' = 'pending';
     if (submission.status === 'completed') {
       arsipStatus = 'approved';
@@ -34,9 +35,13 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     }
     entries.push({
       stage: 'Arsip',
-      timestamp: submission.waktuArsip,
+      timestamp: submission.waktuArsip || submission.waktuKppn || '',
       status: arsipStatus,
-      notes: submission.statusArsip,
+      notes: submission.status === 'completed' 
+        ? (submission.statusArsip || 'Pencatatan selesai') 
+        : submission.status === 'pending_kppn' 
+          ? 'Menunggu pencatatan Arsip'
+          : submission.statusArsip,
     });
   }
 
