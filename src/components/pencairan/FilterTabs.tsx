@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { FileText, Edit, XCircle, Clock, CheckCircle, Archive, Package } from 'lucide-react';
+import { FileText, Edit, XCircle, Clock, CheckCircle, Send, Archive, Package } from 'lucide-react';
 
 interface FilterTabsProps {
   activeFilter: string;

@@ -138,8 +138,6 @@ export default function UsulanPencairan() {
     result['pending_ppk'] = (result['pending_ppk'] || 0) + (result['rejected_ppspm'] || 0);
     // PPSPM includes rejected_kppn
     result['pending_ppspm'] = (result['pending_ppspm'] || 0) + (result['rejected_kppn'] || 0);
-    // Arsip tab (pending_kppn) includes completed
-    result['pending_kppn'] = (result['pending_kppn'] || 0) + (result['completed'] || 0);
 
     return result;
   }, [submissions, userRole]);
