@@ -174,11 +174,13 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
                    {entry.stage}:{' '}
                    {entry.stage === 'SM' && entry.status === 'pending'
                      ? 'Dalam persiapan'
-                     : entry.status === 'approved'
-                       ? 'Diserahkan'
-                       : entry.status === 'rejected'
-                         ? 'Ditolak'
-                         : 'Menunggu verifikasi'}
+                     : entry.stage === 'Arsip' && entry.status === 'approved'
+                       ? 'Selesai'
+                       : entry.status === 'approved'
+                         ? 'Diserahkan'
+                         : entry.status === 'rejected'
+                           ? 'Ditolak'
+                           : 'Menunggu pencatatan'}
                  </p>
                 
                 {/* Badge with notes */}
