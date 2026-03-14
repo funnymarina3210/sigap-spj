@@ -72,9 +72,14 @@ export default function UsulanPencairan() {
         sub.status === 'pending_ppk' || sub.status === 'rejected_ppspm'
       );
     } else if (activeFilter === 'pending_ppspm') {
-      // PPSPM tab includes pending_ppspm + rejected_kppn (ditolak KPPN → kembali ke PPSPM)
+      // PPSPM tab includes pending_ppspm + rejected_kppn (ditolak Arsip → kembali ke PPSPM)
       result = result.filter(sub => 
         sub.status === 'pending_ppspm' || sub.status === 'rejected_kppn'
+      );
+    } else if (activeFilter === 'pending_kppn') {
+      // Arsip tab includes pending_kppn + completed
+      result = result.filter(sub => 
+        sub.status === 'pending_kppn' || sub.status === 'completed'
       );
     } else if (activeFilter !== 'all') {
       result = result.filter(sub => sub.status === activeFilter);
