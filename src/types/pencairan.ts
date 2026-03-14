@@ -177,7 +177,7 @@ export const STATUS_LABELS: Record<SubmissionStatus, string> = {
   pending_bendahara: 'Menunggu Bendahara',
   pending_ppk: 'Menunggu PPK',
   pending_ppspm: 'Menunggu PPSPM',
-  pending_kppn: 'Menunggu KPPN',
+  pending_kppn: 'Menunggu Arsip',
   pending_arsip: 'Menunggu Arsip',
   completed: 'Selesai',
   rejected_sm: 'Ditolak Bendahara',
