@@ -512,7 +512,7 @@ export function canTakeActionOnRejected(role: UserRole, status: SubmissionStatus
 }
 
 export function canReturnFromArsip(role: UserRole, status: SubmissionStatus): boolean {
-  return (role === 'Arsip' || role === 'admin') && (status === 'pending_kppn' || status === 'pending_arsip');
+  return (role === 'Arsip' || role === 'admin') && status === 'pending_kppn';
 }
 
 export function canViewDetail(role: UserRole, status: SubmissionStatus): boolean {

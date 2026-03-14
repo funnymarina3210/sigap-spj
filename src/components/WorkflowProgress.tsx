@@ -103,7 +103,7 @@ export function WorkflowProgress({ status, className }: WorkflowProgressProps) {
       case 'pending_ppspm':
       case 'rejected_ppspm': return '60%';
       case 'pending_kppn':
-      case 'rejected_kppn': return '80%';
+      case 'rejected_kppn': return '90%';
       case 'pending_arsip': return '90%';
       case 'completed': return '100%';
       default: return '0%';
