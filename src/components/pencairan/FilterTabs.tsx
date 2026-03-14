@@ -16,7 +16,8 @@ const filters: { value: string; label: string; icon: React.ReactNode; activeColo
   { value: 'pending_bendahara', label: 'Bendahara', icon: <Clock className="w-3.5 h-3.5" />, activeColor: 'bg-blue-500 text-white', badgeColor: 'bg-blue-500 text-white' },
   { value: 'pending_ppk', label: 'PPK', icon: <Clock className="w-3.5 h-3.5" />, activeColor: 'bg-yellow-500 text-white', badgeColor: 'bg-yellow-500 text-white' },
   { value: 'pending_ppspm', label: 'PPSPM', icon: <Clock className="w-3.5 h-3.5" />, activeColor: 'bg-violet-500 text-white', badgeColor: 'bg-violet-500 text-white' },
-  { value: 'pending_kppn', label: 'Arsip', icon: <Archive className="w-3.5 h-3.5" />, activeColor: 'bg-emerald-500 text-white', badgeColor: 'bg-emerald-500 text-white' },
+  { value: 'pending_kppn', label: 'KPPN', icon: <Send className="w-3.5 h-3.5" />, activeColor: 'bg-teal-500 text-white', badgeColor: 'bg-teal-500 text-white' },
+  { value: 'completed', label: 'Arsip', icon: <Archive className="w-3.5 h-3.5" />, activeColor: 'bg-emerald-500 text-white', badgeColor: 'bg-emerald-500 text-white' },
 ];
 
 // Helper to compute combined "rejected" count
