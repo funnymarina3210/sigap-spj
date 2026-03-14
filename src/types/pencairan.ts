@@ -227,7 +227,7 @@ export function isStageCompleted(stage: string, status: SubmissionStatus): boole
   // Map status to current stage index
   const statusStageMap: Record<string, number> = {
     draft: -1, submitted_sm: 0, pending_bendahara: 1, pending_ppk: 2,
-    pending_ppspm: 3, pending_kppn: 4, pending_arsip: 5,
+    pending_ppspm: 3, pending_kppn: 5, pending_arsip: 5,
     rejected_sm: 0, rejected_bendahara: 1, rejected_ppk: 2,
     rejected_ppspm: 3, rejected_kppn: 4,
   };
