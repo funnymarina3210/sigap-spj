@@ -177,7 +177,7 @@ export const STATUS_LABELS: Record<SubmissionStatus, string> = {
   pending_bendahara: 'Menunggu Bendahara',
   pending_ppk: 'Menunggu PPK',
   pending_ppspm: 'Menunggu PPSPM',
-  pending_kppn: 'Menunggu KPPN',
+  pending_kppn: 'Menunggu Arsip',
   pending_arsip: 'Menunggu Arsip',
   completed: 'Selesai',
   rejected_sm: 'Ditolak Bendahara',
@@ -227,7 +227,7 @@ export function isStageCompleted(stage: string, status: SubmissionStatus): boole
   // Map status to current stage index
   const statusStageMap: Record<string, number> = {
     draft: -1, submitted_sm: 0, pending_bendahara: 1, pending_ppk: 2,
-    pending_ppspm: 3, pending_kppn: 4, pending_arsip: 5,
+    pending_ppspm: 3, pending_kppn: 5, pending_arsip: 5,
     rejected_sm: 0, rejected_bendahara: 1, rejected_ppk: 2,
     rejected_ppspm: 3, rejected_kppn: 4,
   };
@@ -512,7 +512,7 @@ export function canTakeActionOnRejected(role: UserRole, status: SubmissionStatus
 }
 
 export function canReturnFromArsip(role: UserRole, status: SubmissionStatus): boolean {
-  return (role === 'Arsip' || role === 'admin') && (status === 'pending_kppn' || status === 'pending_arsip');
+  return (role === 'Arsip' || role === 'admin') && status === 'pending_kppn';
 }
 
 export function canViewDetail(role: UserRole, status: SubmissionStatus): boolean {

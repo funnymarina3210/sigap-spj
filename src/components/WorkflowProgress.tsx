@@ -53,8 +53,8 @@ function getStepStatus(stepKey: string, submissionStatus: SubmissionStatus | und
       if (stepKey === 'ppspm') return 'error';
       return 'pending';
     case 'pending_kppn':
-      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm') return 'complete';
-      if (stepKey === 'kppn') return 'current';
+      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm' || stepKey === 'kppn') return 'complete';
+      if (stepKey === 'arsip') return 'current';
       return 'pending';
     case 'rejected_kppn':
       if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm') return 'complete';
@@ -103,7 +103,7 @@ export function WorkflowProgress({ status, className }: WorkflowProgressProps) {
       case 'pending_ppspm':
       case 'rejected_ppspm': return '60%';
       case 'pending_kppn':
-      case 'rejected_kppn': return '80%';
+      case 'rejected_kppn': return '90%';
       case 'pending_arsip': return '90%';
       case 'completed': return '100%';
       default: return '0%';

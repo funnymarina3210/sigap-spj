@@ -30,7 +30,7 @@ export const WORKFLOW_TRANSITIONS: Record<SubmissionStatus, Record<WorkflowActio
   },
   pending_arsip: {
     approve: 'completed',
-    reject: 'pending_kppn',
+    reject: null,
   },
   completed: {
     approve: null,
@@ -95,8 +95,7 @@ export function getCurrentWorkflowStage(status: SubmissionStatus): string {
   if (status === 'pending_bendahara' || status === 'rejected_bendahara') return 'Bendahara';
   if (status === 'pending_ppk' || status === 'rejected_ppk') return 'PPK';
   if (status === 'pending_ppspm' || status === 'rejected_ppspm') return 'PPSPM';
-  if (status === 'pending_kppn' || status === 'rejected_kppn') return 'KPPN';
-  if (status === 'pending_arsip') return 'Arsip';
+  if (status === 'pending_kppn' || status === 'rejected_kppn') return 'Arsip';
   if (status === 'completed') return 'Arsip';
   return 'Unknown';
 }

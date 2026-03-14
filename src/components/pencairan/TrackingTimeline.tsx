@@ -25,28 +25,31 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
   }> = [];
 
   // Latest first
-  if (submission.waktuArsip) {
+  // Arsip entry: show when completed or pending_kppn (Arsip's responsibility)
+  if (submission.waktuArsip || submission.status === 'pending_kppn' || submission.status === 'completed') {
     let arsipStatus: 'pending' | 'approved' | 'rejected' = 'pending';
     if (submission.status === 'completed') {
       arsipStatus = 'approved';
-    } else if (submission.status === 'pending_arsip') {
-      arsipStatus = 'pending';
     } else if (submission.status === 'rejected_kppn') {
-      arsipStatus = 'rejected'; // KPPN rejected it, so Arsip won't process
+      arsipStatus = 'rejected';
     }
     entries.push({
       stage: 'Arsip',
-      timestamp: submission.waktuArsip,
+      timestamp: submission.waktuArsip || submission.waktuKppn || '',
       status: arsipStatus,
-      notes: submission.statusArsip,
+      notes: submission.status === 'completed' 
+        ? (submission.statusArsip || 'Pencatatan selesai') 
+        : submission.status === 'pending_kppn' 
+          ? 'Menunggu pencatatan Arsip'
+          : submission.statusArsip,
     });
   }
 
   if (submission.waktuKppn) {
     let kppnStatus: 'pending' | 'approved' | 'rejected' = 'pending';
     if (submission.status === 'pending_kppn') {
-      kppnStatus = 'pending';
-    } else if (['pending_arsip', 'completed'].includes(submission.status)) {
+      kppnStatus = 'approved'; // KPPN stage is passed, now waiting for Arsip
+    } else if (submission.status === 'completed') {
       kppnStatus = 'approved';
     } else if (submission.status === 'rejected_kppn') {
       kppnStatus = 'rejected';
@@ -176,11 +179,13 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
                    {entry.stage}:{' '}
                    {entry.stage === 'SM' && entry.status === 'pending'
                      ? 'Dalam persiapan'
-                     : entry.status === 'approved'
-                       ? 'Diserahkan'
-                       : entry.status === 'rejected'
-                         ? 'Ditolak'
-                         : 'Menunggu verifikasi'}
+                     : entry.stage === 'Arsip' && entry.status === 'approved'
+                       ? 'Selesai'
+                       : entry.status === 'approved'
+                         ? 'Diserahkan'
+                         : entry.status === 'rejected'
+                           ? 'Ditolak'
+                           : 'Menunggu pencatatan'}
                  </p>
                 
                 {/* Badge with notes */}

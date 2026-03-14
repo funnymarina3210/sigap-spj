@@ -297,8 +297,8 @@ export function SubmissionDetail({
 
       // Notes are now optional (tidak lagi wajib)
 
-      newStatus = 'pending_arsip';
-      actor = 'kppn';
+      newStatus = 'completed';
+      actor = 'arsip';
     } else if (submission.status === 'rejected_bendahara') {
       // SM/Submitter correcting and resubmitting to Bendahara
       newStatus = 'pending_bendahara';
@@ -348,7 +348,7 @@ export function SubmissionDetail({
       actor = 'ppspm';
     } else if (submission.status === 'pending_kppn') {
       newStatus = 'rejected_kppn';
-      actor = 'kppn';
+      actor = 'arsip';
     } else if (submission.status === 'rejected_ppk') {
       // Bendahara menolak kembali ke SM
       newStatus = 'rejected_bendahara';
