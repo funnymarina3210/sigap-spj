@@ -29,10 +29,8 @@ export function TrackingTimeline({ submission }: TrackingTimelineProps) {
     let arsipStatus: 'pending' | 'approved' | 'rejected' = 'pending';
     if (submission.status === 'completed') {
       arsipStatus = 'approved';
-    } else if (submission.status === 'pending_arsip') {
-      arsipStatus = 'pending';
     } else if (submission.status === 'rejected_kppn') {
-      arsipStatus = 'rejected'; // KPPN rejected it, so Arsip won't process
+      arsipStatus = 'rejected';
     }
     entries.push({
       stage: 'Arsip',
