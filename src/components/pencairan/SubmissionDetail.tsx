@@ -295,14 +295,7 @@ export function SubmissionDetail({
         return;
       }
 
-      if (!notes) {
-        toast({
-          title: 'Validasi gagal',
-          description: 'Catatan wajib diisi',
-          variant: 'destructive',
-        });
-        return;
-      }
+      // Notes are now optional (tidak lagi wajib)
 
       newStatus = 'pending_arsip';
       actor = 'kppn';
@@ -889,19 +882,17 @@ export function SubmissionDetail({
                 {(canAction || canReturnArsip) ? (
                   <div className="space-y-2">
                     <label htmlFor="notes" className="text-sm font-medium">
-                      Catatan {submission.status === 'pending_kppn' && <span className="text-red-500">*</span>}
+                      Catatan
                     </label>
                     <textarea
                       id="notes"
-                      placeholder={submission.status === 'pending_kppn' ? "Catatan wajib diisi..." : "Tambahkan catatan..."}
+                      placeholder="Tambahkan catatan..."
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       className="w-full px-3 py-2 border border-input rounded-md text-sm resize-none"
                       rows={3}
                     />
-                    {submission.status === 'pending_kppn' && !notes && (
-                      <p className="text-xs text-red-500">Isi catatan dengan nomor SPPD dan SPM</p>
-                    )}
+
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground bg-secondary/50 p-3 rounded-lg">
