@@ -25,7 +25,7 @@ export const WORKFLOW_TRANSITIONS: Record<SubmissionStatus, Record<WorkflowActio
     reject: 'rejected_ppspm',
   },
   pending_kppn: {
-    approve: 'pending_arsip',
+    approve: 'completed',
     reject: 'rejected_kppn',
   },
   pending_arsip: {

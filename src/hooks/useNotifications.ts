@@ -85,16 +85,16 @@ function generateNotificationsFromSubmissions(
         }
         break;
 
-      // Pending KPPN - notify KPPN
+      // Pending KPPN - notify Arsip for archiving
       case 'pending_kppn':
-        if (normalized === 'KPPN') {
+        if (normalized === 'Arsip') {
           title = 'Sigap SPJ - Pengajuan Baru';
-          message = `${judul} siap dikirim ke KPPN`;
+          message = `${judul} untuk diarsipkan`;
           shouldShow = true;
         }
         break;
 
-      // Pending Arsip - notify Arsip
+      // Pending Arsip - notify Arsip (backward compat)
       case 'pending_arsip':
         if (normalized === 'Arsip') {
           title = 'Sigap SPJ - Pengajuan Baru';

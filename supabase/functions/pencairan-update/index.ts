@@ -55,14 +55,14 @@ function normalizeRole(role: string): UserRole {
 function canTakeActionOnRejected(role: UserRole, status: SubmissionStatus): boolean {
   if (role === 'admin') return true;
   
-  // Workflow: SM → Bendahara → PPK → PPSPM → KPPN → Arsip
+  // Workflow: SM → Bendahara → PPK → PPSPM → Arsip (pending_kppn for archiving)
   // Previous stage role handles rejection correction:
   
   if (status === 'rejected_sm') return SUBMITTER_ROLES.includes(role);
   if (status === 'rejected_bendahara') return SUBMITTER_ROLES.includes(role) || role === 'Bendahara';
   if (status === 'rejected_ppk') return role === 'Bendahara'; // ← Bendahara resends to PPK
   if (status === 'rejected_ppspm') return role === 'Pejabat Pembuat Komitmen'; // ← PPK resends
-  if (status === 'rejected_kppn') return role === 'Pejabat Penandatangan Surat Perintah Membayar'; // ← PPSPM resends
+  if (status === 'rejected_kppn') return role === 'Pejabat Penandatangan Surat Perintah Membayar'; // ← PPSPM resends to Arsip (pending_kppn)
   
   return false;
 }

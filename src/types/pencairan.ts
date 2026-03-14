@@ -478,8 +478,8 @@ export function canTakeAction(role: UserRole, status: SubmissionStatus): boolean
   // Can take action on pending statuses based on role
   if (role === 'Pejabat Pembuat Komitmen' && (status === 'pending_ppk' || status === 'rejected_ppspm')) return true;
   if (role === 'Pejabat Penandatangan Surat Perintah Membayar' && (status === 'pending_ppspm' || status === 'rejected_kppn')) return true;
-  if (role === 'KPPN' && status === 'pending_kppn') return true;
-  if (role === 'Arsip' && status === 'pending_arsip') return true;
+  if (role === 'KPPN' && status === 'pending_kppn') return false; // KPPN no longer handles pending_kppn
+  if (role === 'Arsip' && (status === 'pending_kppn' || status === 'pending_arsip')) return true; // Arsip handles archiving
 
   // Can also take action on rejected statuses (resubmit)
   if (canTakeActionOnRejected(role, status)) return true;
@@ -490,7 +490,7 @@ export function canTakeAction(role: UserRole, status: SubmissionStatus): boolean
 export function canTakeActionOnRejected(role: UserRole, status: SubmissionStatus): boolean {
   if (role === 'admin') return true;
   
-  // Alur workflow: SM → Bendahara → PPK → PPSPM → KPPN → Arsip
+  // Alur workflow: SM → Bendahara → PPK → PPSPM → Arsip (pending_kppn for archiving)
   // When rejected at a stage, the previous stage role can take corrective action:
   
   // rejected_sm: Submitter bisa resubmit (but we need submissionUser to verify)
@@ -505,14 +505,14 @@ export function canTakeActionOnRejected(role: UserRole, status: SubmissionStatus
   // rejected_ppspm: PPK bisa send ulang ke PPSPM  
   if (status === 'rejected_ppspm') return role === 'Pejabat Pembuat Komitmen';
   
-  // rejected_kppn: PPSPM bisa send ulang ke KPPN
+  // rejected_kppn: PPSPM bisa send ulang ke KPPN (untuk Arsip proses)
   if (status === 'rejected_kppn') return role === 'Pejabat Penandatangan Surat Perintah Membayar';
   
   return false;
 }
 
 export function canReturnFromArsip(role: UserRole, status: SubmissionStatus): boolean {
-  return (role === 'Arsip' || role === 'admin') && status === 'pending_arsip';
+  return (role === 'Arsip' || role === 'admin') && (status === 'pending_kppn' || status === 'pending_arsip');
 }
 
 export function canViewDetail(role: UserRole, status: SubmissionStatus): boolean {
