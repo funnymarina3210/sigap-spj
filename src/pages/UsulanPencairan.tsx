@@ -77,10 +77,11 @@ export default function UsulanPencairan() {
         sub.status === 'pending_ppspm' || sub.status === 'rejected_kppn'
       );
     } else if (activeFilter === 'pending_kppn') {
-      // Arsip tab includes pending_kppn + completed
-      result = result.filter(sub => 
-        sub.status === 'pending_kppn' || sub.status === 'completed'
-      );
+      // KPPN tab: pending_kppn only
+      result = result.filter(sub => sub.status === 'pending_kppn');
+    } else if (activeFilter === 'completed') {
+      // Arsip tab: completed only
+      result = result.filter(sub => sub.status === 'completed');
     } else if (activeFilter !== 'all') {
       result = result.filter(sub => sub.status === activeFilter);
     }
@@ -137,8 +138,6 @@ export default function UsulanPencairan() {
     result['pending_ppk'] = (result['pending_ppk'] || 0) + (result['rejected_ppspm'] || 0);
     // PPSPM includes rejected_kppn
     result['pending_ppspm'] = (result['pending_ppspm'] || 0) + (result['rejected_kppn'] || 0);
-    // Arsip tab (pending_kppn) includes completed
-    result['pending_kppn'] = (result['pending_kppn'] || 0) + (result['completed'] || 0);
 
     return result;
   }, [submissions, userRole]);
