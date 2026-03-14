@@ -247,8 +247,7 @@ export default function Dashboard() {
       { name: 'Bendahara', count: stats.pending_bendahara, color: '#06b6d4' },
       { name: 'PPK', count: stats.pending_ppk, color: '#f59e0b' },
       { name: 'PPSPM', count: stats.pending_ppspm, color: '#8b5cf6' },
-      { name: 'KPPN', count: stats.pending_kppn, color: '#14b8a6' },
-      { name: 'Arsip', count: stats.pending_arsip + stats.completed, color: '#10b981' },
+      { name: 'Arsip', count: stats.pending_kppn + stats.completed, color: '#10b981' },
     ];
   }, [stats]);
 
