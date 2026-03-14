@@ -28,6 +28,10 @@ export const WORKFLOW_TRANSITIONS: Record<SubmissionStatus, Record<WorkflowActio
     approve: 'completed',
     reject: 'rejected_kppn',
   },
+  pending_arsip: {
+    approve: 'completed',
+    reject: null,
+  },
   completed: {
     approve: null,
     reject: null,
