@@ -53,8 +53,8 @@ function getStepStatus(stepKey: string, submissionStatus: SubmissionStatus | und
       if (stepKey === 'ppspm') return 'error';
       return 'pending';
     case 'pending_kppn':
-      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm') return 'complete';
-      if (stepKey === 'kppn') return 'current';
+      if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm' || stepKey === 'kppn') return 'complete';
+      if (stepKey === 'arsip') return 'current';
       return 'pending';
     case 'rejected_kppn':
       if (stepKey === 'sm' || stepKey === 'bendahara' || stepKey === 'ppk' || stepKey === 'ppspm') return 'complete';
