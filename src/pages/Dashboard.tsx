@@ -494,6 +494,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </div>
 
       {/* Monthly Trend Chart */}
       <Card>
