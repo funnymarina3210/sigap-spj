@@ -412,7 +412,26 @@ export default function Dashboard() {
         <StatCard title="Rata-rata Proses" value={averageTotalTime.display} icon={Timer} variant="secondary" subtitle={`${averageTotalTime.count} pengajuan`} />
       </div>
 
-      {/* Charts Row 1 */}
+      {/* Role Filter + Charts Row 1 */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">Filter Role Pengaju:</span>
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Semua Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Role</SelectItem>
+              {availableRoles.map(role => (
+                <SelectItem key={role} value={role}>{role}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {filterRole !== 'all' && (
+            <span className="text-xs text-muted-foreground">({roleFilteredSubmissions.length} pengajuan)</span>
+          )}
+        </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status Distribution Pie Chart */}
         <Card>
