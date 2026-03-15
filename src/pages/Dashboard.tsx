@@ -146,10 +146,26 @@ export default function Dashboard() {
     return { ...counts, inProcess, rejected, successRate };
   }, [filteredSubmissions]);
 
+  // Get unique roles from submissions
+  const [filterRole, setFilterRole] = useState<string>('all');
+  const availableRoles = useMemo(() => {
+    const roles = new Set<string>();
+    filteredSubmissions.forEach(sub => {
+      if (sub.user && sub.user.trim()) roles.add(sub.user.trim());
+    });
+    return Array.from(roles).sort();
+  }, [filteredSubmissions]);
+
+  // Filtered by role
+  const roleFilteredSubmissions = useMemo(() => {
+    if (filterRole === 'all') return filteredSubmissions;
+    return filteredSubmissions.filter(sub => (sub.user || '').trim() === filterRole);
+  }, [filteredSubmissions, filterRole]);
+
   // Status distribution for pie chart
   const statusDistribution = useMemo(() => {
     const distribution: Record<string, number> = {};
-    filteredSubmissions.forEach(sub => {
+    roleFilteredSubmissions.forEach(sub => {
       const label = STATUS_LABELS[sub.status] || sub.status;
       distribution[label] = (distribution[label] || 0) + 1;
     });
@@ -157,19 +173,19 @@ export default function Dashboard() {
       .map(([name, value]) => ({ name, value }))
       .filter(item => item.value > 0)
       .sort((a, b) => b.value - a.value);
-  }, [filteredSubmissions]);
+  }, [roleFilteredSubmissions]);
 
   // Jenis Belanja distribution
   const jenisBelanjaDistribution = useMemo(() => {
     const distribution: Record<string, number> = {};
-    filteredSubmissions.forEach(sub => {
+    roleFilteredSubmissions.forEach(sub => {
       const jenis = sub.jenisBelanja || 'Lainnya';
       distribution[jenis] = (distribution[jenis] || 0) + 1;
     });
     return Object.entries(distribution)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [filteredSubmissions]);
+  }, [roleFilteredSubmissions]);
 
   // Monthly trend data
   const monthlyTrend = useMemo(() => {
