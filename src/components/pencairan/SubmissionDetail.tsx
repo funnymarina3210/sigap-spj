@@ -228,18 +228,10 @@ export function SubmissionDetail({
           });
           return;
         }
-        if (pembayaran === 'LS' && !nomorSPM) {
+        if (!nomorSPM) {
           toast({
             title: 'Validasi gagal',
-            description: 'Nomor SPM wajib diisi untuk pembayaran Langsung (LS)',
-            variant: 'destructive',
-          });
-          return;
-        }
-        if (pembayaran === 'UP') {
-          toast({
-            title: 'Langkah salah',
-            description: 'Untuk Uang Persediaan (UP), gunakan tombol "Simpan SPBy"',
+            description: 'Nomor SPM wajib diisi untuk kedua metode pembayaran',
             variant: 'destructive',
           });
           return;
@@ -257,26 +249,15 @@ export function SubmissionDetail({
           });
           return;
         }
-
-        if (pembayaran === 'LS' && !nomorSPM) {
+        if (!nomorSPM) {
           toast({
             title: 'Validasi gagal',
-            description: 'Nomor SPM wajib diisi untuk pembayaran Langsung (LS)',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        if (pembayaran === 'UP') {
-          toast({
-            title: 'Langkah salah',
-            description: 'Untuk Uang Persediaan (UP), gunakan tombol "Simpan SPBy"',
+            description: 'Nomor SPM wajib diisi untuk kedua metode pembayaran',
             variant: 'destructive',
           });
           return;
         }
       }
-
       newStatus = 'pending_ppk';
       actor = 'bendahara';
     } else if (submission.status === 'pending_ppk') {
@@ -756,22 +737,20 @@ export function SubmissionDetail({
                   </label>
                 </div>
 
-                {pembayaran === 'LS' && (
-                  <div className="space-y-2 pt-2 border-t">
-                    <label htmlFor="nomorSPM" className="text-sm font-medium">
-                      Nomor SPM <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="nomorSPM"
-                      type="text"
-                      placeholder="Input nomor SPM (contoh: 00043A)"
-                      value={nomorSPM}
-                      onChange={(e) => setNomorSPM(e.target.value)}
-                      className="w-full px-3 py-2 border border-input rounded-md text-sm"
-                    />
-                    <p className="text-xs text-muted-foreground">Wajib diisi sebelum submit</p>
-                  </div>
-                )}
+                <div className="space-y-2 pt-2 border-t">
+                  <label htmlFor="nomorSPM" className="text-sm font-medium">
+                    Nomor SPM <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="nomorSPM"
+                    type="text"
+                    placeholder="Input nomor SPM (contoh: 00043A)"
+                    value={nomorSPM}
+                    onChange={(e) => setNomorSPM(e.target.value)}
+                    className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">Wajib diisi untuk kedua metode pembayaran</p>
+                </div>
               </CardContent>
             </Card>
             </>
@@ -949,30 +928,20 @@ export function SubmissionDetail({
                   {isUpdating ? '⏳ Memproses...' : (canReturnArsip ? '↩️ Kembalikan ke PPSPM' : `❌ ${getRejectButtonLabel()}`)}
                 </Button>
                 
-                {userRole === 'Bendahara' && pembayaran === 'UP' && (submission.status === 'pending_bendahara' || submission.status === 'submitted_sm') ? (
-                  <Button 
-                    className="flex-1"
-                    onClick={handleSaveSPBy}
-                    disabled={isUpdating || !pembayaran}
-                  >
-                    {isUpdating ? '⏳ Memproses...' : '💾 Simpan SPBy'}
-                  </Button>
-                ) : (
-                  <Button 
-                    className="flex-1"
-                    onClick={handleApprove}
-                    disabled={
-                      (canAction && !allDocsComplete) || 
-                      isUpdating || 
-                      (submission.status === 'pending_kppn' && !notes) ||
-                      (userRole === 'Bendahara' && !pembayaran) ||
-                      (userRole === 'Bendahara' && pembayaran === 'LS' && !nomorSPM) ||
-                      (userRole === 'Arsip' && !nomorSPPD)
-                    }
-                  >
-                    {isUpdating ? '⏳ Memproses...' : `✅ ${getApproveButtonLabel()}`}
-                  </Button>
-                )}
+                <Button 
+                  className="flex-1"
+                  onClick={handleApprove}
+                  disabled={
+                    (canAction && !allDocsComplete) || 
+                    isUpdating || 
+                    (submission.status === 'pending_kppn' && !notes) ||
+                    (userRole === 'Bendahara' && !pembayaran) ||
+                    (userRole === 'Bendahara' && !nomorSPM) ||
+                    (userRole === 'Arsip' && !nomorSPPD)
+                  }
+                >
+                  {isUpdating ? '⏳ Memproses...' : `✅ ${getApproveButtonLabel()}`}
+                </Button>
               </div>
             )
           )}
