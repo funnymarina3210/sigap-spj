@@ -23,7 +23,7 @@ export function SubmissionTable({ submissions, onRowClick, userRole }: Submissio
             <TableHead>Jenis Belanja</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Update Terakhir</TableHead>
-            <TableHead>No SPM / SPPD</TableHead>
+            <TableHead>No SPM / SP2D</TableHead>
             <TableHead className="w-10">Aksi</TableHead>
           </TableRow>
         </TableHeader>

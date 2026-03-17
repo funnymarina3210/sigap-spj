@@ -270,7 +270,7 @@ export function SubmissionDetail({
       if (userRole === 'Arsip' && !nomorSPPD) {
         toast({
           title: 'Validasi gagal',
-          description: 'Nomor SPPD wajib diisi',
+          description: 'Nomor SP2D wajib diisi',
           variant: 'destructive',
         });
         return;
@@ -778,7 +778,7 @@ export function SubmissionDetail({
                 )}
                 {submission.nomorSPPD && (
                   <div>
-                    <p className="text-xs text-muted-foreground">Nomor SPPD</p>
+                    <p className="text-xs text-muted-foreground">Nomor SP2D</p>
                     <p className="text-sm font-medium">{submission.nomorSPPD}</p>
                   </div>
                 )}
@@ -844,12 +844,12 @@ export function SubmissionDetail({
                 {userRole === 'Arsip' && (submission.status === 'pending_kppn') && (
                   <div className="space-y-2">
                     <label htmlFor="nomorSPPD" className="text-sm font-medium">
-                      Nomor SPPD <span className="text-red-500">*</span>
+                      Nomor SP2D <span className="text-red-500">*</span>
                     </label>
                     <input
                       id="nomorSPPD"
                       type="text"
-                      placeholder="Input nomor SPPD (contoh: 00043T)"
+                      placeholder="Input nomor SP2D (contoh: 00043T)"
                       value={nomorSPPD}
                       onChange={(e) => setNomorSPPD(e.target.value)}
                       className="w-full px-3 py-2 border border-input rounded-md text-sm"
